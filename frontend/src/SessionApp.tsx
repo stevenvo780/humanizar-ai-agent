@@ -203,13 +203,13 @@ function AuthScreen({
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              minLength={creating ? 12 : 1}
+              minLength={creating ? 6 : 1}
               maxLength={128}
-              placeholder={creating ? 'Al menos 12 caracteres' : 'Tu contraseña'}
+              placeholder={creating ? 'Al menos 6 caracteres' : 'Tu contraseña'}
             />
             {creating && (
               <span className="auth-password-hint">
-                Usa al menos 12 caracteres para proteger tu cuenta.
+                Usa al menos 6 caracteres para proteger tu cuenta.
               </span>
             )}
             {error && (

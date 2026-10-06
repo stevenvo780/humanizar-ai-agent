@@ -151,6 +151,31 @@ def test_bootstrap_race_across_connections(tmp_path: Path) -> None:
         second.close()
 
 
+@pytest.mark.parametrize(("route", "role"), [("setup", "admin"), ("register", "customer")])
+def test_six_character_password_boundary_for_setup_and_registration(
+    client: TestClient,
+    database: ApplicationDatabase,
+    route: str,
+    role: str,
+) -> None:
+    if route == "register":
+        signup(client)
+    payload = {"name": "Boundary test", "email": "boundary@example.test"}
+    rejected = client.post(f"/api/auth/{route}", json={**payload, "password": "12345"})
+    assert rejected.status_code == 422 and "12345" not in rejected.text
+    assert database.get_user_by_email(payload["email"]) is None
+
+    # This explicit boundary value is used only in an isolated synthetic test database.
+    accepted = client.post(f"/api/auth/{route}", json={**payload, "password": "123456"})
+    assert accepted.status_code == 200
+    assert accepted.json()["user"]["role"] == role
+    persisted = database.get_user_by_email(payload["email"])
+    assert persisted is not None and persisted.password_hash.startswith("$argon2id$")
+    login = client.post("/api/auth/login", json={"email": payload["email"], "password": "123456"})
+    assert login.status_code == 200
+    assert login.json()["user"]["id"] == accepted.json()["user"]["id"]
+
+
 @pytest.mark.parametrize(
     "invalid",
     [
@@ -266,7 +291,7 @@ def test_validation_never_echoes_password(client: TestClient) -> None:
         json={"name": "Owner", "email": "owner@example.test", "password": password},
     )
     assert result.status_code == 422 and password not in result.text
-    weak = secrets.token_hex(4)
+    weak = secrets.token_hex(3)[:5]
     result = client.post(
         "/api/auth/setup", json={"name": "Owner", "email": "owner@example.test", "password": weak}
     )

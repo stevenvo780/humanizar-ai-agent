@@ -13,7 +13,7 @@ for legacy isolated component checks.
 
 `GET /auth/status` -> `{setup_required: boolean}`.
 `POST /auth/setup` creates the sole first administrator; `/auth/register` creates
-customers. Both accept `{name,email,password}` (password 12–128 characters).
+customers. Both accept `{name,email,password}` (password 6–128 characters).
 `POST /auth/login` accepts `{email,password}`. These return
 `{access_token,token_type:"bearer",user:{id,name,email,role}}` and set an HttpOnly
 refresh cookie. Access JWT lasts 30 minutes; refresh lasts seven days.

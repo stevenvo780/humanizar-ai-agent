@@ -55,7 +55,7 @@ class SignupRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=120)
     email: str = Field(min_length=3, max_length=254)
-    password: SecretStr = Field(min_length=12, max_length=128)
+    password: SecretStr = Field(min_length=6, max_length=128)
 
     @field_validator("email")
     @classmethod
