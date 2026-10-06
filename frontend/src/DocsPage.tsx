@@ -726,13 +726,17 @@ export default function DocsPage() {
             <div className="docs-status-grid">
               <div className="docs-status-verified">
                 <span>
-                  <CheckCheck size={17} /> Comprobado en la base
+                  <CheckCheck size={17} /> Comprobado localmente
                 </span>
                 <ul>
                   <li>Acceso por cuenta, roles y sesiones revocables.</li>
                   <li>Persistencia local y recuperación semántica.</li>
                   <li>Chat con fuentes, solicitudes confirmadas e inbox admin.</li>
                   <li>Identidad MCP y verificaciones de código.</li>
+                  <li>
+                    Claude Haiku 4.5: llamada autenticada y ejecución real del agente con MCP
+                    verificadas localmente.
+                  </li>
                 </ul>
               </div>
               <div className="docs-status-pending">
@@ -741,7 +745,8 @@ export default function DocsPage() {
                 </span>
                 <ul>
                   <li>
-                    Anthropic: falta una credencial real y una llamada autenticada registrada.
+                    Cada instalación requiere su propia clave de Anthropic en el backend y verificar
+                    la conexión.
                   </li>
                   <li>Docker: el daemon no estaba disponible en la última validación.</li>
                   <li>Qdrant remoto y despliegue público: fuera de esa verificación.</li>

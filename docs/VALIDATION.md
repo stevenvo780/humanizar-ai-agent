@@ -24,6 +24,14 @@ de TestClient/httpx en cada suite Python; no impide los resultados.
 
 ## Servicios reales locales
 
+- Anthropic autenticado con Haiku 4.5, respuesta de modelo
+  `claude-haiku-4-5-20251001` en una llamada real. El backend local y su proxy web
+  reportan modo `anthropic`; la credencial queda únicamente en configuración
+  privada del backend, ignorada por Git y con permisos 0600.
+- Ciclo real del agente comprobado con respuestas HTTP 200: consulta de identidad
+  mediante `mcp_company_info` y consulta sobre Cauce mediante `search_knowledge`
+  con una fuente recuperada. Las comprobaciones usaron cuentas y datos sintéticos
+  aislados; ninguna sesión privada forma parte del repositorio.
 - Clon público en una ruta nueva con espacios: `make setup`, `make speckit-check`
   y `make check` completos. El arranque real en Python 3.12 verificó administrador,
   registro de cliente, chat con fuentes semánticas de Humanizar, historial, refresh
@@ -73,8 +81,9 @@ verificación de proveedor y el reinicio del rate limit mediante login exitoso.
 - CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
   locales, auditoría de paths, Gitleaks e integración Docker. El runner remoto no
   inició su ejecución; el workflow no cuenta como validación de Docker.
-- Modo demo activo: sin llamada real a Anthropic con credencial nueva. El ciclo
-  nativo de herramientas, errores y presupuestos se probó con proveedor simulado.
+- El clon público no contiene una credencial: cada instalación configura su propia
+  clave privada. Los controles automatizados del ciclo, errores y presupuestos
+  utilizan proveedores simulados; las llamadas reales locales se registran arriba.
 - Qdrant remoto no probado; modo local persistente comprobado.
 - PDF requiere texto extraíble, sin OCR. El historial autenticado persiste en SQLite.
 - Hosting público de la web queda fuera de esta base local. Autenticación multiusuario
