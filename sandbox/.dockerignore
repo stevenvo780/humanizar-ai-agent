@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!pyproject.toml
+!uv.lock
+!app/
+!app/*.py
+!fixtures/
+!fixtures/example.txt

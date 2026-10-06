@@ -1,0 +1,2 @@
+Lumen sandbox fixture.
+Only approved, read-only commands run here.

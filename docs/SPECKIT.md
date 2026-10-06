@@ -1,0 +1,88 @@
+# Spec Kit 1.0.7 en este proyecto
+
+El scaffolding procede de Specify CLI 1.0.7, con integración `claude`, scripts Bash
+y skills invocables. Está incluido en Git: no hace falta regenerarlo en cada laptop.
+La versión de la CLI de administración se fija con `make speckit`.
+
+| Comando en Claude Code | Propósito |
+| --- | --- |
+| `/speckit-constitution` | Revisar principios del proyecto cuando el brief lo requiera |
+| `/speckit-specify` | Convertir requisitos reales en una especificación |
+| `/speckit-clarify` | Resolver ambigüedades concretas |
+| `/speckit-plan` | Definir arquitectura y cambios mínimos |
+| `/speckit-checklist` | Revisar la calidad de los requisitos |
+| `/speckit-tasks` | Generar tareas verificables y ordenadas |
+| `/speckit-analyze` | Revisar coherencia sin modificar los artefactos |
+| `/speckit-implement` | Implementar y comprobar las tareas autorizadas |
+| `/speckit-converge` | Registrar diferencias que todavía faltan por implementar |
+| `/speckit-taskstoissues` | Crear issues solo cuando se solicite publicar en GitHub |
+
+Los nombres utilizan guiones: `/speckit-specify`, no `/speckit.specify`.
+Los nombres con puntos en el workflow describen IDs internos de Spec Kit.
+Los hooks de extensiones son opcionales; este proyecto no instala extensiones
+que publiquen o creen ramas automáticamente.
+
+## Elegir la feature correcta
+
+`001-company-agent` describe la base Humanizar implementada. `002-exam-adaptation`
+reserva la adaptación a un enunciado todavía desconocido: todas sus tareas están
+pendientes. Las features no dependen del nombre de la rama Git en la versión 1.0.7.
+
+`make setup` crea, si falta, `.specify/feature.json` con la ruta relativa de `001`.
+Ese archivo es estado local ignorado por el scaffolding oficial. Al cambiar feature,
+el CLI actualiza el puntero; no se distribuyen rutas absolutas de una laptop.
+`SPECIFY_FEATURE` solo fija el identificador: no selecciona por sí solo el directorio.
+
+Comprobar la base explícitamente:
+
+```bash
+make speckit-check
+```
+
+Abrir Claude Code para la prueba real:
+
+```bash
+SPECIFY_FEATURE=002-exam-adaptation \
+SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation \
+make claude
+```
+
+Lee primero el material importado con `--no-upload`. Ejecuta `/speckit-specify`
+indicando la ruta y los requisitos reales; después `/speckit-clarify` si faltan
+decisiones, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze` y `/speckit-implement`.
+El plan inicial de `002` explica el orden, pero no sustituye el análisis del enunciado.
+No marques una tarea como terminada hasta contar con implementación y evidencia.
+
+Para cambiar manualmente el contexto en tu shell:
+
+```bash
+export SPECIFY_FEATURE=002-exam-adaptation
+export SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation
+bash .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks
+```
+
+Ese comando comprueba existencia y rutas, no demuestra que el examen esté resuelto.
+Mantén `001` como referencia y escribe los requisitos de la prueba en `002`.
+
+## Auditoría de la base
+
+La revisión de coherencia encontró cobertura cualitativa de los diez requisitos
+de aceptación originales en sus diez tareas, sin conflictos críticos de constitución.
+Se corrigieron permisos de ingesta, descripción del embedding por defecto y las
+referencias a la persistencia del historial. La matriz FR/T de `001` hace explícita
+esa cobertura; la evidencia de ejecución vive en [VALIDATION.md](VALIDATION.md).
+
+La CLI local informó versión 1.0.7 y `specify check` terminó correctamente.
+Se comprobó también la instalación fijada desde [PyPI](https://pypi.org/project/specify-cli/1.0.7/)
+en un directorio de herramientas aislado.
+Los 22 scripts/templates/skills coinciden con los hashes de sus dos manifiestos;
+los diez skills declaran nombres válidos y seis referencias de ejecución locales
+resuelven. Las referencias `metadata.source: templates/commands/...` indican
+procedencia upstream, no archivos adicionales que falten en el clon.
+La sintaxis de los seis scripts Bash se verificó. Los templates se resuelven
+mediante `.specify/scripts/bash/resolve-template.sh`, con fallback local cuando
+no hay presets. La auditoría no ejecutó un workflow de implementación ni modelos
+de pago para fingir un resultado del examen.
+
+Fuentes: [Spec Kit](https://github.com/github/spec-kit) y
+[skills en Claude Code](https://code.claude.com/docs/en/skills).

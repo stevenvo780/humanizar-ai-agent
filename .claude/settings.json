@@ -1,0 +1,25 @@
+{
+  "model": "claude-opus-5-5",
+  "permissions": {
+    "allow": [
+      "Bash(uv run --project backend *)",
+      "Bash(uv run --project sandbox *)",
+      "Bash(npm --prefix frontend run *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Read",
+      "Edit",
+      "Write"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/*.token)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(.claude/settings.local.json)",
+      "Read(data/**)",
+      "Read(backend/data/**)"
+    ]
+  }
+}

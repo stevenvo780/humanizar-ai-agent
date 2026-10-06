@@ -1,0 +1,5 @@
+# Local development only: expose the sandbox on loopback for the host API.
+services:
+  sandbox:
+    ports:
+      - "127.0.0.1:8081:8001"

@@ -1,0 +1,71 @@
+services:
+  api:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      SANDBOX_URL: http://sandbox:8001
+      LUMEN_API_URL: http://127.0.0.1:8000
+    volumes:
+      - knowledge:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [app, tools]
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 1g
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [app]
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+      - /var/cache/nginx:size=16m
+      - /var/run:size=1m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 32
+    mem_limit: 128m
+    restart: unless-stopped
+
+  sandbox:
+    build: ./sandbox
+    networks: [tools]
+    read_only: true
+    tmpfs:
+      - /tmp:size=8m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 32
+    mem_limit: 160m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  knowledge:
+
+networks:
+  app:
+  tools:
+    internal: true
