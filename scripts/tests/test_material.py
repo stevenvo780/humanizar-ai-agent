@@ -195,6 +195,7 @@ def test_packager_allowlist_and_no_overwrite(tmp_path: Path) -> None:
         ".agents/skills/speckit-specify/SKILL.md",
         ".github/workflows/quality.yml",
         "config/env.example",
+        "frontend/nginx.conf",
         ".env.example",
         "backend/app/main.py",
         "backend/uv.lock",

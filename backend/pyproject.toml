@@ -41,7 +41,8 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4"]
 known-first-party = ["app"]
 
 [tool.mypy]
-python_version = "3.11"
+# NumPy wheels for Python 3.12 include PEP 695 stubs; the runtime floor stays at 3.11.
+python_version = "3.12"
 strict = true
 files = ["app", "tests"]
 
