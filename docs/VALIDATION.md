@@ -15,11 +15,21 @@ la prueba, todavía desconocidos.
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total: **214 pruebas aprobadas**. Python backend ejecutó en 3.11.15 y sandbox en
-3.12.3; Docker apunta a Python 3.12. Existe una advertencia externa de deprecación
+Total: **214 pruebas aprobadas**. Comprobación completa repetida desde un clon
+descargado del repositorio público con Python 3.12.3 en backend y sandbox. El
+backend también se verificó en 3.11.15; Docker apunta a Python 3.12. Mypy utiliza
+objetivo 3.12 para interpretar los stubs PEP 695 de NumPy, manteniendo el código
+compatible con Python 3.11 mediante Ruff. Existe una advertencia externa de deprecación
 de TestClient/httpx en cada suite Python; no impide los resultados.
 
 ## Servicios reales locales
+
+- Clon público en una ruta nueva con espacios: `make setup`, `make speckit-check`
+  y `make check` completos. El arranque real en Python 3.12 verificó administrador,
+  registro de cliente, chat con fuentes semánticas de Humanizar, historial, refresh
+  y logout. Datos sintéticos en una instancia temporal; servicios cerrados al terminar.
+- Build de producción servido en navegador: acceso y `/docs` en móvil sin errores
+  JavaScript ni overflow; `/docs` no realiza solicitudes de autenticación.
 
 - FastEmbed multilingüe descargado e inferencia de vectores de 384 dimensiones.
 - Corpus activo: cinco resúmenes de Humanizar con URLs oficiales y fecha de consulta.
@@ -60,6 +70,9 @@ verificación de proveedor y el reinicio del rate limit mediante login exitoso.
 
 - El daemon Docker no responde. Compose y Dockerfiles están preparados; no se
   ejecutaron builds ni procesos de terminal del producto en este host.
+- CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
+  locales, auditoría de paths, Gitleaks e integración Docker. El runner remoto no
+  inició su ejecución; el workflow no cuenta como validación de Docker.
 - Modo demo activo: sin llamada real a Anthropic con credencial nueva. El ciclo
   nativo de herramientas, errores y presupuestos se probó con proveedor simulado.
 - Qdrant remoto no probado; modo local persistente comprobado.
@@ -81,6 +94,12 @@ los 10 skills tienen nombres válidos, seis referencias locales requeridas resue
 y los scripts Bash pasan verificación de sintaxis. `specify version` y `specify check`
 se ejecutaron; el análisis de la baseline no encontró conflictos críticos.
 Ver [la selección de features y auditoría](SPECKIT.md).
+
+Publicación: repositorio público con historial independiente saneado; Gitleaks
+no encontró secretos en los archivos ni en el historial publicado. No se incluyen
+configuración privada, cuentas, datos de sesión, material del examen ni el
+manifiesto local de paridad. El ZIP portable contiene también Nginx y excluye el
+puntero local `.specify/feature.json`; el bootstrap lo recrea al instalar.
 
 Portabilidad: `make setup` y `make speckit-check` pasaron en una copia limpia de
 fuentes reubicada, con espacios en la ruta, Python 3.12.3 y sin copiar entornos,

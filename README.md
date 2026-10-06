@@ -20,6 +20,8 @@ make dev
 Abre **http://127.0.0.1:5173**. Swagger está en **http://127.0.0.1:5173/api/docs**;
 el esquema está en **http://127.0.0.1:5173/api/openapi.json**. La API directa
 usa los mismos paths bajo el puerto 8000.
+La presentación técnica pública está en **http://127.0.0.1:5173/docs**, sin login:
+arquitectura, ciclo del agente, datos, seguridad, herramientas y evidencia de calidad.
 Consulta [portabilidad y dependencias](docs/PORTABILITY.md) para una instalación limpia.
 La configuración inicial utiliza Humanizar y cinco resúmenes de fuentes públicas
 oficiales en `backend/knowledge/humanizar`. Se cargan automáticamente sin duplicarse.
@@ -130,6 +132,9 @@ make package
 
 La verificación ejecuta lint, formato, tipos, pruebas y build. El paquete excluye
 claves, dependencias instaladas, datos privados y sesiones locales.
+El workflow de GitHub repite esos controles, revisa el historial con Gitleaks y
+prepara un job de integración Docker. Su ejecución requiere un runner disponible;
+la evidencia local y los límites pendientes se documentan por separado.
 Consulta [la arquitectura](docs/ARCHITECTURE.md), [el contrato](docs/API_CONTRACT.md)
 y [el estado de validación](docs/VALIDATION.md).
 
