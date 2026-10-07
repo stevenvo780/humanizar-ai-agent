@@ -22,6 +22,10 @@ def test_api_upload_chat_delete_and_stream(settings: Settings) -> None:
         )
         assert uploaded.status_code == 200
         identifier = uploaded.json()["documents"][0]["id"]
+        detail = client.get(f"/api/documents/{identifier}")
+        assert detail.status_code == 200 and detail.headers["cache-control"] == "no-store"
+        assert detail.json()["content"] == "Soporte lunes viernes 9 a 18"
+        assert detail.json()["reconstructed"] is False
         assert client.get("/api/documents").json()["total_chunks"] == 1
         assert client.get("/api/search", params={"query": "Soporte"}).json()["sources"]
         response = client.post("/api/chat", json={"message": "Soporte"}).json()
@@ -36,6 +40,7 @@ def test_api_upload_chat_delete_and_stream(settings: Settings) -> None:
         tokens = "".join(data["text"] for event, data in events if event == "token")
         assert tokens == events[-1][1]["answer"]
         assert client.delete(f"/api/documents/{identifier}").status_code == 204
+        assert client.get(f"/api/documents/{identifier}").status_code == 404
         assert client.delete(f"/api/documents/{identifier}").status_code == 404
 
 
@@ -71,7 +76,7 @@ def test_health_declares_customer_capability_without_account_data(
         response = client.get("/api/health")
         assert response.status_code == 200
         body = response.json()
-        assert body["features"] == {"customer_management": True}
+        assert body["features"] == {"customer_management": True, "document_reading": True}
         assert set(body) == {"status", "mode", "model", "embedding", "tools", "features"}
 
 

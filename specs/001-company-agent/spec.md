@@ -33,7 +33,7 @@
 - Optional PostgreSQL persistence with a dedicated schema, verified TLS and transactional session handling.
 - Vercel same-origin API proxy to the HTTPS Docker backend, with authenticated sessions and streamed tool activity.
 - Admin-only customer creation and paginated public account fields, with fixed customer roles and unchanged administrator cookies.
-- Readable text, single section navigation, visible upload controls, sufficient contrast and responsive layouts without horizontal page overflow.
+- Readable text, single section navigation, visible upload and document-reading controls, sufficient contrast and responsive layouts without horizontal page overflow.
 
 ## Scope limits
 
@@ -56,10 +56,10 @@ and arbitrary autonomous code execution are outside this implementation.
 | FR-008 | JWT/Argon2, roles, revocable sessions and histories isolate accounts | Auth, refresh, role and conversation ownership tests |
 | FR-009 | Provider credentials come only from the backend environment | Removed HTTP routes, ignored legacy DB configuration and public-response isolation tests; live calls require a user's key |
 | FR-010 | Public Humanizar evidence supports recommendations and confirmed local requests | Recommendation, idempotency, owner listing and admin inbox tests |
-| FR-011 | Optional PostgreSQL preserves auth and business contracts in a dedicated schema | Twelve isolated PostgreSQL tests, concurrent bootstrap, production TLS 1.3 and persistence after API restart |
+| FR-011 | Optional PostgreSQL preserves auth and business contracts in a dedicated schema | Fifteen isolated PostgreSQL tests, concurrent bootstrap, production TLS 1.3 and persistence after API restart |
 | FR-012 | Vercel proxies authenticated requests and SSE to the persistent Docker backend | Ready production deployment, secure session cookies, real tools, Swagger, protected origin and absence of backend keys from browser assets |
 | FR-013 | Administrators create and list customer accounts without changing their session | Auth/role/public-field tests, coherent pagination snapshots in SQLite and PostgreSQL; production API rollout tracked separately |
-| FR-014 | UI text, single navigation and Markdown administration are readable and discoverable | Browser checks across 320–1440 px, measured contrast, actual admin Markdown ingestion, role-aware navigation and keyboard-accessible mobile drawer |
+| FR-014 | UI text, single navigation and Markdown upload/reading are readable and discoverable | Browser checks across 320–1440 px, measured contrast, admin ingestion/reading, persistent original text, legacy migration, role-aware navigation and keyboard-accessible mobile drawer |
 
 Build, types, lint and responsive browser checks apply across these requirements.
 Detailed execution evidence and external-service limits are recorded in docs/VALIDATION.md.

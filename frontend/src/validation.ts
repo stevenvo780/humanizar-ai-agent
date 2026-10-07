@@ -7,6 +7,7 @@ import type {
   CustomerAccount,
   CustomerAccountList,
   CustomerRequest,
+  DocumentDetail,
   DocumentList,
   Health,
   KnowledgeDocument,
@@ -119,7 +120,10 @@ export function isHealth(value: unknown): value is Health {
     typeof value.tools.sandbox === 'boolean' &&
     typeof value.tools.mcp === 'boolean' &&
     (value.features === undefined ||
-      (isRecord(value.features) && typeof value.features.customer_management === 'boolean'))
+      (isRecord(value.features) &&
+        typeof value.features.customer_management === 'boolean' &&
+        (value.features.document_reading === undefined ||
+          typeof value.features.document_reading === 'boolean')))
   );
 }
 
@@ -131,6 +135,19 @@ function isDocument(value: unknown): value is KnowledgeDocument {
     isCount(value.chunks) &&
     isCount(value.characters) &&
     typeof value.created_at === 'string'
+  );
+}
+
+export function isDocumentDetail(value: unknown): value is DocumentDetail {
+  return (
+    isDocument(value) &&
+    value.id.length > 0 &&
+    value.name.length > 0 &&
+    Number.isFinite(Date.parse(value.created_at)) &&
+    'content' in value &&
+    typeof value.content === 'string' &&
+    'reconstructed' in value &&
+    typeof value.reconstructed === 'boolean'
   );
 }
 

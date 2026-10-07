@@ -14,7 +14,7 @@ export interface Health {
   model: string;
   embedding: string;
   tools: { sandbox: boolean; mcp: boolean };
-  features?: { customer_management: boolean };
+  features?: { customer_management: boolean; document_reading?: boolean };
 }
 
 export interface KnowledgeDocument {
@@ -23,6 +23,11 @@ export interface KnowledgeDocument {
   chunks: number;
   characters: number;
   created_at: string;
+}
+
+export interface DocumentDetail extends KnowledgeDocument {
+  content: string;
+  reconstructed: boolean;
 }
 
 export interface DocumentList {

@@ -15,6 +15,8 @@
 - [x] T013 FR-013: admin customer creation/listing, fixed role, session preservation and coherent pagination (`backend/app`, `backend/tests`, `frontend/src/CustomersPanel.tsx`, `frontend/src/customers.test.ts`).
 - [x] T014 FR-014: readable typography/contrast, single section navigation, shared dialog focus and visible Markdown upload (`frontend/src/styles.css`, `frontend/src/docs.css`, `frontend/src/App.tsx`, `frontend/src/workspaceNavigation.ts`, `frontend/src/useDialogFocus.ts`).
 - [ ] T015 FR-013: publish the updated API to the VPS and verify customer management through the public Vercel UI; requires an authenticated SSH connection.
+- [x] T016 FR-002/FR-008/FR-014: persist complete document text, migrate legacy metadata, add authenticated content API and safe Markdown/text reader, and verify storage, roles and browser behavior.
+- [ ] T017 FR-014: publish the document reader API/UI and verify reading from Vercel; requires an authenticated SSH connection to update the VPS API.
 
 Production Docker sandbox execution, real Haiku responses and PostgreSQL persistence
 were verified and are recorded in docs/VALIDATION.md. Remote Qdrant remains untested;

@@ -1623,19 +1623,295 @@ summary::-webkit-details-marker {
 }
 .document-info {
   min-width: 0;
+  flex: 1;
 }
-.document-info > strong {
+.document-read-button {
   font-size: 14px;
   font-weight: 500;
   color: #d0dce6;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  max-width: 100%;
+  background: transparent;
+  text-align: left;
+  line-height: 1.6;
   overflow-wrap: anywhere;
+}
+.document-read-button > svg {
+  flex-shrink: 0;
+  color: #a0dfc5;
+}
+.document-read-button:not(:disabled):hover > span {
+  color: #bef1d9;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.document-read-button:disabled > svg {
+  color: #b2becb;
+}
+.document-row-reading {
+  background: #1c2d2b;
+  box-shadow: inset 3px 0 #a0e5cd;
 }
 .document-info > span {
   color: #aab8c6;
   font-size: 12px;
   margin-top: 7px;
   display: block;
+}
+.document-reader-availability {
+  padding: 15px 18px;
+  margin: 0 0 16px;
+  border: 1px solid #574e3d;
+  border-radius: 8px;
+  background: #2a2b23;
+  color: #d7ccae;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.document-reader {
+  min-width: 0;
+  margin: 30px 0 22px;
+  border: 1px solid #4c6659;
+  border-radius: 12px;
+  background: #141e25;
+  scroll-margin-top: 24px;
+}
+.document-reader-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  border-bottom: 1px solid #35463f;
+}
+.document-reader-header > div {
+  min-width: 0;
+}
+.document-reader-header > button {
+  flex: 0 0 36px;
+  border: 1px solid #4f6158;
+  background: #20302a;
+  color: #ccded1;
+}
+.document-reader-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #abc9b7;
+  margin-bottom: 12px;
+}
+.document-reader-header h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #e1ede5;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+#document-reader-title:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+.document-reader-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 50px 24px;
+  color: #b6cdc0;
+  font-size: 14px;
+}
+.document-reader-error {
+  padding: 4px 24px 24px;
+}
+.document-reader-error > button {
+  margin-top: 18px;
+}
+.document-reader-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 19px 24px;
+  border-bottom: 1px solid #35463f;
+}
+.document-reader-formats {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid #43574b;
+  border-radius: 8px;
+  background: #1a2826;
+}
+.document-reader-formats > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 9px 12px;
+  border-radius: 5px;
+  background: transparent;
+  color: #b8cfc0;
+  font-size: 14px;
+}
+.document-reader-formats > button.selected {
+  background: #2f4b39;
+  color: #d8eee0;
+  box-shadow: inset 0 0 0 1px #5c7c64;
+}
+.document-reader-formats > button:hover {
+  color: #e5f4eb;
+}
+.document-reader-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #b1c5b9;
+  font-size: 12px;
+}
+.document-reconstruction-note {
+  padding: 14px 18px;
+  margin: 22px 24px 0;
+  border: 1px solid #5a5944;
+  border-radius: 7px;
+  color: #d8d0b0;
+  background: #2c2d23;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.document-reader-content {
+  min-width: 0;
+  padding: 24px;
+}
+.document-reader .document-markdown {
+  color: #ccdacf;
+  font-size: 16px;
+  line-height: 1.9;
+}
+.document-reader .document-markdown h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.4;
+  margin: 10px 0 20px;
+}
+.document-reader .document-markdown h2 {
+  font-size: 23px;
+}
+.document-reader .document-markdown h3 {
+  font-size: 19px;
+}
+.document-reader .document-markdown h4,
+.document-reader .document-markdown h5,
+.document-reader .document-markdown h6 {
+  font-size: 16px;
+  color: #deeee5;
+  line-height: 1.6;
+  margin: 20px 0 10px;
+}
+.document-markdown pre {
+  max-width: 100%;
+}
+.document-table-scroll {
+  max-width: 100%;
+  margin: 20px 0;
+  overflow-x: auto;
+  border: 1px solid #43594a;
+  border-radius: 7px;
+}
+.document-markdown table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  background: #15231b;
+  color: #c4d8ca;
+  font-size: 14px;
+}
+.document-markdown th,
+.document-markdown td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #43594a;
+  line-height: 1.7;
+  vertical-align: top;
+}
+.document-markdown th {
+  background: #253c2c;
+  color: #deebe2;
+  font-weight: 600;
+}
+.document-markdown tr:last-child td {
+  border-bottom: 0;
+}
+.document-original-text {
+  max-width: 100%;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #3b4f44;
+  border-radius: 7px;
+  background: #0f1920;
+  color: #d3e3db;
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.document-reader-empty {
+  margin: 0;
+  color: #b9cdc0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.document-image-note {
+  color: #b2c2b8;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .document-reader-header,
+  .document-reader-toolbar,
+  .document-reader-content {
+    padding: 18px;
+  }
+  .document-reader-header h2 {
+    font-size: 19px;
+  }
+  .document-reader-header {
+    gap: 12px;
+  }
+  .document-reader-eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .document-reader-error {
+    padding: 0 18px 18px;
+  }
+  .document-reconstruction-note {
+    margin: 18px 18px 0;
+  }
+  .document-reader .document-markdown h1 {
+    font-size: 24px;
+  }
+  .document-reader-formats {
+    width: 100%;
+  }
+  .document-reader-formats > button {
+    flex: 1;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .document-original-text {
+    padding: 14px;
+  }
 }
 .ready-badge {
   margin-left: auto;
@@ -2424,7 +2700,7 @@ summary::-webkit-details-marker {
     gap: 9px;
     padding: 13px;
   }
-  .document-info > strong {
+  .document-read-button {
     font-size: 14px;
   }
   .document-info > span {

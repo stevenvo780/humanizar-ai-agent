@@ -9,7 +9,7 @@ from qdrant_client import QdrantClient, models
 
 from app.embeddings import Embedder, create_embedder, terms
 from app.ingestion import ParsedDocument, chunks
-from app.models import Document, DocumentList, Source
+from app.models import Document, DocumentDetail, DocumentList, Source
 from app.settings import Settings
 
 
@@ -32,8 +32,22 @@ class KnowledgeStore:
                 "chunks INTEGER NOT NULL, characters INTEGER NOT NULL, created_at TEXT NOT NULL);"
                 "CREATE TABLE IF NOT EXISTS chunks (id TEXT PRIMARY KEY, document_id TEXT NOT NULL "
                 "REFERENCES documents(id) ON DELETE CASCADE, text TEXT NOT NULL);"
+                "CREATE TABLE IF NOT EXISTS document_contents (document_id TEXT PRIMARY KEY "
+                "REFERENCES documents(id) ON DELETE CASCADE, content TEXT NOT NULL);"
                 "CREATE TABLE IF NOT EXISTS flags (key TEXT PRIMARY KEY, value TEXT NOT NULL);"
             )
+            # Preserve an optional column from an intermediate version without altering it.
+            with self._db:
+                self._db.execute("BEGIN IMMEDIATE")
+                columns = {
+                    str(row["name"]) for row in self._db.execute("PRAGMA table_info(documents)")
+                }
+                if "content" in columns:
+                    self._db.execute(
+                        "INSERT INTO document_contents (document_id,content) "
+                        "SELECT id,content FROM documents WHERE content IS NOT NULL "
+                        "ON CONFLICT(document_id) DO NOTHING"
+                    )
             if settings.qdrant_url:
                 self._vectors = QdrantClient(
                     url=settings.qdrant_url,
@@ -78,11 +92,54 @@ class KnowledgeStore:
         with self._lock:
             documents = [
                 Document.model_validate(dict(row))
-                for row in self._db.execute("SELECT * FROM documents ORDER BY created_at, id")
+                for row in self._db.execute(
+                    "SELECT id,name,chunks,characters,created_at FROM documents "
+                    "ORDER BY created_at,id"
+                )
             ]
             return DocumentList(
                 documents=documents, total_chunks=sum(document.chunks for document in documents)
             )
+
+    @staticmethod
+    def _reconstruct(fragments: list[str]) -> str:
+        if not fragments:
+            return ""
+        # Historical ingestion used a 150-character overlap. Trimming lost formatting,
+        # so this is an explicitly approximate reconstruction rather than an original.
+        parts = [fragments[0]]
+        previous = fragments[0]
+        for fragment in fragments[1:]:
+            maximum = min(150, len(previous), len(fragment))
+            overlap = next(
+                (size for size in range(maximum, 0, -1) if previous.endswith(fragment[:size])),
+                0,
+            )
+            parts.append(fragment[overlap:] if overlap else "\n\n" + fragment)
+            previous = fragment
+        return "".join(parts)
+
+    def get_document(self, document_id: str) -> DocumentDetail | None:
+        """Read complete extracted text from metadata, without contacting vector storage."""
+        with self._lock:
+            row = self._db.execute(
+                "SELECT d.id,d.name,d.chunks,d.characters,d.created_at,c.content FROM documents d "
+                "LEFT JOIN document_contents c ON c.document_id=d.id WHERE d.id=?",
+                (document_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            record = dict(row)
+            reconstructed = record["content"] is None
+            if reconstructed:
+                fragments = [
+                    str(chunk["text"])
+                    for chunk in self._db.execute(
+                        "SELECT text FROM chunks WHERE document_id=? ORDER BY rowid", (document_id,)
+                    )
+                ]
+                record["content"] = self._reconstruct(fragments)
+            return DocumentDetail.model_validate({**record, "reconstructed": reconstructed})
 
     def add_documents(self, parsed: list[ParsedDocument]) -> list[Document]:
         with self._lock:
@@ -100,8 +157,19 @@ class KnowledgeStore:
                         created_at=datetime.now(UTC).isoformat(),
                     )
                     self._db.execute(
-                        "INSERT INTO documents VALUES (?, ?, ?, ?, ?)",
-                        tuple(document.model_dump().values()),
+                        "INSERT INTO documents (id,name,chunks,characters,created_at) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        (
+                            document.id,
+                            document.name,
+                            document.chunks,
+                            document.characters,
+                            document.created_at,
+                        ),
+                    )
+                    self._db.execute(
+                        "INSERT INTO document_contents (document_id,content) VALUES (?, ?)",
+                        (document.id, item.text),
                     )
                     records = [
                         {
@@ -113,7 +181,7 @@ class KnowledgeStore:
                         for fragment in fragments
                     ]
                     self._db.executemany(
-                        "INSERT INTO chunks VALUES (?, ?, ?)",
+                        "INSERT INTO chunks (id,document_id,text) VALUES (?, ?, ?)",
                         [(row["id"], row["document_id"], row["text"]) for row in records],
                     )
                     points.extend(self._points(records))

@@ -101,6 +101,33 @@ def test_customer_confirmations_persist_once_and_do_not_expose_other_requests(
         assert client.post("/api/actions/confirm", json=forbidden, headers=user).status_code == 422
 
 
+def test_document_detail_is_admin_only_and_reads_extracted_text(settings: Settings) -> None:
+    application = create_app(settings.model_copy(update={"auth_enabled": True}))
+    with TestClient(application) as client:
+        admin = account(client, "/api/auth/setup", "owner@example.invalid")
+        customer = account(client, "/api/auth/register", "customer@example.invalid")
+        text = "\n## Synthetic knowledge\n\n" + "Fila con texto público.\n" * 150 + "\n"
+        uploaded = client.post(
+            "/api/documents", files={"file": ("public.md", text.encode())}, headers=admin
+        )
+        assert uploaded.status_code == 200
+        document = uploaded.json()["documents"][0]
+        assert document["chunks"] > 1
+        identifier = document["id"]
+        path = f"/api/documents/{identifier}"
+        assert client.get(path).status_code == 401
+        assert client.get(path, headers=customer).status_code == 403
+        assert client.get("/api/documents/missing", headers=customer).status_code == 403
+        response = client.get(path, headers=admin)
+        assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
+        assert response.json() == {**document, "content": text.strip(), "reconstructed": False}
+        listed = client.get("/api/documents", headers=admin).json()["documents"][0]
+        assert "content" not in listed and "reconstructed" not in listed
+        assert client.get("/api/documents/missing", headers=admin).status_code == 404
+        assert client.delete(path, headers=admin).status_code == 204
+        assert client.get(path, headers=admin).status_code == 404
+
+
 @pytest.mark.parametrize(
     ("mode", "configured", "expected"),
     [("auto", False, "demo"), ("auto", True, "anthropic"), ("demo", True, "demo")],

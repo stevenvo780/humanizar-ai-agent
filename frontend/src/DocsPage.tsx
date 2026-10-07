@@ -346,10 +346,10 @@ export default function DocsPage() {
             <div className="docs-metrics">
               <div>
                 <span className="docs-metric-number">
-                  378<span> / pruebas</span>
+                  411<span> / pruebas</span>
                 </span>
                 <p>En la base de comprobación</p>
-                <small>205 API · 77 sandbox/scripts · 28 despliegue · 68 web</small>
+                <small>213 API · 77 sandbox/scripts · 28 despliegue · 93 web</small>
               </div>
               <div>
                 <span className="docs-metric-title">
@@ -511,8 +511,10 @@ export default function DocsPage() {
             <div className="docs-inline-note">
               <BookOpen size={16} />
               <p>
-                La pestaña <strong>Documentación</strong> de administración contiene fuentes
-                empresariales para el agente.{' '}
+                La sección <strong>Documentación</strong> de administración permite cargar y leer
+                las fuentes empresariales del agente en Markdown o como texto. Las nuevas cargas
+                conservan el texto completo; las anteriores se reconstruyen desde sus fragmentos con
+                un aviso sobre el formato.{' '}
                 <strong>Esta página técnica es pública y está separada de ese conocimiento.</strong>
               </p>
             </div>
@@ -660,7 +662,7 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La base cuenta con <strong>378 pruebas aprobadas</strong>, incluidas pruebas reales de
+              La base cuenta con <strong>411 pruebas aprobadas</strong>, incluidas pruebas reales de
               persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
               describe la base registrada; cada cambio posterior debe volver a pasar sus
               comprobaciones.
@@ -682,7 +684,7 @@ export default function DocsPage() {
                       Ruff, formato, mypy estricto, agente, autenticación y persistencia PostgreSQL
                     </td>
                     <td>
-                      <strong>205</strong>
+                      <strong>213</strong>
                     </td>
                   </tr>
                   <tr>
@@ -705,7 +707,7 @@ export default function DocsPage() {
                       ESLint con tipos, hooks y accesibilidad; Prettier; TypeScript; Vitest; build
                     </td>
                     <td>
-                      <strong>68</strong>
+                      <strong>93</strong>
                     </td>
                   </tr>
                 </tbody>

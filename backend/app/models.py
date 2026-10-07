@@ -12,6 +12,7 @@ class HealthTools(BaseModel):
 
 class HealthFeatures(BaseModel):
     customer_management: Literal[True] = True
+    document_reading: Literal[True] = True
 
 
 class HealthResponse(BaseModel):
@@ -29,6 +30,11 @@ class Document(BaseModel):
     chunks: int
     characters: int
     created_at: str
+
+
+class DocumentDetail(Document):
+    content: str
+    reconstructed: bool
 
 
 class Source(BaseModel):

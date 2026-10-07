@@ -8,17 +8,18 @@ las pruebas PostgreSQL utilizan exclusivamente una instancia temporal aislada.
 
 | Componente | Evidencia |
 | --- | --- |
-| Backend | Ruff, formato, mypy estricto en 39 archivos, 205 pruebas incluidas 15 PostgreSQL |
+| Backend | Ruff, formato, mypy estricto en 39 archivos, 213 pruebas incluidas 15 PostgreSQL |
 | Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 77 pruebas |
 | Helpers de despliegue | 28 pruebas offline de configuración, rutas y ejecución privada |
-| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 68 pruebas y build |
+| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 93 pruebas y build |
 | Dependencias web | npm audit: 0 vulnerabilidades en la comprobación del frontend |
 | Configuración | JSON válido; Compose local y producción; proxy Vercel tipado |
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total comprobado: **378 pruebas aprobadas** entre las puertas anteriores sin cambios
-y las suites afectadas de esta revisión. Las 15 de PostgreSQL se activan con
+Total comprobado: **411 pruebas aprobadas** entre las puertas anteriores sin cambios
+y las suites afectadas de esta revisión, incluidas 213 pruebas backend con PostgreSQL
+temporal y 93 frontend. Las 15 de PostgreSQL se activan con
 `LUMEN_TEST_DATABASE_URL` apuntando exclusivamente a una base temporal loopback
 `lumen_test`; cada prueba crea y elimina su propio schema aleatorio. Nunca apuntar
 esa variable a la base de la empresa. La base anterior de 214 pruebas también
@@ -33,6 +34,24 @@ previamente validada sigue siendo PostgreSQL 18.6. Existe una advertencia extern
 de TestClient/httpx en cada suite Python; no impide los resultados.
 
 ## Servicios reales locales
+
+- Lector de documentos: API protegida por rol admin, contenido completo persistente
+  en nuevas cargas y migración aditiva compatible con la estructura anterior. Las
+  213 pruebas backend incluyen lectura, whitespace, reinicio, reconstrucción,
+  rollback, borrado y permisos; 93 frontend verifican el contrato y Markdown seguro.
+- Chromium con API real y datos sintéticos: Markdown con títulos, listas, tablas,
+  código y enlaces; vista de texto completo; documentos previos con aviso de
+  reconstrucción; apertura con foco/desplazamiento, cierre, error y reintento,
+  borrado del documento abierto. Escritorio 1440 px y móvil 390/320 px, sin overflow
+  horizontal, HTML ejecutable, imágenes remotas ni errores JavaScript.
+- Un segundo smoke sintético verificó cancelación de lecturas, cambio entre dos
+  documentos sin respuestas obsoletas, retorno del foco y API anterior sin GET de
+  contenido. Revisión independiente: 25 pruebas frontend y seis backend dirigidas,
+  sin bloqueantes confirmados ni acceso al corpus privado.
+- La API del entorno LAN ya declara `features.document_reading: true`; su UI
+  carga sin errores. Activar el lector en Vercel sigue pendiente de publicar la API
+  actualizada en el VPS con una conexión SSH autenticada. El frontend verifica la
+  capacidad antes de habilitar la lectura, manteniendo carga y borrado en APIs anteriores.
 
 - Gestión de clientes: 205 pruebas backend con PostgreSQL temporal y 68 frontend.
   Se verificaron autorización, rol fijo, campos públicos, conservación de la sesión

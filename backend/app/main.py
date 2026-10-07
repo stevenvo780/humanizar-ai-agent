@@ -32,6 +32,7 @@ from app.models import (
     ActionConfirmation,
     ChatRequest,
     ChatResponse,
+    DocumentDetail,
     DocumentList,
     HealthResponse,
     HealthTools,
@@ -341,6 +342,19 @@ def create_app(
         finally:
             ingestion_slots.release()
             await file.close()
+
+    @api.get("/api/documents/{document_id}", response_model=DocumentDetail)
+    async def document_detail(
+        document_id: str,
+        response: Response,
+        _user: Annotated[User | None, Depends(admin_scope)],
+    ) -> DocumentDetail:
+        store: KnowledgeStore = api.state.store
+        detail = await run_sync(store.get_document, document_id)
+        if detail is None:
+            raise HTTPException(404, "Documento no encontrado.")
+        response.headers["Cache-Control"] = "no-store"
+        return detail
 
     @api.delete("/api/documents/{document_id}", status_code=204)
     def delete(document_id: str, _user: Annotated[User | None, Depends(admin_scope)]) -> Response:

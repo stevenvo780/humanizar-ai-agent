@@ -52,17 +52,29 @@ with `{name,email,password}` over private stdin. The CLI emits no session or JWT
 Password limits remain 6–128 characters. Once an administrator exists, bootstrap
 returns 409 and all public registrations create customers.
 
-`GET /api/health`: `{status: "ok", mode: "demo" | "anthropic", model: string, embedding: string, tools: {sandbox: boolean, mcp: boolean}, features: {customer_management: true}}`.
+`GET /api/health`: `{status: "ok", mode: "demo" | "anthropic", model: string, embedding: string, tools: {sandbox: boolean, mcp: boolean}, features: {customer_management: true, document_reading: true}}`.
 `features.customer_management` is always true in this backend version, independently
 of `AUTH_ENABLED`; it signals that the customer-management routes exist. Older
 versions may omit `features`, so clients should only expose this feature when the
 flag is explicitly true. Health is public and returns no customer or account data.
+`features.document_reading` signals that the document-content route exists; the
+reader only enables when this flag is explicitly true. Earlier API releases may
+omit it, allowing frontend and backend updates to occur independently.
 
 `GET /api/config`: `{company_name: string, company_description: string, assistant_name: string, model: string, mode: "demo" | "anthropic", embedding: string, max_upload_mb: number}`.
 
 `GET /api/documents`: `{documents: Document[], total_chunks: number}`.
 
 `Document`: `{id: string, name: string, chunks: number, characters: number, created_at: string}`.
+
+`GET /api/documents/{id}`: administrator-only document reader. Returns the
+`Document` fields plus `{content: string, reconstructed: boolean}`; missing or
+deleted ids return 404. With authentication enabled, missing/invalid JWTs return
+401 and customer JWTs return 403. Responses use `Cache-Control: no-store`.
+New uploads retain their complete extracted text, with `reconstructed: false`.
+Legacy documents are read from stored chunks in insertion order with overlaps
+removed when possible, with `reconstructed: true`; the original whitespace or
+Markdown formatting is not guaranteed. Reading does not query the vector service.
 
 `POST /api/documents`: multipart field `file`, supports TXT, MD, PDF, CSV, JSON, DOCX and ZIP. Returns `{documents: Document[], total_chunks: number, skipped: string[]}`. ZIP paths are never extracted to the host. Maximum upload and decompressed sizes must be enforced.
 

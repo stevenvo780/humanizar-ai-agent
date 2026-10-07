@@ -29,6 +29,10 @@ Canonical baseline contract: docs/API_CONTRACT.md. Documents own chunk metadata;
 retrieval returns document/chunk identifiers, excerpts and scores. Responses contain
 answer, sources, trace, provider mode, model and actual usage. SSE exposes status,
 tool, token, done and error events.
+New uploads also retain their complete extracted text for an administrator-only
+document reader. An additive SQLite migration preserves previous records; legacy
+documents reconstruct readable text from ordered chunks and explicitly disclose
+formatting limits. The browser renders Markdown safely and can display its text.
 
 ## Verification
 
@@ -52,6 +56,9 @@ its health response, allowing frontend and API releases to proceed independently
 Keep one section navigation with typed role/capability metadata. Desktop and mobile
 share the same sidebar; the mobile drawer and help dialog share focus handling.
 Closed drawers are inert, and section content is labelled by the visible header.
+Verify authenticated reading, exact text after restart for new uploads, legacy
+migration and reconstruction, deleted/missing documents, request cancellation and
+readable Markdown headings, tables and code on desktop and mobile.
 
 ## Assessment adaptation
 

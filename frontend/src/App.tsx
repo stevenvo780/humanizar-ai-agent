@@ -41,6 +41,7 @@ import { CustomersPanel } from './CustomersPanel';
 import { SiteLink } from './navigation';
 import { workspaceNavigation } from './workspaceNavigation';
 import { useDialogFocus } from './useDialogFocus';
+import { DocumentReader } from './DocumentReader';
 import type {
   ChatMessage,
   Config,
@@ -376,11 +377,13 @@ function Knowledge({
   refresh,
   maxUpload,
   online,
+  readerAvailable,
 }: {
   documents: DocumentList;
   refresh: () => Promise<void>;
   maxUpload: number;
   online: boolean;
+  readerAvailable: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -388,7 +391,32 @@ function Knowledge({
   const [error, setError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [readingDocument, setReadingDocument] = useState<KnowledgeDocument | null>(null);
+  const readingSelection = useRef<KnowledgeDocument | null>(null);
+  const readingTrigger = useRef<HTMLButtonElement | null>(null);
+  const libraryHeading = useRef<HTMLHeadingElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function readDocument(document: KnowledgeDocument, trigger: HTMLButtonElement): void {
+    readingSelection.current = document;
+    readingTrigger.current = trigger;
+    setReadingDocument(document);
+  }
+
+  function closeReader(restoreTrigger = true): void {
+    readingSelection.current = null;
+    setReadingDocument(null);
+    if (restoreTrigger && readingTrigger.current?.isConnected) readingTrigger.current.focus();
+    else libraryHeading.current?.focus();
+  }
+
+  useEffect(() => {
+    if (!readerAvailable && readingSelection.current) {
+      readingSelection.current = null;
+      setReadingDocument(null);
+      libraryHeading.current?.focus();
+    }
+  }, [readerAvailable]);
 
   async function upload(files: FileList | File[]): Promise<void> {
     if (uploading || !online) return;
@@ -431,6 +459,7 @@ function Knowledge({
     setError('');
     try {
       await api.deleteDocument(id);
+      if (readingSelection.current?.id === id) closeReader(false);
       await refresh();
       setDeleteId(null);
       setNotice('Documento eliminado de la biblioteca de la empresa.');
@@ -536,20 +565,41 @@ function Knowledge({
         </div>
       )}
       <div className="document-heading">
-        <h2>
+        <h2 ref={libraryHeading} tabIndex={-1}>
           Biblioteca de la empresa <span>{documents.documents.length}</span>
         </h2>
         <span>Disponible para el asistente</span>
       </div>
+      {!readerAvailable && (
+        <p className="document-reader-availability" id="document-reader-unavailable" role="status">
+          La lectura de documentos requiere una actualización del servidor. Puedes seguir
+          administrando la biblioteca.
+        </p>
+      )}
       {documents.documents.length ? (
         <div className="document-list">
           {documents.documents.map((doc: KnowledgeDocument) => (
-            <div className="document-row" key={doc.id}>
+            <div
+              className={`document-row ${readerAvailable && readingDocument?.id === doc.id ? 'document-row-reading' : ''}`}
+              key={doc.id}
+            >
               <span className="document-icon">
                 <FileText size={22} />
               </span>
               <div className="document-info">
-                <strong>{doc.name}</strong>
+                <button
+                  className="document-read-button"
+                  type="button"
+                  aria-label={`Leer ${doc.name}`}
+                  aria-expanded={readerAvailable && readingDocument?.id === doc.id}
+                  aria-controls={readerAvailable && readingDocument ? 'document-reader' : undefined}
+                  aria-describedby={!readerAvailable ? 'document-reader-unavailable' : undefined}
+                  disabled={!readerAvailable || deleting === doc.id}
+                  onClick={(event) => readDocument(doc, event.currentTarget)}
+                >
+                  <span>{doc.name}</span>
+                  <BookOpen size={16} />
+                </button>
                 <span>
                   {doc.chunks} fragmentos · {doc.characters.toLocaleString('es')} caracteres
                 </span>
@@ -595,6 +645,13 @@ function Knowledge({
         <EmptyState icon={<BookOpen size={24} />} title="Prepara las fuentes del asistente">
           Los documentos de la empresa aparecerán aquí después de subirlos.
         </EmptyState>
+      )}
+      {readerAvailable && readingDocument && (
+        <DocumentReader
+          key={readingDocument.id}
+          document={readingDocument}
+          onClose={() => closeReader()}
+        />
       )}
       <p className="page-footnote">
         <ShieldCheck size={13} /> Los ZIP se procesan sin extraer archivos al sistema anfitrión.
@@ -1620,6 +1677,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                   refresh={refreshDocuments}
                   maxUpload={config?.max_upload_mb ?? 20}
                   online={online}
+                  readerAvailable={health?.features?.document_reading === true}
                 />
               )}
               {section === 'tools' && isAdmin && (

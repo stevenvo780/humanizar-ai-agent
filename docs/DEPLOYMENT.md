@@ -8,6 +8,12 @@ de login, Haiku, TLS, sandbox y persistencia están en [VALIDATION.md](VALIDATIO
 El proyecto Vercel está conectado al repositorio GitHub con rama de producción
 `dev`. Un push a esa rama actualiza el frontend; el backend se actualiza por
 separado en el VPS mediante pull y el helper de Compose, después del backup.
+El lector de documentos necesita la API actualizada: `/api/health` debe declarar
+`features.document_reading: true`. La migración añade `document_contents` a la
+base de conocimiento SQLite, conservando la tabla histórica de documentos,
+los fragmentos y los vectores. No modifica el schema PostgreSQL. La UI mantiene
+la carga y el borrado disponibles mientras un servidor anterior todavía no declara
+esa capacidad.
 GitHub Actions permanece definido, pero su runner no inicia por un bloqueo de
 facturación de la cuenta. El despliegue y las pruebas reales registrados no
 dependen de atribuir éxito a ese workflow.

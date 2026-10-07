@@ -382,6 +382,48 @@
       }
     },
     "/api/documents/{document_id}": {
+      "get": {
+        "summary": "Document Detail",
+        "operationId": "document_detail_api_documents__document_id__get",
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "summary": "Delete",
         "operationId": "delete_api_documents__document_id__delete",
@@ -1035,6 +1077,49 @@
         ],
         "title": "Document"
       },
+      "DocumentDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "chunks": {
+            "type": "integer",
+            "title": "Chunks"
+          },
+          "characters": {
+            "type": "integer",
+            "title": "Characters"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "reconstructed": {
+            "type": "boolean",
+            "title": "Reconstructed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "chunks",
+          "characters",
+          "created_at",
+          "content",
+          "reconstructed"
+        ],
+        "title": "DocumentDetail"
+      },
       "DocumentList": {
         "properties": {
           "documents": {
@@ -1075,6 +1160,12 @@
             "type": "boolean",
             "const": true,
             "title": "Customer Management",
+            "default": true
+          },
+          "document_reading": {
+            "type": "boolean",
+            "const": true,
+            "title": "Document Reading",
             "default": true
           }
         },

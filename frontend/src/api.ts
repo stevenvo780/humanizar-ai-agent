@@ -9,6 +9,7 @@ import {
   isConversationList,
   isCreatedCustomer,
   isCustomerAccountList,
+  isDocumentDetail,
   isDocumentList,
   isHealth,
   isRequestList,
@@ -24,6 +25,16 @@ export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Ocurrió un error inesperado. Intenta de nuevo.';
 }
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function checkResponse(response: Response): Promise<void> {
   if (response.ok) return;
   let message = `El servidor respondió con un error (${response.status}).`;
@@ -36,7 +47,7 @@ async function checkResponse(response: Response): Promise<void> {
   } catch {
     /* Keep a useful HTTP error if the response is not JSON. */
   }
-  throw new Error(message);
+  throw new ApiError(message, response.status);
 }
 
 async function request<T>(path: string, check: Validator<T>, init?: RequestInit): Promise<T> {
@@ -86,6 +97,14 @@ export const api = {
   config: () => request('/config', isConfig),
   health: () => request('/health', isHealth),
   documents: () => request('/documents', isDocumentList),
+  document: async (id: string, signal: AbortSignal) => {
+    const detail = await request(`/documents/${encodeURIComponent(id)}`, isDocumentDetail, {
+      signal,
+    });
+    if (detail.id !== id)
+      throw new Error('El servidor devolvió un documento diferente al solicitado.');
+    return detail;
+  },
   tools: () => request('/tools', isToolList),
   upload: (file: File) => {
     const form = new FormData();
