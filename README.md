@@ -14,6 +14,12 @@ persistente. El administrador se provisiona por un canal privado; la web permite
 registrar cuentas de clientes. Configuración y repetición en
 [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+## Prueba técnica Softop
+
+El entregable de la prueba (endpoint `POST /preguntar` con RAG sobre `faq.json`) está en
+[`softop-rag/`](softop-rag/README.md): ejecución, flujo, decisiones y evidencia con Claude Haiku.
+Especificación, plan y tareas en [`specs/002-exam-adaptation`](specs/002-exam-adaptation/spec.md).
+
 ## Arranque local
 
 Requisitos: Git, Bash, GNU Make, uv 0.11.21 o posterior y Node.js 22 o posterior

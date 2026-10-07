@@ -1,0 +1,9 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+openai==1.51.0
+pydantic==2.9.2
+numpy==1.26.4
+python-dotenv==1.0.1
+# Añadidos: openai 1.51 falla con httpx>=0.28 (argumento `proxies`); Claude como proveedor alternativo.
+httpx==0.27.2
+anthropic==0.69.0

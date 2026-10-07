@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "pregunta": "¿Cómo se registra una venta de lentes?",
+    "respuesta": "Desde el módulo 'Ventas' selecciona 'Nueva venta', busca al cliente por documento o crea uno nuevo, agrega los productos (montura, lunas, servicios) desde el inventario, aplica descuentos si aplica y confirma el pago. El sistema genera automáticamente la factura y descuenta el stock."
+  },
+  {
+    "id": 2,
+    "pregunta": "¿Qué hago si el inventario no cuadra?",
+    "respuesta": "Ve a 'Inventario > Auditoría', genera un conteo físico y compáralo contra el conteo del sistema. Si hay diferencias, usa la opción 'Ajuste de inventario', indica el motivo (pérdida, daño, error de digitación) y adjunta evidencia. Todo ajuste queda registrado en el log de auditoría con el usuario responsable."
+  },
+  {
+    "id": 3,
+    "pregunta": "¿Cómo genero un reporte mensual?",
+    "respuesta": "En el módulo 'Reportes', selecciona 'Reporte mensual', elige el rango de fechas y la sucursal (o todas). Puedes exportarlo en PDF o Excel. Incluye ventas totales, productos más vendidos, comisiones por vendedor y estado de inventario."
+  },
+  {
+    "id": 4,
+    "pregunta": "¿Cómo agrego un nuevo empleado al sistema?",
+    "respuesta": "Desde 'Administración > Usuarios', haz clic en 'Nuevo usuario', ingresa sus datos personales, asigna un rol (vendedor, optómetra, administrador) y define los permisos correspondientes a ese rol. El empleado recibirá un correo para activar su cuenta."
+  },
+  {
+    "id": 5,
+    "pregunta": "¿Cómo programo una cita para examen visual?",
+    "respuesta": "En el módulo 'Agenda', selecciona el optómetra disponible, elige fecha y hora, busca o registra al paciente y confirma. El sistema envía un recordatorio automático por SMS o WhatsApp 24 horas antes."
+  },
+  {
+    "id": 6,
+    "pregunta": "¿Cómo aplico una garantía a unas gafas?",
+    "respuesta": "Busca la venta original en 'Historial de ventas', selecciona 'Aplicar garantía', indica el motivo (rotura de lente, ajuste de armazón, etc.) y el sistema genera una orden de servicio sin costo si está dentro del período de garantía configurado."
+  },
+  {
+    "id": 7,
+    "pregunta": "¿Cómo cambio el precio de un producto?",
+    "respuesta": "Desde 'Inventario > Productos', busca el producto, haz clic en 'Editar' y actualiza el precio de venta. Los cambios de precio quedan versionados; las ventas ya facturadas no se ven afectadas."
+  },
+  {
+    "id": 8,
+    "pregunta": "¿Qué hago si un cliente quiere devolver un producto?",
+    "respuesta": "En 'Ventas > Devoluciones', busca la factura original, selecciona los ítems a devolver e indica el motivo. El sistema calcula automáticamente el reembolso o la nota crédito y actualiza el inventario."
+  },
+  {
+    "id": 9,
+    "pregunta": "¿Cómo veo las comisiones de un vendedor?",
+    "respuesta": "En 'Reportes > Comisiones', filtra por vendedor y rango de fechas. El sistema muestra el detalle de cada venta, el porcentaje de comisión aplicado y el total acumulado del período."
+  },
+  {
+    "id": 10,
+    "pregunta": "¿Cómo cierro caja al final del día?",
+    "respuesta": "Desde 'Caja > Cierre de caja', el sistema muestra el total esperado según las ventas registradas. Ingresa el efectivo físico contado, y si hay diferencias, regístralas con una nota. El cierre queda bloqueado y solo un administrador puede reabrirlo."
+  }
+]

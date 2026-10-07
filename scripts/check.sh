@@ -12,6 +12,7 @@ uv run --project sandbox --locked ruff format --check --config sandbox/pyproject
 uv run --project sandbox --locked mypy --config-file sandbox/pyproject.toml sandbox/app scripts/import-material.py scripts/material_import scripts/package.py scripts/audit-public.py scripts/smoke-docker.py scripts/deploy-vps.py scripts/deploy-vercel.py scripts/deploy-tests.py scripts/deploy_tests
 uv run --project sandbox --locked pytest -c sandbox/pyproject.toml sandbox/tests scripts/tests -q
 uv run --project sandbox --locked python scripts/deploy-tests.py -q
+uv run --no-project --python 3.12 --with-requirements softop-rag/requirements-dev.txt -- python -m pytest -q -p no:cacheprovider softop-rag/tests
 npm --prefix frontend run lint
 npm --prefix frontend run typecheck
 npm --prefix frontend run test -- --run
