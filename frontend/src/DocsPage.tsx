@@ -89,7 +89,7 @@ function Architecture() {
             JWT, consulta PostgreSQL con TLS en el schema lumen, recupera evidencia de Qdrant local
             y coordina Claude Haiku y el sandbox aislado. SQLite es la alternativa local opcional.
             MCP consulta la misma API por HTTP. Este diagrama describe la configuración preparada;
-            la comprobación del despliegue público se registra por separado.
+            las comprobaciones del despliegue público se registran por separado.
           </desc>
           <defs>
             <marker
@@ -368,7 +368,7 @@ export default function DocsPage() {
             </div>
             <p className="docs-snapshot-note">
               El inventario y la evidencia están fechados; esta página no ejecuta comprobaciones en
-              vivo. El despliegue público requiere su propio smoke de extremo a extremo.
+              vivo. El despliegue público también pasó su smoke de extremo a extremo.
             </p>
           </section>
           <Section
@@ -557,7 +557,7 @@ export default function DocsPage() {
                     La configuración HTTPS utiliza una cookie Secure y HttpOnly. El refresh rota sus
                     credenciales y el logout revoca la familia completa. Refresh y logout requieren
                     un encabezado de verificación; el cliente reintenta una sola vez al recibir un
-                    401. El smoke del despliegue debe comprobar estos atributos en el entorno real.
+                    401. Estos atributos se comprobaron desde el navegador en el despliegue público.
                   </p>
                 </div>
               </article>
@@ -645,9 +645,9 @@ export default function DocsPage() {
               <p>
                 La última base verificó handshake, catálogo MCP y <code>company_info</code> sobre la
                 API real. La búsqueda protegida exige sesión: un MCP sin autenticación no tiene
-                acceso. La receta de VPS define la API y el sandbox con Docker Compose y aislamiento
-                del sandbox. Sus comprobaciones de código no sustituyen ejecutar presets y revisar
-                streaming y persistencia en el despliegue correspondiente.
+                acceso. En el VPS se comprobaron los contenedores saludables, la red interna y el
+                preset real de Python. Streaming, sesiones y persistencia también se verificaron
+                desde Vercel, con una llamada autenticada a Haiku.
               </p>
             </details>
           </Section>
@@ -658,7 +658,7 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La base cuenta con <strong>351 pruebas</strong>, incluidas pruebas reales de
+              La base cuenta con <strong>351 pruebas aprobadas</strong>, incluidas pruebas reales de
               persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
               describe la base registrada; cada cambio posterior debe volver a pasar sus
               comprobaciones.
@@ -726,10 +726,11 @@ export default function DocsPage() {
             <p>
               Las pruebas relevantes cubren UTF-8 fragmentado y errores SSE; refresh y logout;
               confirmaciones permitidas; aislamiento de cuentas, ingesta, citas y presupuestos del
-              agente. PostgreSQL tiene pruebas de integración sobre una base real con TLS. Las rutas
-              de Vercel se compilan y validan sin serializar secretos. El smoke de navegador local
-              registrado comprobó registro, acceso, historial, solicitudes y ausencia de errores
-              JavaScript y overflow móvil; no acredita todavía el despliegue público.
+              agente. PostgreSQL tiene pruebas en una base temporal y una conexión productiva con
+              TLS verificado. Las rutas de Vercel se compilan sin serializar secretos. El smoke del
+              despliegue público comprobó acceso, sesión renovable, historial, fuentes, Swagger y
+              documentación, sin errores JavaScript ni overflow móvil. Un reinicio de la API
+              conservó el historial y las sesiones.
             </p>
           </Section>
           <Section
@@ -748,10 +749,10 @@ export default function DocsPage() {
                   <li>Persistencia PostgreSQL con TLS y recuperación semántica local.</li>
                   <li>Chat con fuentes, solicitudes confirmadas e inbox admin.</li>
                   <li>Identidad MCP y verificaciones de código.</li>
-                  <li>Configuración Vercel y helpers de despliegue validados.</li>
+                  <li>Vercel y backend Docker desplegados; cookies HTTPS y sandbox comprobados.</li>
                   <li>
                     Claude Haiku 4.5: llamada autenticada, ejecución real del agente con MCP y
-                    recuperación de documentación con fuentes verificadas localmente.
+                    recuperación de documentación con fuentes verificadas desde la web pública.
                   </li>
                 </ul>
               </div>
@@ -765,8 +766,8 @@ export default function DocsPage() {
                     la conexión.
                   </li>
                   <li>
-                    Despliegue público: confirmar acceso, cookies HTTPS, SSE y sandbox de extremo a
-                    extremo, además de persistencia tras reinicio del VPS.
+                    Fedora: instalación real pendiente de disponer del usuario y host SSH del
+                    portátil. El helper y el procedimiento están documentados.
                   </li>
                   <li>Qdrant remoto: opcional, fuera de la verificación registrada.</li>
                   <li>PDF escaneado: no incluye OCR.</li>

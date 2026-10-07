@@ -1,8 +1,7 @@
 # Deploy CLI runs from the repository root; Vercel Root Directory is frontend.
 # Only the frontend source tree is needed by the remote build.
-*
-!frontend/
-!frontend/**
+/*
+!frontend
 
 # Keep all private configuration and runtime state excluded after the allowlist.
 **/.env*

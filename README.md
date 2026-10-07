@@ -4,6 +4,14 @@ Asistente de atención al cliente con información empresarial, interfaz React/T
 FastAPI, recuperación en Qdrant, Claude Haiku, herramientas acotadas y MCP.
 Preparado para adaptar documentos y requisitos de una prueba técnica.
 
+**Web publicada:** [Humanizar IA](https://humanizar-ai-agent.vercel.app) ·
+[Documentación técnica](https://humanizar-ai-agent.vercel.app/docs) ·
+[API Swagger](https://humanizar-ai-agent.vercel.app/api/docs).
+Frontend Vercel, FastAPI y sandbox Docker en VPS, PostgreSQL con TLS y Qdrant
+persistente. El administrador se provisiona por un canal privado; la web permite
+registrar cuentas de clientes. Configuración y repetición en
+[DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Arranque local
 
 Requisitos: Git, Bash, GNU Make, uv 0.11.21 o posterior y Node.js 22 o posterior

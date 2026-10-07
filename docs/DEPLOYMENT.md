@@ -1,5 +1,17 @@
 # Despliegue reproducible
 
+Instancia publicada: [web](https://humanizar-ai-agent.vercel.app),
+[documentación](https://humanizar-ai-agent.vercel.app/docs) y
+[API](https://humanizar-ai-agent.vercel.app/api/docs). Los resultados observados
+de login, Haiku, TLS, sandbox y persistencia están en [VALIDATION.md](VALIDATION.md).
+
+El proyecto Vercel está conectado al repositorio GitHub con rama de producción
+`dev`. Un push a esa rama actualiza el frontend; el backend se actualiza por
+separado en el VPS mediante pull y el helper de Compose, después del backup.
+GitHub Actions permanece definido, pero su runner no inicia por un bloqueo de
+facturación de la cuenta. El despliegue y las pruebas reales registrados no
+dependen de atribuir éxito a ese workflow.
+
 El frontend se publica en Vercel y conserva llamadas del navegador a `/api` en el
 mismo origen. La API FastAPI y el sandbox se ejecutan en un VPS mediante
 `compose.production.yaml`. PostgreSQL remoto almacena cuentas, sesiones y
@@ -7,6 +19,12 @@ solicitudes; Qdrant en modo local, documentos y el secreto generado permanecen e
 el volumen `/data` del VPS. Se usa un único worker de API por la persistencia local
 de Qdrant. Este documento describe el procedimiento; la publicación y las
 comprobaciones reales de cada entorno requieren evidencia de ese despliegue.
+
+En la instancia preparada, el checkout está en `/opt/humanizar-ai-agent/repo`,
+el entorno privado en `/opt/humanizar-ai-agent/production.env` y el acceso del
+administrador en `/opt/humanizar-ai-agent/operator-access.json`. Los dos archivos
+privados pertenecen al operador y tienen permisos `0600`; no se publican ni se
+incorporan al ZIP. La configuración del proxy también queda fuera del checkout.
 
 ## Fuente y desarrollo
 
@@ -158,6 +176,12 @@ a `ORIGIN_SECRET`. El valor no debe aparecer en código, `dist`, variables `VITE
 ni solicitudes del navegador. La URL pública de la API puede ser visible.
 La configuración programática se evalúa en el despliegue.
 [Configuración Vercel](https://vercel.com/docs/project-configuration).
+
+Instalar primero las dependencias frontend (`npm ci --prefix frontend`, o
+`make setup`): el compilador local necesita `@vercel/config`. La allowlist raíz de
+`.vercelignore` usa `/*` y `!frontend`: permite la carpeta antes de recorrerla y
+después excluye configuración privada y archivos de ejecución. Una negación con
+sólo `!frontend/` puede podar la carpeta y subir cero archivos.
 
 Autenticar y vincular el CLI en el ordenador del operador. La versión comprobada
 para este procedimiento es **54.4.1**; `npm exec` la ejecuta sin instalación global:

@@ -1416,7 +1416,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
           </div>
           <div className="topbar-right">
             <span className="private-badge">
-              <ShieldCheck size={13} /> Entorno local
+              <ShieldCheck size={13} /> Tu espacio
             </span>
             <span className={`mode-pill ${!online ? 'offline' : ''}`}>
               <StatusDot online={online} />

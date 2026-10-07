@@ -16,7 +16,7 @@ la prueba, todavía desconocidos.
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total actual: **351 pruebas**. Las 12 de PostgreSQL se activan con
+Total actual: **351 pruebas aprobadas**. Las 12 de PostgreSQL se activan con
 `LUMEN_TEST_DATABASE_URL` apuntando exclusivamente a una base temporal loopback
 `lumen_test`; cada prueba crea y elimina su propio schema aleatorio. Nunca apuntar
 esa variable a la base de la empresa. La base anterior de 214 pruebas también
@@ -75,6 +75,39 @@ de TestClient/httpx en cada suite Python; no impide los resultados.
 Capturas locales en `artifacts/`: desktop, mobile, chat, conocimiento y herramientas.
 Se excluyen del ZIP source para mantenerlo portable y libre de datos de sesión.
 
+## Despliegue real verificado
+
+El 7 de octubre de 2026 se publicó
+[Humanizar IA](https://humanizar-ai-agent.vercel.app), con
+[documentación pública](https://humanizar-ai-agent.vercel.app/docs) y
+[Swagger](https://humanizar-ai-agent.vercel.app/api/docs) bajo el mismo origen.
+
+- Vercel: build de producción READY, Node 22, frontend compilado desde sus fuentes.
+  El rewrite agrega el secreto del proxy sólo en el servidor; el origen directo
+  rechaza con 403 las peticiones que no lo incluyen.
+- VPS: API y sandbox Docker saludables. API en loopback; sandbox no root, filesystem
+  de lectura, sin mounts de host, capacidades eliminadas y red interna. Preset
+  `python --version` ejecutado realmente, más calculadora y consulta MCP.
+- PostgreSQL 18.6: TLS 1.3 con CA y hostname verificados desde la imagen de API.
+  Schema exclusivo `lumen`, seis tablas del proyecto y exactamente un administrador
+  inicial provisionado por stdin privado. Bootstrap protegido y token rotado.
+- Claude Haiku: conversación SSE real en 5.6 segundos, herramienta de búsqueda,
+  fuente de Humanizar y uso de tokens distinto de cero. Otra conversación real
+  se visualizó en Chromium con recomendaciones, fuentes y trazas.
+- Reinicio controlado del contenedor API: historial PostgreSQL conservado y refresh
+  de la sesión anterior válido. Logout revocó la familia y refresh devolvió 401.
+  Cliente registrado con rol customer, sin acceso a documentación/tools admin ni
+  conversaciones ajenas.
+- Chromium desktop y móvil: login, historial recuperado desde la barra lateral al
+  recargar, logout, `/docs`, Swagger y OpenAPI. Cookie Secure/HttpOnly comprobada;
+  respuestas de autenticación sin cache. Sin errores JavaScript ni overflow
+  horizontal. Los bundles descargados no contienen las credenciales privadas.
+
+Capturas y resúmenes de ejecución quedan sólo en `artifacts/`, excluidos de Git y
+del paquete source. Las credenciales de operación se entregan en un archivo privado
+del VPS, separado del checkout. La instalación en Fedora no se acredita aquí:
+requiere identificar su usuario/host SSH y ejecutarla en el portátil.
+
 ## Revisión independiente
 
 Veredicto aprobado dentro del alcance revisado. Se corrigieron y revalidaron:
@@ -109,8 +142,10 @@ producción. La publicación real se registra por separado del inventario automa
   un contenedor temporal aislado en el VPS, accesible sólo por un túnel loopback.
   Los builds y el sandbox productivo se verifican en el VPS durante el despliegue.
 - CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
-  locales, auditoría de paths, Gitleaks e integración Docker. El runner remoto no
-  inició su ejecución; el workflow no cuenta como validación de Docker.
+  locales, auditoría de paths, Gitleaks, PostgreSQL temporal e integración Docker.
+  El runner remoto no inició por bloqueo de facturación de la cuenta GitHub;
+  el workflow no cuenta como validación remota aprobada. Las 351 pruebas locales
+  y el smoke Docker/Vercel real se registran de forma independiente.
 - El clon público no contiene una credencial: cada instalación configura su propia
   clave privada. Los controles automatizados del ciclo, errores y presupuestos
   utilizan proveedores simulados; las llamadas reales locales se registran arriba.
