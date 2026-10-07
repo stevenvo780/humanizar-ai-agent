@@ -7,6 +7,7 @@ import {
   Database,
   FileCheck2,
   Fingerprint,
+  FlaskConical,
   GitBranch,
   Sparkles,
 } from 'lucide-react';
@@ -42,11 +43,11 @@ export function HeroSection({
         claros por dentro. Así está construido {assistant}.
       </p>
       <p className="docs-snapshot-note">
-        Base preparada para la prueba técnica de Softop.{' '}
+        Prueba técnica de Softop: un asistente para su software de gestión de ópticas que responde
+        solo con las preguntas frecuentes, también disponible como <code>POST /preguntar</code>.{' '}
         {configured
-          ? `${company} es la empresa configurada actualmente;`
-          : 'La empresa se configura en el backend;'}{' '}
-        el perfil, los documentos y las herramientas se adaptan a los requisitos.
+          ? `${company} es la empresa configurada actualmente.`
+          : 'La empresa se configura en el backend.'}
       </p>
       <div className="docs-hero-actions">
         <ExternalLink
@@ -60,6 +61,9 @@ export function HeroSection({
           <Braces size={16} /> API · Swagger
           <ArrowUpRight size={14} />
         </ExternalLink>
+        <a href="#prueba-tecnica">
+          <FlaskConical size={16} /> Prueba técnica
+        </a>
         <a href="#recursos">
           <ArrowDown size={16} /> Todos los recursos
         </a>

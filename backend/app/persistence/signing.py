@@ -47,7 +47,7 @@ def master_secret(directory: Path) -> bytes:
 
 
 def access_key(master: bytes) -> bytes:
-    return hmac.digest(master, b"humanizar.access.v1", "sha256")
+    return hmac.digest(master, b"lumen.access.v1", "sha256")
 
 
 def signing_secret(data_dir: Path, override: bytes | None = None) -> bytes:

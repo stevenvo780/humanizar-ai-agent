@@ -1,6 +1,6 @@
 # Administración y cuentas de clientes
 
-La aplicación está en [humanizar-ai-agent.vercel.app](https://humanizar-ai-agent.vercel.app).
+La aplicación está en [softop-ai-agent.vercel.app](https://softop-ai-agent.vercel.app).
 Los clientes se registran en la pantalla de acceso y disponen de conversaciones y
 solicitudes privadas. El registro público siempre crea una cuenta de cliente.
 Existe un único administrador; el servidor comprueba su rol en cada petición.

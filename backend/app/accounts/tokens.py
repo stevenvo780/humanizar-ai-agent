@@ -9,10 +9,12 @@ from jwt import InvalidTokenError
 from app.persistence.contracts import IdentityStore
 from app.persistence.models import REFRESH_SECONDS, User
 
-ISSUER = "humanizar-assistant"
-AUDIENCE = "humanizar-api"
+ISSUER = "lumen-assistant"
+AUDIENCE = "lumen-api"
 ACCESS_MINUTES = 30
-REFRESH_COOKIE = "humanizar_refresh"
+REFRESH_COOKIE = "lumen_refresh"
+# Cookie-authenticated session calls (refresh/logout) must carry X-Requested-With: Lumen.
+CSRF_HEADER_VALUE = "Lumen"
 
 
 def unauthorized() -> HTTPException:

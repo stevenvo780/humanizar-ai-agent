@@ -24,7 +24,7 @@ describe('in-memory authenticated requests', () => {
       setAccessToken('test-retained-access');
       vi.stubGlobal('window', new EventTarget());
       const expired = vi.fn();
-      window.addEventListener('humanizar-session-expired', expired);
+      window.addEventListener('lumen-session-expired', expired);
       const mock = vi
         .fn()
         .mockResolvedValueOnce(new Response(null, { status: 401 }))
@@ -47,7 +47,7 @@ describe('in-memory authenticated requests', () => {
     setAccessToken('test-retained-access');
     vi.stubGlobal('window', new EventTarget());
     const expired = vi.fn();
-    window.addEventListener('humanizar-session-expired', expired);
+    window.addEventListener('lumen-session-expired', expired);
     const mock = vi
       .fn()
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
@@ -67,7 +67,7 @@ describe('in-memory authenticated requests', () => {
       setAccessToken('test-access');
       vi.stubGlobal('window', new EventTarget());
       const expired = vi.fn();
-      window.addEventListener('humanizar-session-expired', expired);
+      window.addEventListener('lumen-session-expired', expired);
       const mock = vi
         .fn()
         .mockResolvedValueOnce(new Response(null, { status: 401 }))
@@ -116,7 +116,7 @@ describe('in-memory authenticated requests', () => {
       '/api/auth/refresh',
       expect.objectContaining({
         credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'Humanizar' },
+        headers: { 'X-Requested-With': 'Lumen' },
       }),
     );
   });
@@ -124,7 +124,7 @@ describe('in-memory authenticated requests', () => {
   it('does not refresh a second time if the retried request still returns 401', async () => {
     vi.stubGlobal('window', new EventTarget());
     const expired = vi.fn();
-    window.addEventListener('humanizar-session-expired', expired);
+    window.addEventListener('lumen-session-expired', expired);
     const mock = vi
       .fn()
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
@@ -173,7 +173,7 @@ describe('in-memory authenticated requests', () => {
     await authenticatedFetch('/api/health');
     const logout = mock.mock.calls[0]?.[1] as RequestInit;
     const later = mock.mock.calls[1]?.[1] as RequestInit;
-    expect(new Headers(logout.headers).get('X-Requested-With')).toBe('Humanizar');
+    expect(new Headers(logout.headers).get('X-Requested-With')).toBe('Lumen');
     expect(new Headers(later.headers).has('Authorization')).toBe(false);
   });
 

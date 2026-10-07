@@ -1,8 +1,9 @@
 # Despliegue reproducible
 
-Instancia publicada: [web](https://humanizar-ai-agent.vercel.app),
-[documentación](https://humanizar-ai-agent.vercel.app/docs) y
-[API](https://humanizar-ai-agent.vercel.app/api/docs). Los resultados observados
+Instancia publicada: [web](https://softop-ai-agent.vercel.app),
+[documentación](https://softop-ai-agent.vercel.app/docs),
+[API](https://softop-ai-agent.vercel.app/api/docs) y el endpoint de la prueba
+`POST https://softop-ai-agent.vercel.app/preguntar`. Los resultados observados
 de login, Haiku, TLS, sandbox y persistencia están en [VALIDATION.md](VALIDATION.md).
 
 **Estado al 2026-10-07:** el frontend publicado está disponible en
@@ -46,11 +47,18 @@ administrador en `/opt/humanizar-ai-agent/operator-access.json`. Los dos archivo
 privados pertenecen al operador y tienen permisos `0600`; no se publican ni se
 incorporan al ZIP. La configuración del proxy también queda fuera del checkout.
 
+**Nombres heredados de infraestructura.** El repositorio GitHub
+`stevenvo780/humanizar-ai-agent`, el proyecto Vercel `humanizar-ai-agent`, el proyecto
+Compose `humanizar-ai-agent` con su volumen `humanizar-ai-agent_knowledge` y las rutas
+`/opt/humanizar-ai-agent/...` conservan el nombre de la primera empresa de ejemplo.
+Renombrarlos rompería el despliegue o separaría el volumen de datos; no identifican a la
+empresa configurada, que es Softop. El dominio público es `softop-ai-agent.vercel.app`.
+
 ## Fuente y desarrollo
 
 ```bash
-git clone --branch dev https://github.com/stevenvo780/humanizar-ai-agent.git
-cd humanizar-ai-agent
+git clone --branch dev https://github.com/stevenvo780/humanizar-ai-agent.git lumen
+cd lumen
 make setup
 make dev
 ```
@@ -79,9 +87,10 @@ usar la auditoría de rutas y el escaneo de secretos establecidos por el reposit
 | `JWT_SECRET` | API, archivo privado | Obligatorio en producción, al menos 32 caracteres; mantenerlo estable. |
 | `AUTH_BOOTSTRAP_TOKEN` | API, archivo privado | Obligatorio en producción, al menos 32 caracteres; protege el bootstrap HTTP mediante `X-Bootstrap-Token`. |
 | `CORS_ORIGINS` | API | Array JSON de los orígenes HTTPS exactos del frontend. |
-| `COMPANY_NAME` / `COMPANY_DESCRIPTION` / `ASSISTANT_NAME` | API | Perfil público; Humanizar permanece como ejemplo actual de la base para Softop. |
-| `COMPANY_WEBSITE` | API | Enlace público opcional HTTP(S), sin credenciales. |
-| `COMPANY_SUGGESTED_QUESTIONS` / `COMPANY_PRODUCTS` | API | Arrays JSON; `null` usa el ejemplo sólo para Humanizar y `[]` lo desactiva. |
+| `COMPANY_NAME` / `COMPANY_DESCRIPTION` / `ASSISTANT_NAME` | API | Perfil público: `Softop`, descripción derivada de las FAQ y `Asistente Softop`. |
+| `COMPANY_WEBSITE` | API | Enlace público opcional HTTP(S), sin credenciales. Vacío para Softop. |
+| `COMPANY_SUGGESTED_QUESTIONS` / `COMPANY_PRODUCTS` | API | Arrays JSON; `null` usa valores genéricos y `[]` los desactiva. Softop usa cuatro preguntas de las FAQ y `[]` productos. |
+| `KNOWLEDGE_DIR` | API | Corpus inicial `knowledge/softop`. Añade los archivos que falten por nombre; no borra documentos que ya estén en `/data`. |
 | `LUMEN_PRODUCTION_ENV` | Helper/Compose | Ruta absoluta del archivo privado externo al checkout. |
 | `LUMEN_API_PORT` | Helper/Compose | Puerto loopback de la API, por defecto `8087`. |
 
@@ -144,7 +153,7 @@ python3 scripts/deploy-vps.py up --env-file /opt/humanizar-ai-agent/production.e
 python3 scripts/deploy-vps.py status --env-file /opt/humanizar-ai-agent/production.env
 ```
 
-El proyecto Compose `humanizar-ai-agent` da nombres propios a sus contenedores,
+El proyecto Compose `humanizar-ai-agent` (nombre heredado) da nombres propios a sus contenedores,
 redes y volumen. `--project` permite escoger otro nombre exclusivo, y `--port`
 otro puerto libre. La API escucha en `127.0.0.1:8087`; una colisión hace fallar
 Docker y debe resolverse eligiendo un puerto libre. El sandbox no publica puertos,
@@ -208,9 +217,9 @@ Se conservan `frontend/vercel.ts`, `frontend/deployment`, fuentes y lock/config 
 build. Revisar esta lista al añadir entradas públicas que el build necesite fuera
 del frontend. El enlace local `.vercel` tampoco se publica.
 El proyecto usa framework Vite, Node **22 o posterior**, instalación
-`npm ci` y build `npm run build`. `frontend/vercel.ts` genera el rewrite `/api`
-hacia `API_ORIGIN` y agrega el header privado mediante una referencia de despliegue
-a `ORIGIN_SECRET`. El valor no debe aparecer en código, `dist`, variables `VITE_*`
+`npm ci` y build `npm run build`. `frontend/vercel.ts` genera los rewrites `/api` y
+`/preguntar` hacia `API_ORIGIN` y agrega a ambos el header privado mediante una referencia
+de despliegue a `ORIGIN_SECRET`. El valor no debe aparecer en código, `dist`, variables `VITE_*`
 ni solicitudes del navegador. La URL pública de la API puede ser visible.
 La configuración programática se evalúa en el despliegue.
 [Configuración Vercel](https://vercel.com/docs/project-configuration).
@@ -254,7 +263,7 @@ revisar los logs privados, sin pegarlos completos antes de sanitizarlos.
 [CLI de variables Vercel](https://vercel.com/docs/cli/env).
 
 Validar login/refresh/logout, streaming, recuperación con fuentes, la lista aislada
-de solicitudes y los presets. Comprobar que JS y `dist` no contienen credenciales,
+de solicitudes, los presets y `POST /preguntar` sin sesión. Comprobar que JS y `dist` no contienen credenciales,
 que Swagger `/api/docs` y OpenAPI `/api/openapi.json` siguen el mismo origen, y que
 el backend conserva los datos tras recrear el contenedor. Un HTTP 200 no demuestra
 una llamada real a Anthropic: registrar esa comprobación por separado si se realiza.

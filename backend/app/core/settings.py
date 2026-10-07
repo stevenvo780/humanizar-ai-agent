@@ -6,7 +6,13 @@ from urllib.parse import urlsplit
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.business.company import HUMANIZAR_PRODUCTS, HUMANIZAR_QUESTIONS, ProductDefinition
+from app.business.company import (
+    DEFAULT_ASSISTANT_NAME,
+    DEFAULT_COMPANY_DESCRIPTION,
+    DEFAULT_COMPANY_NAME,
+    DEFAULT_SUGGESTED_QUESTIONS,
+    ProductDefinition,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -18,11 +24,11 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr = SecretStr("")
     llm_mode: Literal["auto", "demo", "anthropic"] = "auto"
     anthropic_model: str = "claude-haiku-4-5"
-    company_name: str = "Humanizar"
-    company_description: str = "Software a medida y agentes de IA para operación empresarial."
-    assistant_name: str = "Humanizar IA"
+    company_name: str = DEFAULT_COMPANY_NAME
+    company_description: str = DEFAULT_COMPANY_DESCRIPTION
+    assistant_name: str = DEFAULT_ASSISTANT_NAME
     company_website: str = Field(default="", max_length=500)
-    company_suggested_questions: list[str] | None = Field(default=None, max_length=8)
+    company_suggested_questions: list[str] | None = Field(default=None, max_length=12)
     company_products: list[ProductDefinition] | None = Field(default=None, max_length=40)
     data_dir: Path = ROOT / "backend" / "data"
     seed_demo: bool = True
@@ -108,25 +114,23 @@ class Settings(BaseSettings):
         return [value.strip() for value in values] if values is not None else None
 
     @property
-    def is_humanizar(self) -> bool:
-        return self.company_name.strip().casefold() == "humanizar"
+    def uses_default_identity(self) -> bool:
+        return self.company_name.strip().casefold() == DEFAULT_COMPANY_NAME.casefold()
 
     @property
     def website(self) -> str | None:
-        return self.company_website or ("https://humanizar.tech/" if self.is_humanizar else None)
+        return self.company_website or None
 
     @property
     def suggested_questions(self) -> list[str] | None:
         """None lets the UI show its generic prompts; an explicit [] hides suggestions."""
         if self.company_suggested_questions is not None:
             return list(self.company_suggested_questions)
-        return list(HUMANIZAR_QUESTIONS) if self.is_humanizar else None
+        return list(DEFAULT_SUGGESTED_QUESTIONS) if self.uses_default_identity else None
 
     @property
     def products(self) -> tuple[ProductDefinition, ...]:
-        if self.company_products is not None:
-            return tuple(self.company_products)
-        return HUMANIZAR_PRODUCTS if self.is_humanizar else ()
+        return tuple(self.company_products or ())
 
     @field_validator("jwt_secret", "auth_bootstrap_token")
     @classmethod
@@ -137,7 +141,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def verify_mode(self) -> "Settings":
-        if not self.is_humanizar:
+        if not self.uses_default_identity:
             if "assistant_name" not in self.model_fields_set:
                 self.assistant_name = "Lumen"
             if "company_description" not in self.model_fields_set:

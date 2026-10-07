@@ -58,7 +58,7 @@ class FakeAnthropic:
 @pytest.fixture
 def live(settings: Settings, monkeypatch: pytest.MonkeyPatch) -> Settings:
     FakeAnthropic.calls, FakeAnthropic.error = [], None
-    monkeypatch.setattr("app.api.routes.ask.anthropic.AsyncAnthropic", FakeAnthropic)
+    monkeypatch.setattr("app.agent.rag.anthropic.AsyncAnthropic", FakeAnthropic)
     return settings.model_copy(
         update={"llm_mode": "anthropic", "anthropic_api_key": SecretStr("test-key")}
     )

@@ -1,13 +1,15 @@
 # Lumen — company knowledge agent
 
-This is a prepared technical-assessment baseline, not the unknown exam solution.
-The assessment project is Softop; Humanizar remains its example company until the
-owner explicitly asks to change company identity and knowledge.
+Lumen is the reusable platform; the assessment project is Softop. The brief (FAQ bot:
+`POST /preguntar` with RAG over `softop-rag/base/faq.json`) is delivered standalone in
+softop-rag/ and integrated in Lumen as the public root route `POST /preguntar`.
+At the owner's request the company identity and corpus are Softop (2026-10-07).
+Public app: https://softop-ai-agent.vercel.app (`/docs`, `/api/docs`, `/preguntar`).
 The website is a customer-facing company assistant. Claude Code is the development
 tool used during the exam with Opus 5.5. The website's configurable API model defaults
 to Haiku; these are separate roles. Keep visitor/customer language in the product.
 Start with README.md, docs/EXAM_20_MIN.md, docs/API_CONTRACT.md, and
-.specify/memory/constitution.md. The real requirements will arrive as a ZIP.
+.specify/memory/constitution.md. Requirements and decisions: specs/002-exam-adaptation.
 The readable public configuration template is config/env.example. Project
 permissions intentionally deny `.env.*` reads, including the root example;
 do not loosen that deny to inspect credentials. Neither these permissions nor
@@ -19,7 +21,9 @@ allowed build commands constitute an OS sandbox for Claude Code.
   - core/: settings, secret redaction, request limits, thread offloading.
   - api/: schemas (HTTP contracts), dependencies (auth scopes, typed state), errors and
     routes/ with one router per resource (system, knowledge, tools, requests, customers,
-    conversations, chat + SSE).
+    conversations, chat + SSE, ask). `POST /preguntar` (root path, public, rate limited
+    per IP) returns exactly `{"respuesta"}` and shares retrieval + prompt + model call
+    with `POST /api/ask`.
   - agent/: loop (company_agent), provider, prompt, grounding, deterministic fallback, demo.
   - tools/: contract (definitions), registry (validation/redaction) and handlers/ (HANDLERS).
   - knowledge/: ingestion, PDF parser, embeddings, Qdrant store, initial corpus bootstrap.
@@ -30,13 +34,14 @@ allowed build commands constitute an OS sandbox for Claude Code.
   - manage.py: operator CLI (`python -m app.manage create-admin`, `mcp-login`).
   Anthropic credentials come exclusively from the backend environment.
 - backend/tests mirrors those domains; regressions/ holds adaptation regressions.
-- backend/knowledge/humanizar: public sourced initial corpus. Clear KNOWLEDGE_DIR
-  and use a new DATA_DIR when adapting another company.
+- backend/knowledge/softop: initial corpus, one Markdown file per FAQ generated from
+  softop-rag/base/faq.json. Use a new KNOWLEDGE_DIR and DATA_DIR for another company.
+- softop-rag/: standalone exam deliverable (FastAPI + in-memory numpy RAG, own tests).
 - frontend/src: strict React/TypeScript UI, real login, chats, requests and admin views.
 - sandbox: nonroot Docker-only terminal presets; no arbitrary shell execution.
 - scripts: setup, local run, scoped verification, sanitized ZIP import/package.
 - .claude/skills/speckit-*: actual Spec Kit skills installed by specify-cli.
-- specs/001-company-agent: baseline intent and architecture; adapt to real brief.
+- specs/001-company-agent: baseline intent and architecture; specs/002: Softop brief.
 - prueba-tecnica/: drop zone for the exam material (git-ignored except README);
   /prueba-tecnica runs the read → goal → implement → verify → ship procedure.
 
@@ -60,16 +65,21 @@ allowed build commands constitute an OS sandbox for Claude Code.
 Claude Code starts with Opus 5.5 via project settings or `make claude` (CLI >=2.1.280).
 `CLAUDE_CODE_MODEL` overrides the Make target; `opus` is a supported family alias.
 The website keeps its separate Anthropic Haiku configuration.
-Production: docs/DEPLOYMENT.md; Vercel serves the frontend and proxies `/api` to
-the persistent Docker backend. DATABASE_URL selects PostgreSQL with a dedicated
-DATABASE_SCHEMA and verified TLS. Local SQLite remains available offline.
+Production: docs/DEPLOYMENT.md; Vercel serves the frontend and proxies `/api` and
+`/preguntar` to the persistent Docker backend.
+DATABASE_URL selects PostgreSQL with a dedicated DATABASE_SCHEMA and verified TLS.
+Local SQLite remains available offline. Legacy resource names from the first example
+company stay unchanged because renaming breaks deploys: GitHub repo
+stevenvo780/humanizar-ai-agent, Vercel and Compose project `humanizar-ai-agent`
+(volume `humanizar-ai-agent_knowledge`) and VPS paths under `/opt/humanizar-ai-agent`.
+Never reference that company in new product text.
 Prepare a Fedora presentation copy with docs/FEDORA.md. Deployment secrets are
 provided privately to the relevant runtime, never copied as whole environment files
 or placed in source, browser bundles, commands or documentation.
 API docs: http://127.0.0.1:8000/api/docs. Local UI: http://127.0.0.1:5173.
 Docker UI: http://127.0.0.1:8080. MCP requires a running API; inspect `/mcp`.
 Read docs/SPECKIT.md for feature selection: 001 is the implemented baseline;
-002 is pending adaptation to the actual brief. Never overwrite 001 to invent exam completion.
+002 holds the Softop brief. Never overwrite 001 to invent exam completion.
 
 ## Rules
 

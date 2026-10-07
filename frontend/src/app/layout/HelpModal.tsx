@@ -7,7 +7,6 @@ export function HelpModal({
   onClose,
   company,
   assistant,
-  humanizar,
   isAdmin,
   demoMode,
 }: {
@@ -15,7 +14,6 @@ export function HelpModal({
   onClose: () => void;
   company: string;
   assistant: string;
-  humanizar: boolean;
   isAdmin: boolean;
   demoMode: boolean;
 }) {
@@ -38,8 +36,7 @@ export function HelpModal({
           Resuelve tus dudas con {assistant}.
         </h2>
         <p>
-          Pregunta por productos, servicios
-          {humanizar ? ', agentes de IA o demostraciones' : ' o ayuda'}. El asistente consulta la
+          Pregunta cómo usar {company}, resolver un problema o pedir ayuda. El asistente consulta la
           documentación de la empresa y puede usar herramientas para ayudarte. Abre las fuentes para
           revisar la información de cada respuesta.
         </p>

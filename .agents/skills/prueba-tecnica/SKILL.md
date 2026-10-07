@@ -38,7 +38,8 @@ brief is clear; `/speckit-plan` only if architecture changes.
 - Company identity and corpus: company facts → `backend/knowledge/<empresa>/*.md`; give the user
   the exact `.env` lines to paste (COMPANY_NAME, COMPANY_DESCRIPTION, ASSISTANT_NAME,
   COMPANY_WEBSITE, COMPANY_SUGGESTED_QUESTIONS, COMPANY_PRODUCTS, KNOWLEDGE_DIR, a new
-  DATA_DIR, SEED_DEMO=false). Never read `.env`. Do not rename "Humanizar" protocol identifiers.
+  DATA_DIR, SEED_DEMO=false). Never read `.env`. Protocol identifiers (`X-Requested-With: Lumen`,
+  JWT issuer/audience, `APPLICATION_ID`, `lumen-*` events) belong to the platform: keep them.
 - Split independent work by **disjoint files** and do the core inline. Delegate one sizable,
   independent slice (frontend, corpus or tests) to Codex: `bash scripts/codex-worker.sh prepare`,
   write the task (goal, exact files it owns, checks to run) to a file and launch
@@ -67,7 +68,8 @@ brief is clear; `/speckit-plan` only if architecture changes.
    `deploy-vps.py check/up/status`). SSH credentials come from the user for that session only;
    keep them in a 0600 scratch file and shred it afterwards. If production env vars must change
    (e.g. COMPANY_NAME), edit only those keys in the private env file without printing it.
-3. Confirm `https://humanizar-ai-agent.vercel.app/api/health` and one production answer.
+3. Confirm `https://softop-ai-agent.vercel.app/api/health` and one production answer
+   (for the Softop brief: `POST https://softop-ai-agent.vercel.app/preguntar`).
 4. `make package` only if the evaluator asks for a ZIP; inspect `zipinfo -1`.
 5. Final message: how to run, required variables (names only), decisions, checks actually
    executed with results, and remaining gaps. Never claim unverified checks.

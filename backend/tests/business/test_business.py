@@ -6,6 +6,7 @@ from typing import Any, cast
 
 import pytest
 
+from app.business.company import ProductDefinition
 from app.business.requests import BusinessStore, BusinessValidationError
 from app.core.settings import Settings
 from app.knowledge.ingestion import ParsedDocument
@@ -16,7 +17,7 @@ DEMO: dict[str, str] = {
     "name": "Ana",
     "email": "ana@example.test",
     "company": "Distribuidora",
-    "interest": "Deméter",
+    "interest": "Rutéa",
     "needs": "Organizar pedidos y rutas de reparto.",
 }
 SUPPORT = {"subject": "Acceso al catálogo", "description": "La página no muestra mis pedidos."}
@@ -294,7 +295,12 @@ async def test_recommendation_requires_retrieved_document_evidence(
     settings: Settings,
     store: KnowledgeStore,
 ) -> None:
-    registry = ToolRegistry(settings.model_copy(update={"company_name": "Humanizar"}), store)
+    catalog = [
+        ProductDefinition(
+            name="Rutéa", keywords=["distribuidora", "alimento", "ruta", "despacho", "cartera"]
+        )
+    ]
+    registry = ToolRegistry(settings.model_copy(update={"company_products": catalog}), store)
     try:
         missing = await registry.run(
             "recommend_product", {"process": "Distribuidora de alimentos y rutas"}
@@ -305,7 +311,7 @@ async def test_recommendation_requires_retrieved_document_evidence(
             [
                 ParsedDocument(
                     "catalogo.md",
-                    "Deméter: pedidos, despacho por rutas y cartera para "
+                    "Rutéa: pedidos, despacho por rutas y cartera para "
                     "distribuidoras alimentarias. "
                     "No hay precios publicados.",
                 )
@@ -315,7 +321,7 @@ async def test_recommendation_requires_retrieved_document_evidence(
             "recommend_product", {"process": "Distribuidora de alimentos, pedidos y rutas"}
         )
         payload = json.loads(result.trace.output)
-        assert payload["recommendations"][0]["product"] == "Deméter"
+        assert payload["recommendations"][0]["product"] == "Rutéa"
         assert result.sources and result.sources[0].document_id == documents[0].id
         assert payload["recommendations"][0]["source_ids"] == [result.sources[0].chunk_id]
         assert "No hay precios publicados" in result.trace.output

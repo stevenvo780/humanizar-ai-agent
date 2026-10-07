@@ -92,6 +92,42 @@ describe('Vercel reverse proxy configuration', () => {
     },
   );
 
+  it('routes exactly /preguntar to the backend root with the same private origin header', () => {
+    const config = createDeploymentConfig(environment);
+    const filesystemIndex = config.routes.findIndex((route) => 'handle' in route);
+    const matching = config.routes.flatMap((route, index) =>
+      'src' in route && route.src && 'dest' in route && new RegExp(route.src).test('/preguntar')
+        ? [{ route, index }]
+        : [],
+    );
+    expect(matching).toHaveLength(1);
+    const route = matching[0]?.route;
+    if (!route || !('dest' in route)) throw new Error('Missing /preguntar rewrite');
+    expect(matching[0]?.index).toBeLessThan(filesystemIndex);
+    expect(route.dest).toBe('https://api.example.com/preguntar');
+    expect(route.respectOriginCacheControl).toBe(false);
+    expect(route.transforms).toEqual(
+      expect.arrayContaining([
+        {
+          type: 'request.headers',
+          op: 'set',
+          target: { key: 'x-origin-secret' },
+          args: '$ORIGIN_SECRET',
+          env: ['ORIGIN_SECRET'],
+        },
+        expect.objectContaining({
+          type: 'response.headers',
+          target: { key: 'Cache-Control' },
+          args: 'private, no-store',
+        }),
+      ]),
+    );
+    const merged = Object.assign({}, ...headersFor('/preguntar')) as Record<string, string>;
+    expect(merged['Cache-Control']).toBe('private, no-store');
+    for (const path of ['/preguntar/', '/preguntar/extra', '/preguntar?x=1', '/preguntas'])
+      expect(new RegExp(route.src ?? '').test(path), path).toBe(false);
+  });
+
   it('preserves static files and direct docs reloads without ever rewriting API failures to HTML', () => {
     const config = createDeploymentConfig(environment);
     const fallback = config.routes.at(-1);
@@ -102,6 +138,9 @@ describe('Vercel reverse proxy configuration', () => {
     expect(pattern.test('/docs/')).toBe(true);
     expect(pattern.test('/api/unknown')).toBe(false);
     expect(pattern.test('/api')).toBe(false);
+    expect(pattern.test('/preguntar')).toBe(false);
+    expect(pattern.test('/preguntar/')).toBe(false);
+    expect(pattern.test('/preguntas')).toBe(true);
     expect('dest' in fallback && fallback.dest).toBe('/index.html');
     expect(config.routes.at(-2)).toEqual({ handle: 'filesystem' });
   });
@@ -123,7 +162,7 @@ describe('Vercel reverse proxy configuration', () => {
     },
   );
 
-  it.each(['/api', '/api/', '/api/docs', '/api/health'])(
+  it.each(['/api', '/api/', '/api/docs', '/api/health', '/preguntar'])(
     'leaves the API responses (including Swagger) outside the SPA CSP: %s',
     (path) => {
       expect(headersFor(path).filter((headers) => 'Content-Security-Policy' in headers)).toEqual(
@@ -170,5 +209,16 @@ describe('Vercel reverse proxy configuration', () => {
       nginx.indexOf('location / {'),
     );
     expect(apiLocation).not.toContain('Content-Security-Policy');
+    const askLocation = nginx.slice(
+      nginx.indexOf('location = /preguntar {'),
+      nginx.indexOf('location / {'),
+    );
+    expect(askLocation).toContain('proxy_pass http://api:8000;');
+    expect(askLocation).not.toContain('Content-Security-Policy');
+  });
+
+  it('proxies /preguntar in the Vite dev server to the same target as /api', () => {
+    const vite = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
+    expect(vite).toContain("proxy: { '/api': apiTarget, '/preguntar': apiTarget }");
   });
 });

@@ -51,10 +51,10 @@ export function RequestsPanel({ onChat, isAdmin }: { onChat: () => void; isAdmin
     const changed = () => {
       void load();
     };
-    window.addEventListener('humanizar-requests-changed', changed);
+    window.addEventListener('lumen-requests-changed', changed);
     return () => {
       invalidateLoad();
-      window.removeEventListener('humanizar-requests-changed', changed);
+      window.removeEventListener('lumen-requests-changed', changed);
     };
   }, [load, invalidateLoad]);
   const labels: Record<string, string> = {

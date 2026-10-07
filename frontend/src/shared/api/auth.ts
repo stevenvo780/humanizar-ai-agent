@@ -35,7 +35,7 @@ export async function refreshSession(): Promise<AuthResponse | null> {
       response = await fetch('/api/auth/refresh', {
         method: 'POST',
         credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'Humanizar' },
+        headers: { 'X-Requested-With': 'Lumen' },
       });
     } catch (error) {
       if (revision !== sessionRevision) return null;
@@ -77,18 +77,18 @@ export async function authenticatedFetch(path: string, init: RequestInit = {}): 
     const retry = await perform();
     if (retry.status !== 401 || revision !== sessionRevision) return retry;
     setAccessToken(null);
-    if (typeof window !== 'undefined') window.dispatchEvent(new Event('humanizar-session-expired'));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('lumen-session-expired'));
     return retry;
   }
   setAccessToken(null);
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event('humanizar-session-expired'));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('lumen-session-expired'));
   return response;
 }
 
 export async function logoutSession(): Promise<void> {
   const token = accessToken;
   setAccessToken(null);
-  const headers = new Headers({ 'X-Requested-With': 'Humanizar' });
+  const headers = new Headers({ 'X-Requested-With': 'Lumen' });
   if (token) headers.set('Authorization', `Bearer ${token}`);
   try {
     const response = await fetch('/api/auth/logout', {

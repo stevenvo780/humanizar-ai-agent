@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 import httpx
 from pydantic import SecretStr
 
-from app.accounts.tokens import REFRESH_COOKIE
+from app.accounts.tokens import CSRF_HEADER_VALUE, REFRESH_COOKIE
 from app.core.concurrency import run_sync
 from app.mcp.errors import MCPAuthenticationRequired, MCPForbidden, MCPUnavailable
 from app.mcp.sessions import (
@@ -125,7 +125,7 @@ class MCPAPIClient:
             response = await self.http.post(
                 self.origin + "/api/auth/refresh",
                 headers={
-                    "X-Requested-With": "Humanizar",
+                    "X-Requested-With": CSRF_HEADER_VALUE,
                     "Cookie": f"{REFRESH_COOKIE}={current.refresh_token.get_secret_value()}",
                 },
             )

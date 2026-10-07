@@ -2,13 +2,13 @@
 
 Asistente de atención al cliente con información empresarial, interfaz React/TypeScript, API
 FastAPI, recuperación en Qdrant, Claude Haiku, herramientas acotadas y MCP.
-Preparado para adaptar documentos y requisitos de una prueba técnica.
-El proyecto prepara la prueba de **Softop**; **Humanizar** se conserva como empresa
-de ejemplo hasta que el dueño solicite cambiar la identidad y el material.
+Lumen es la plataforma reutilizable; la empresa configurada es **Softop**, software de
+gestión para ópticas, con las preguntas frecuentes de la prueba técnica como corpus.
 
-**Web publicada:** [Humanizar IA](https://humanizar-ai-agent.vercel.app) ·
-[Documentación técnica](https://humanizar-ai-agent.vercel.app/docs) ·
-[API Swagger](https://humanizar-ai-agent.vercel.app/api/docs).
+**Web publicada:** [Asistente Softop](https://softop-ai-agent.vercel.app) ·
+[Documentación técnica](https://softop-ai-agent.vercel.app/docs) ·
+[API Swagger](https://softop-ai-agent.vercel.app/api/docs) ·
+[OpenAPI](https://softop-ai-agent.vercel.app/api/openapi.json).
 Frontend Vercel, FastAPI y sandbox Docker en VPS, PostgreSQL con TLS y Qdrant
 persistente. El administrador se provisiona por un canal privado; la web permite
 registrar cuentas de clientes. Configuración y repetición en
@@ -16,8 +16,26 @@ registrar cuentas de clientes. Configuración y repetición en
 
 ## Prueba técnica Softop
 
-El entregable de la prueba (endpoint `POST /preguntar` con RAG sobre `faq.json`) está en
-[`softop-rag/`](softop-rag/README.md): ejecución, flujo, decisiones y evidencia con Claude Haiku.
+El enunciado pide un endpoint FastAPI `POST /preguntar` que reciba `{"pregunta": str}` y
+devuelva `{"respuesta": str}` usando sólo `faq.json` mediante RAG. Hay dos entregas:
+
+- **Independiente:** [`softop-rag/`](softop-rag/README.md), sobre el repositorio base
+  recibido (índice numpy en memoria): ejecución, flujo, decisiones y evidencia con Claude Haiku.
+- **Integrada en producción:** la misma ruta en la raíz de Lumen, con FastEmbed + Qdrant
+  (3 fragmentos), el corpus `backend/knowledge/softop` (un Markdown por FAQ) y un prompt que
+  restringe la respuesta al contexto. Si no recupera nada relevante responde
+  *"No encuentro esa información en las preguntas frecuentes."* sin llamar al modelo.
+  Es pública, como pide el enunciado, con límite de 30 peticiones cada 5 minutos por IP
+  (429 con `Retry-After`); un fallo del proveedor devuelve 503 `{detail, code}`.
+
+```bash
+curl -s -X POST https://softop-ai-agent.vercel.app/preguntar \
+  -H 'content-type: application/json' \
+  -d '{"pregunta": "¿Cómo cierro caja al final del día?"}'
+```
+
+En local, la misma petición funciona en `http://127.0.0.1:8000/preguntar` y a través del
+proxy de Vite en `http://127.0.0.1:5173/preguntar`.
 Especificación, plan y tareas en [`specs/002-exam-adaptation`](specs/002-exam-adaptation/spec.md).
 
 ## Arranque local
@@ -27,8 +45,9 @@ con npm. Se recomienda Linux; en Windows utiliza WSL2. uv prepara Python 3.12
 si no encuentra un intérprete compatible. La primera instalación necesita internet.
 
 ```bash
-git clone https://github.com/stevenvo780/humanizar-ai-agent.git
-cd humanizar-ai-agent
+# El repositorio conserva su nombre heredado de GitHub; se clona en la carpeta lumen.
+git clone https://github.com/stevenvo780/humanizar-ai-agent.git lumen
+cd lumen
 make setup
 make dev
 ```
@@ -39,8 +58,8 @@ usa los mismos paths bajo el puerto 8000.
 La presentación técnica pública está en **http://127.0.0.1:5173/docs**, sin login:
 arquitectura, ciclo del agente, datos, seguridad, herramientas y evidencia de calidad.
 Consulta [portabilidad y dependencias](docs/PORTABILITY.md) para una instalación limpia.
-La configuración inicial utiliza Humanizar y cinco resúmenes de fuentes públicas
-oficiales en `backend/knowledge/humanizar`. Se cargan automáticamente sin duplicarse.
+La configuración inicial utiliza Softop y sus diez preguntas frecuentes en
+`backend/knowledge/softop`, un Markdown por FAQ. Se cargan automáticamente sin duplicarse.
 Sin una clave nueva, la aplicación funciona en modo demo extractivo, identificado
 en pantalla. Ese modo verifica carga, recuperación y herramientas sin consumir API.
 
@@ -78,12 +97,15 @@ como deshabilitada hasta conectar el sandbox.
 
 ## Lo que puedes probar
 
-- Preguntar por Humanizar, Cauce, agentes de IA y productos; inspeccionar las fuentes.
+- Preguntar cómo registrar una venta, cuadrar el inventario o cerrar caja; inspeccionar
+  las fuentes. Un dato que no está en las FAQ se admite como ausente.
+- Llamar a `POST /preguntar` desde curl o Swagger y comparar con la entrega `softop-rag/`.
 - Crear cuentas de cliente, cerrar sesión y recuperar conversaciones desde la base de datos.
 - Subir TXT, Markdown, PDF de texto, DOCX, JSON, CSV o ZIP desde Documentación como administrador.
 - Probar calculadora, búsqueda, MCP y los presets de terminal disponibles.
   La búsqueda MCP utiliza una sesión propia preparada con el [CLI privado](docs/MCP.md).
-- Recomendar productos según el proceso y preparar solicitudes de demo o soporte.
+- Preparar solicitudes de demo o soporte. Softop no configura un catálogo de productos
+  (`COMPANY_PRODUCTS=[]`), así que no hay recomendaciones de producto.
 - Confirmar cada solicitud antes de guardarla; consultar su ID en Mis solicitudes.
 - Revisar las solicitudes de clientes en la bandeja del administrador.
 - Crear y listar clientes desde administración cuando la API declara esa capacidad;
@@ -116,7 +138,7 @@ ni confirman reuniones externas.
 
 ## Despliegue y portátil
 
-La web se despliega en Vercel y envía `/api` al backend FastAPI por HTTPS. La API,
+La web se despliega en Vercel y envía `/api` y `/preguntar` al backend FastAPI por HTTPS. La API,
 Qdrant y el sandbox se ejecutan en el VPS con Docker; PostgreSQL guarda los datos
 relacionales. `ANTHROPIC_API_KEY`, `DATABASE_URL` y los secretos de autenticación
 pertenecen al entorno privado del backend. Vercel utiliza `API_ORIGIN` y un secreto
@@ -134,9 +156,12 @@ La configuración privada de este workspace se separa en `.env` para desarrollo,
 Los archivos tienen permisos `0600`, están ignorados y no se incluyen en Git ni
 en el ZIP. El VPS consume su archivo externo `/opt/humanizar-ai-agent/production.env`;
 no se sobrescriben sus secretos ni se regeneran claves de sesión durante una actualización.
+El repositorio GitHub, el proyecto Vercel, el proyecto Compose y las rutas del VPS conservan
+el nombre heredado `humanizar-ai-agent` de la primera empresa de ejemplo: renombrarlos
+rompería el despliegue. No identifican a la empresa configurada.
 
-Para adaptar otra empresa, cambia la identidad en `.env`, vacía `KNOWLEDGE_DIR`
-y utiliza un `DATA_DIR` distinto, o apunta `KNOWLEDGE_DIR` a tus archivos Markdown/TXT.
+Para adaptar otra empresa, cambia la identidad en `.env`, apunta `KNOWLEDGE_DIR` a tus
+archivos Markdown/TXT (o déjalo vacío) y utiliza un `DATA_DIR` distinto.
 Las rutas relativas de ese directorio se resuelven desde `backend/`.
 
 ## Claude Code y Spec Kit
@@ -159,11 +184,10 @@ Los diez skills oficiales de Spec Kit 1.0.7 vienen incluidos; no hace falta
 regenerar el proyecto. [SPECKIT.md](docs/SPECKIT.md) documenta cada comando,
 la auditoría y cómo seleccionar la feature de adaptación `002`.
 
-Cuando llegue el material, cópialo en `prueba-tecnica/` y ejecuta `/prueba-tecnica`
-dentro de `make exam-claude`. Sigue [la guía de los 20 minutos](docs/EXAM_20_MIN.md) y copia
-[el prompt de adaptación](docs/EXAM_PROMPT.txt) cuando llegue el ZIP real.
-La base no puede anticipar requisitos todavía desconocidos: el objetivo es reducir
-el trabajo inicial y dejar tiempo para resolver lo que realmente evalúen.
+El material de la prueba se leyó desde `prueba-tecnica/` con `/prueba-tecnica` dentro de
+`make exam-claude`, siguiendo [la guía de los 20 minutos](docs/EXAM_20_MIN.md) y
+[el prompt de adaptación](docs/EXAM_PROMPT.txt). El resultado está en `softop-rag/` y en
+la ruta integrada `POST /preguntar`; el mismo procedimiento sirve para otro enunciado.
 
 ## Verificación y entrega
 

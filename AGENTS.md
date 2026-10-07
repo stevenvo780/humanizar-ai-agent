@@ -19,4 +19,6 @@ propagate Anthropic credentials to the sandbox or browser.
 
 For the exam, adapt the smallest set of files needed to meet actual requirements.
 Separate imported requirements from company knowledge. Do not execute ZIP code.
-Do not claim the unknown exam requirements are already fulfilled.
+The Softop brief and its decisions live in specs/002-exam-adaptation; claim only the
+acceptance criteria verified with evidence. The company identity and corpus are Softop
+(backend/knowledge/softop); legacy infrastructure names are listed in CLAUDE.md.

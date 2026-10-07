@@ -8,7 +8,10 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.engine import URL, Connection, Engine, make_url
 from sqlalchemy.exc import SQLAlchemyError
 
-APPLICATION_ID = "humanizar-lumen-v1"
+APPLICATION_ID = "lumen-v1"
+# Schema identity written by releases before the company-neutral rename. A schema that still
+# carries it is ours and is rewritten to APPLICATION_ID during initialization; never write it.
+LEGACY_APPLICATION_ID = "humanizar-lumen-v1"
 
 
 def connection_options(value: str) -> tuple[URL, dict[str, str | int]]:
@@ -79,8 +82,10 @@ def bounded_engine(url: URL, options: dict[str, str | int]) -> Engine:
     )
 
 
-def advisory_lock(connection: Connection, schema: str, resource: str) -> None:
+def advisory_lock(
+    connection: Connection, schema: str, resource: str, application: str = APPLICATION_ID
+) -> None:
     """Transaction-scoped lock keyed by application, schema and resource."""
-    digest = hashlib.sha256(f"{APPLICATION_ID}:{schema}:{resource}".encode()).digest()
+    digest = hashlib.sha256(f"{application}:{schema}:{resource}".encode()).digest()
     key = int.from_bytes(digest[:8], "big", signed=True)
     connection.execute(select(func.pg_advisory_xact_lock(key)))

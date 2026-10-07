@@ -23,34 +23,16 @@ class ProductDefinition(BaseModel):
         return [value.strip() for value in values]
 
 
-HUMANIZAR_PRODUCTS = (
-    ProductDefinition(name="POS Saldantia", keywords=["venta", "tienda", "inventario", "pos"]),
-    ProductDefinition(
-        name="Deméter", keywords=["distribuidora", "alimento", "ruta", "despacho", "cartera"]
-    ),
-    ProductDefinition(name="Graf Commerce", keywords=["catalogo", "tienda", "comercio", "pedido"]),
-    ProductDefinition(name="Xenía", keywords=["crm", "cliente", "embudo", "comercial"]),
-    ProductDefinition(name="Cauce V3", keywords=["coordinacion", "gobierno", "flota", "agente"]),
-    ProductDefinition(name="Agora", keywords=["investigacion", "markdown", "logica"]),
-    ProductDefinition(name="Aletheia", keywords=["marketing", "metrica", "campana"]),
-    ProductDefinition(name="Apothḗke", keywords=["almacen", "inventario", "pedido"]),
-    ProductDefinition(
-        name="Koinonía", keywords=["comunidad", "publicacion", "biblioteca", "evento"]
-    ),
-    ProductDefinition(name="Chrónos", keywords=["hora", "proyecto", "freelancer"]),
-    ProductDefinition(name="Gravitatoria", keywords=["cotizacion", "entrega", "fisico"]),
-    ProductDefinition(name="Prizma", keywords=["dian", "facturacion", "credito", "pos"]),
-    ProductDefinition(name="Práxis", keywords=["ingenieria", "integral"]),
-    ProductDefinition(name="Érgon", keywords=["personalizado", "software", "desarrollo"]),
-    ProductDefinition(
-        name="Agentes de IA a medida",
-        keywords=["atencion", "cobranza", "conciliacion", "whatsapp", "correo"],
-    ),
+# Default public identity (Softop), derived only from its published FAQ. Another COMPANY_NAME
+# never inherits these strings: it gets the generic assistant name and UI prompts instead.
+DEFAULT_COMPANY_NAME = "Softop"
+DEFAULT_ASSISTANT_NAME = "Asistente Softop"
+DEFAULT_COMPANY_DESCRIPTION = (
+    "Software de gestión para ópticas: ventas, inventario, agenda, reportes, garantías y caja."
 )
-
-HUMANIZAR_QUESTIONS = [
-    "¿Qué productos y servicios ofrece Humanizar?",
-    "¿Cómo funcionan los agentes de IA a medida de Humanizar?",
-    "¿Qué es Cauce V3?",
-    "¿Cómo puedo contactar a Humanizar para solicitar una demostración?",
-]
+DEFAULT_SUGGESTED_QUESTIONS = (
+    "¿Cómo registro una venta de lentes?",
+    "¿Qué hago si el inventario no cuadra?",
+    "¿Cómo genero un reporte mensual?",
+    "¿Cómo cierro caja al final del día?",
+)

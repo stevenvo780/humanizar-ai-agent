@@ -47,11 +47,17 @@ def main() -> None:
     session = json.loads(body)
     token = str(session["access_token"])
     assert session["user"]["role"] == "admin"
-    status, body = request("/api/search?query=Humanizar", token=token)
+    status, body = request("/api/search?query=inventario", token=token)
     assert status == 200 and json.loads(body)["sources"], "Company corpus retrieval failed."
-    status, body = request("/api/chat", {"message": "¿Qué ofrece Humanizar?"}, token)
+    status, body = request("/api/chat", {"message": "¿Qué hago si el inventario no cuadra?"}, token)
     answer = json.loads(body)
     assert status == 200 and answer["answer"] and answer["sources"], "Grounded demo chat failed."
+    status, body = request("/preguntar", {"pregunta": "¿Cómo cierro caja al final del día?"})
+    reply = json.loads(body)
+    assert status == 200 and set(reply) == {"respuesta"}, "Public /preguntar contract failed."
+    assert "caja" in reply["respuesta"].casefold(), "/preguntar did not use the FAQ context."
+    status, _ = request("/preguntar", {"pregunta": "¿Cómo cierro caja?", "extra": True})
+    assert status == 422, "/preguntar must reject undeclared fields."
     status, body = request(
         "/api/tools/run", {"name": "calculate", "input": {"expression": "29*12"}}, token
     )
@@ -68,7 +74,10 @@ def main() -> None:
     assert status == 200 and json.loads(body)["status"] == "error", (
         "Terminal must reject arbitrary commands."
     )
-    print("Docker passed: public docs, JWT, corpus, demo chat, calculator and isolated terminal.")
+    print(
+        "Docker passed: public docs, JWT, corpus, demo chat, /preguntar, calculator and "
+        "isolated terminal."
+    )
 
 
 if __name__ == "__main__":

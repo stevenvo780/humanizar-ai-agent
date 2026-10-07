@@ -6,6 +6,7 @@ from app.api.routes import (
     conversations,
     customers,
     knowledge,
+    preguntar,
     requests,
     system,
     tools,
@@ -20,4 +21,5 @@ ROUTERS = (
     conversations.router,
     chat.router,
     ask.router,
+    preguntar.router,
 )

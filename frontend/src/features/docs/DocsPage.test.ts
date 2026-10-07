@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import DocsPage from './DocsPage';
 import { sectionIds, sectionNumber } from './docsContent';
+import { EXAM_ENDPOINT_URL, PUBLIC_APP_URL, repositoryFile } from './docsLinks';
 
 const html = renderToStaticMarkup(createElement(DocsPage));
 const anchors = [...html.matchAll(/<a\b[^>]*>/g)].map((match) => match[0]);
@@ -56,7 +57,18 @@ describe('public documentation page', () => {
     for (const href of absolute) {
       const url = new URL(href);
       expect(url.protocol, href).toBe('https:');
-      expect(['github.com', 'humanizar-ai-agent.vercel.app'], href).toContain(url.hostname);
+      expect(['github.com', new URL(PUBLIC_APP_URL).hostname], href).toContain(url.hostname);
     }
+  });
+
+  it('presents the technical exam endpoint with a copyable request and its sources', () => {
+    expect(html).toContain('id="prueba-tecnica"');
+    expect(html).toContain('POST /preguntar');
+    expect(html).toContain(`curl -X POST ${EXAM_ENDPOINT_URL}`);
+    expect(html).toMatch(/<button[^>]*type="button"[^>]*>.*?Copiar/);
+    for (const path of ['softop-rag/README.md', 'specs/002-exam-adaptation/spec.md'] as const)
+      expect(html).toContain(`href="${repositoryFile(path)}"`);
+    expect(html).toContain('href="#prueba-tecnica"');
+    expect(html).toContain('Softop');
   });
 });

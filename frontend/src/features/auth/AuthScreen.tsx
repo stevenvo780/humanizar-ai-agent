@@ -31,7 +31,7 @@ export function AuthScreen({
   const [error, setError] = useState(initialError);
   const submitting = useRef(false);
   const creating = setup || mode === 'register';
-  const { company, assistant, humanizar, website } = companyPresentation(config, identity);
+  const { company, assistant, website } = companyPresentation(config, identity);
 
   async function submit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -58,7 +58,7 @@ export function AuthScreen({
 
   return (
     <div className="auth-layout">
-      <AuthStory assistant={assistant} company={company} humanizar={humanizar} website={website} />
+      <AuthStory assistant={assistant} company={company} website={website} />
       <main className="auth-form-panel">
         <div className="auth-form-wrap">
           <span className="auth-welcome-icon">

@@ -33,6 +33,10 @@ export function StatusSection() {
             </li>
             <li>Spec Kit 001 completo, de specify a converge, con todas sus tareas cerradas.</li>
             <li>
+              Prueba técnica de Softop: <code>softop-rag</code> con sus pruebas automatizadas y la
+              verificación con Claude Haiku registrada en su README.
+            </li>
+            <li>
               Equipo Fedora 44 de presentación con <code>make setup</code> y <code>make check</code>{' '}
               aprobados.
             </li>
@@ -47,7 +51,10 @@ export function StatusSection() {
               Cada instalación requiere su propia clave de Anthropic en el backend y verificar la
               conexión.
             </li>
-            <li>Spec Kit 002: preparada; se completa cuando llegue el enunciado real.</li>
+            <li>
+              <code>POST /preguntar</code> integrado en la plataforma: verificar por HTTPS en cada
+              publicación, con la clave de Anthropic configurada en el backend.
+            </li>
             <li>
               Recorrido manual del lector y de Clientes con la sesión admin de producción; la API ya
               declara ambas capacidades.

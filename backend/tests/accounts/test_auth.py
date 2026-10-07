@@ -20,7 +20,7 @@ from app.accounts.tokens import AUDIENCE, ISSUER, REFRESH_COOKIE
 from app.persistence.models import SetupAlreadyComplete, User
 from app.persistence.sqlite import ApplicationDatabase
 
-CSRF = {"X-Requested-With": "Humanizar"}
+CSRF = {"X-Requested-With": "Lumen"}
 
 
 @pytest.fixture

@@ -12,7 +12,6 @@ export function ChatWorkspace({
   config,
   assistant,
   company,
-  humanizar,
   prompts,
   userName,
 }: {
@@ -21,7 +20,6 @@ export function ChatWorkspace({
   config: Config | null;
   assistant: string;
   company: string;
-  humanizar: boolean;
   prompts: QuickPrompt[];
   userName: string;
 }) {
@@ -32,7 +30,6 @@ export function ChatWorkspace({
         <Welcome
           assistant={assistant}
           company={company}
-          humanizar={humanizar}
           prompts={prompts}
           disabled={!online || busy || historyLoading}
           onPrompt={chat.send}

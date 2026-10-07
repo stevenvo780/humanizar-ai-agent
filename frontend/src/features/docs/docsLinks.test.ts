@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   API_DOCS_PATH,
+  EXAM_CURL,
+  EXAM_ENDPOINT_URL,
   EXTERNAL_LINK,
   OPENAPI_PATH,
   PUBLIC_APP_URL,
@@ -27,9 +29,9 @@ describe('documentation links', () => {
   });
 
   it('builds file links on the public dev branch', () => {
-    expect(REPOSITORY_URL).toBe('https://github.com/stevenvo780/humanizar-ai-agent');
+    expect(REPOSITORY_URL).toMatch(/^https:\/\/github\.com\/stevenvo780\/[a-z0-9-]+$/);
     expect(repositoryFile('docs/VALIDATION.md')).toBe(
-      'https://github.com/stevenvo780/humanizar-ai-agent/blob/dev/docs/VALIDATION.md',
+      `${REPOSITORY_URL}/blob/dev/docs/VALIDATION.md`,
     );
     for (const link of links) {
       if (link.path !== undefined) expect(link.href).toBe(repositoryFile(link.path));
@@ -67,6 +69,15 @@ describe('documentation links', () => {
       expect(PUBLIC_HOSTS.has(url.hostname), link.href).toBe(true);
       expect(url.username + url.password, link.href).toBe('');
     }
+  });
+
+  it('publishes the exam endpoint on the Softop public origin with a valid JSON body', () => {
+    expect(PUBLIC_APP_URL).toBe('https://softop-ai-agent.vercel.app');
+    expect(EXAM_ENDPOINT_URL).toBe('https://softop-ai-agent.vercel.app/preguntar');
+    expect(EXAM_CURL).toContain(`curl -X POST ${EXAM_ENDPOINT_URL} \\`);
+    expect(EXAM_CURL).toContain("-H 'Content-Type: application/json'");
+    const body = /-d '([^']+)'/.exec(EXAM_CURL)?.[1] ?? '';
+    expect(Object.keys(JSON.parse(body) as Record<string, unknown>)).toEqual(['pregunta']);
   });
 
   it('opens external links in an isolated new tab', () => {

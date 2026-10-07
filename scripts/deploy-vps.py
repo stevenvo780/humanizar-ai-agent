@@ -155,6 +155,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["check", "up", "stop", "status"])
     parser.add_argument("--env-file", type=Path, required=True)
+    # Legacy resource name of the deployed Compose project and its volume; renaming it would
+    # start a new stack without the existing knowledge volume.
     parser.add_argument("--project", default="humanizar-ai-agent")
     parser.add_argument("--port", type=int, default=8087)
     args = parser.parse_args()

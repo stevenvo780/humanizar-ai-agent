@@ -75,8 +75,8 @@ export default function SessionApp() {
       setAccessToken(null);
       setError('Tu sesión terminó. Entra de nuevo para continuar.');
     };
-    window.addEventListener('humanizar-session-expired', expired);
-    return () => window.removeEventListener('humanizar-session-expired', expired);
+    window.addEventListener('lumen-session-expired', expired);
+    return () => window.removeEventListener('lumen-session-expired', expired);
   }, []);
 
   useEffect(() => {

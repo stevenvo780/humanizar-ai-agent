@@ -13,7 +13,7 @@ def test_initial_corpus_idempotent_preserves_uploads(
 ) -> None:
     directory = tmp_path / "corpus"
     directory.mkdir()
-    (directory / "company.md").write_text("Humanizar ofrece software a medida.")
+    (directory / "company.md").write_text("Softop ofrece software de gestión para ópticas.")
     (directory / "existing.md").write_text("No reemplazar la versión subida.")
     (directory / "unsafe.md").symlink_to(directory / "company.md")
     (directory / ".env").write_text("Not a corpus document.")

@@ -12,14 +12,12 @@ const promptStyles = [
 export function Welcome({
   assistant,
   company,
-  humanizar,
   prompts,
   disabled,
   onPrompt,
 }: {
   assistant: string;
   company: string;
-  humanizar: boolean;
   prompts: QuickPrompt[];
   disabled: boolean;
   onPrompt: (question: string) => Promise<void>;
@@ -38,9 +36,7 @@ export function Welcome({
           <span>en una conversación.</span>
         </h1>
         <p>
-          {humanizar
-            ? 'Descubre servicios, explora agentes de IA y resuelve tus dudas.'
-            : 'Descubre productos y servicios y resuelve tus dudas con fuentes.'}
+          Pregunta por cualquier función y resuelve tus dudas con fuentes.
           <br className="desktop-break" /> Te ayudamos a dar el siguiente paso.
         </p>
       </div>

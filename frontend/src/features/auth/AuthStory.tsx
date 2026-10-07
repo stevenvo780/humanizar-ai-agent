@@ -3,12 +3,10 @@ import { Check, ChevronRight, Sparkles } from 'lucide-react';
 export function AuthStory({
   assistant,
   company,
-  humanizar,
   website,
 }: {
   assistant: string;
   company: string;
-  humanizar: boolean;
   website: string | null;
 }) {
   const brand = (
@@ -31,8 +29,7 @@ export function AuthStory({
       )}
       <div className="auth-editorial">
         <span className="page-eyebrow">
-          <span className="status-dot" />{' '}
-          {humanizar ? 'SOFTWARE. AGENTES. POSIBILIDADES.' : 'INFORMACIÓN. AYUDA. CONVERSACIÓN.'}
+          <span className="status-dot" /> INFORMACIÓN. AYUDA. CONVERSACIÓN.
         </span>
         <h1>
           Las buenas preguntas
@@ -40,8 +37,8 @@ export function AuthStory({
           abren <span>nuevos caminos.</span>
         </h1>
         <p>
-          Conoce los productos de {company}, encuentra la solución para tu empresa y da el siguiente
-          paso con un asistente que conecta la información.
+          Resuelve tus dudas sobre {company}, encuentra el paso que necesitas y avanza con un
+          asistente que responde con la información documentada.
         </p>
         <div className="auth-orbit" aria-hidden="true">
           <svg viewBox="0 0 300 240" fill="none">
@@ -62,7 +59,7 @@ export function AuthStory({
             <circle cx="239" cy="162" r="3" fill="#aaa2d2" />
           </svg>
           <span className="orbit-chip chip-one">
-            <Sparkles size={13} /> {humanizar ? 'Agentes a medida' : 'Información de la empresa'}
+            <Sparkles size={13} /> Información documentada
           </span>
           <span className="orbit-chip chip-two">
             <Check size={13} /> Respuestas con fuentes
@@ -70,9 +67,7 @@ export function AuthStory({
         </div>
       </div>
       <div className="auth-story-footer">
-        <span>
-          {company} · {humanizar ? 'Tecnología que resuelve.' : 'Información que conecta.'}
-        </span>
+        <span>{company} · Información que conecta.</span>
         {website && (
           <a href={website} target="_blank" rel="noopener noreferrer">
             Conoce {company} <ChevronRight size={12} />

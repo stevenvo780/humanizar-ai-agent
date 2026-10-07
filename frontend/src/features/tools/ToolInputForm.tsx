@@ -124,7 +124,7 @@ export function ToolInputForm({
       const trace = await api.runTool(tool.name, validation.input, writeTool && writeConfirmed);
       setResult(trace);
       if (writeTool && writeConfirmed && trace.status === 'completed')
-        window.dispatchEvent(new Event('humanizar-requests-changed'));
+        window.dispatchEvent(new Event('lumen-requests-changed'));
     } catch (err) {
       setError(errorMessage(err));
     } finally {

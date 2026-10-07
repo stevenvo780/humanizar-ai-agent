@@ -5,6 +5,7 @@ import {
   CheckCheck,
   Database,
   FileUp,
+  FlaskConical,
   KeyRound,
   Radio,
   Search,
@@ -22,9 +23,18 @@ interface Capability {
   title: string;
   text: string;
   section: SectionId;
+  /** An anchor inside the section, when the card points to a specific block. */
+  anchor?: string;
 }
 
 const CAPABILITIES: readonly Capability[] = [
+  {
+    icon: <FlaskConical size={18} />,
+    title: 'Prueba técnica: POST /preguntar',
+    text: 'Público y sin cuenta: responde solo con las FAQ de Softop, con límite por IP.',
+    section: 'recursos',
+    anchor: 'prueba-tecnica',
+  },
   {
     icon: <Search size={18} />,
     title: 'Respuestas con fuentes',
@@ -34,7 +44,7 @@ const CAPABILITIES: readonly Capability[] = [
   {
     icon: <Search size={18} />,
     title: 'Endpoint RAG /api/ask',
-    text: 'Pregunta → base vectorial → Claude: respuesta citada en una sola llamada HTTP.',
+    text: 'Pregunta → base vectorial → Claude: respuesta citada; comparte el flujo con /preguntar.',
     section: 'agente',
   },
   {
@@ -118,7 +128,7 @@ export function CapabilitiesSection() {
             <span className="docs-capability-icon">{capability.icon}</span>
             <h3>{capability.title}</h3>
             <p>{capability.text}</p>
-            <a href={`#${capability.section}`}>
+            <a href={`#${capability.anchor ?? capability.section}`}>
               {sectionLabel(capability.section)}
               <ArrowRight size={13} />
             </a>

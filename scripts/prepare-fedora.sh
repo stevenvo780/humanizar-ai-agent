@@ -93,6 +93,7 @@ if [[ -e "$PROJECT_DIR" ]]; then
   echo 'Existing checkout preserved; no pull, branch switch or reset was performed.'
 else
   mkdir -p -- "${HOME}/Documentos/repos"
+  # Legacy GitHub repository name, kept unchanged: Vercel and the VPS checkout track it.
   git clone --branch dev --single-branch https://github.com/stevenvo780/humanizar-ai-agent.git "$PROJECT_DIR"
 fi
 if [[ "$SKIP_SETUP" == false ]]; then

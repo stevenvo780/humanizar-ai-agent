@@ -32,7 +32,7 @@ export function isCompanyIdentity(value: unknown): value is CompanyIdentity {
         (entry): entry is string =>
           typeof entry === 'string' && entry.trim().length > 0 && entry.length <= 1000,
       ) &&
-        value.suggested_questions.length <= 8))
+        value.suggested_questions.length <= 12))
   );
 }
 

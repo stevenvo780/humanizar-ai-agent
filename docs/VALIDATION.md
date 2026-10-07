@@ -1,7 +1,13 @@
 # Estado de validación
 
-Validación actualizada el 2026-10-07. No representa validación de los requisitos de
-la prueba, todavía desconocidos.
+Validación actualizada el 2026-10-07. Registra la base Lumen. La evidencia de la
+prueba Softop está en [softop-rag/README.md](../softop-rag/README.md) (entrega
+independiente) y el estado de su integración como `POST /preguntar` en
+[las tareas de 002](../specs/002-exam-adaptation/tasks.md).
+
+El 2026-10-07 la identidad y el corpus pasaron a Softop a petición del dueño. Las
+comprobaciones anteriores a esa fecha usaron el corpus público de la primera empresa de
+ejemplo, ya retirado del repositorio; se conservan como evidencia de la plataforma.
 
 Las puertas de calidad de la base y las comprobaciones de esta revisión pasan;
 las pruebas PostgreSQL utilizan exclusivamente una instancia temporal aislada.
@@ -48,7 +54,7 @@ sintética. Qdrant remoto se simuló en memoria; no se acredita un servidor remo
 No se llamó a Anthropic para estos controles de regresión.
 
 Chromium con contratos HTTP sintéticos comprobó un formulario nuevo con argumentos
-correctos, Humanizar como perfil actual y otro perfil sin enlaces heredados,
+correctos, el perfil de ejemplo entonces configurado y otro perfil sin enlaces heredados,
 respuesta SSE con un solo anuncio final, móvil 320/390 px y cero errores
 JavaScript o desbordes. Esta comprobación no equivale a actualizar la API del VPS.
 La página técnica pública también pasó Chromium en 320/390/1440 px después de
@@ -134,12 +140,13 @@ el helper `prepare-fedora.sh` no se usa en ese equipo.
   reportan modo `anthropic`; la credencial queda únicamente en configuración
   privada del backend, ignorada por Git y con permisos 0600.
 - Ciclo real del agente comprobado con respuestas HTTP 200: consulta de identidad
-  mediante `mcp_company_info` y consulta sobre Cauce mediante `search_knowledge`
+  mediante `mcp_company_info` y consulta sobre un producto del corpus de ejemplo
+  anterior mediante `search_knowledge`
   con una fuente recuperada. Las comprobaciones usaron cuentas y datos sintéticos
   aislados; ninguna sesión privada forma parte del repositorio.
 - Clon público en una ruta nueva con espacios: `make setup`, `make speckit-check`
   y `make check` completos. El arranque real en Python 3.12 verificó administrador,
-  registro de cliente, chat con fuentes semánticas de Humanizar, historial, refresh
+  registro de cliente, chat con fuentes semánticas del corpus de ejemplo, historial, refresh
   y logout. Datos sintéticos en una instancia temporal; servicios cerrados al terminar.
 - Build de producción servido en navegador: acceso y `/docs` en móvil sin errores
   JavaScript ni overflow; `/docs` no realiza solicitudes de autenticación.
@@ -150,8 +157,9 @@ el helper `prepare-fedora.sh` no se usa en ese equipo.
   Sin formulario de claves ni solicitudes a rutas de configuración del proveedor.
 
 - FastEmbed multilingüe descargado e inferencia de vectores de 384 dimensiones.
-- Corpus activo: cinco resúmenes de Humanizar con URLs oficiales y fecha de consulta.
-  La carga inicial es idempotente y usa datos separados del corpus anterior de Forma.
+- Corpus activo desde el 2026-10-07: las diez FAQ de Softop en `backend/knowledge/softop`,
+  un Markdown por FAQ generado desde `softop-rag/base/faq.json`. La carga inicial es
+  idempotente; cada corpus usa su propio `DATA_DIR`.
 - SQLite persistente para cuentas, sesiones, chats y solicitudes.
 - Horario, precios e integraciones se validaron con el corpus ficticio anterior;
   CEO y facturación anual ausentes producen respuesta sin fuentes inventadas.
@@ -176,10 +184,11 @@ Se excluyen del ZIP source para mantenerlo portable y libre de datos de sesión.
 
 ## Despliegue real verificado
 
-El 7 de octubre de 2026 se publicó
-[Humanizar IA](https://humanizar-ai-agent.vercel.app), con
-[documentación pública](https://humanizar-ai-agent.vercel.app/docs) y
-[Swagger](https://humanizar-ai-agent.vercel.app/api/docs) bajo el mismo origen.
+El 7 de octubre de 2026 se publicó la aplicación en el proyecto Vercel
+`humanizar-ai-agent` (nombre heredado), servida hoy en
+[softop-ai-agent.vercel.app](https://softop-ai-agent.vercel.app), con
+[documentación pública](https://softop-ai-agent.vercel.app/docs) y
+[Swagger](https://softop-ai-agent.vercel.app/api/docs) bajo el mismo origen.
 
 - Vercel: build de producción READY, Node 22, frontend compilado desde sus fuentes.
   El rewrite agrega el secreto del proxy sólo en el servidor; el origen directo
@@ -191,7 +200,7 @@ El 7 de octubre de 2026 se publicó
   Schema exclusivo `lumen`, seis tablas del proyecto y exactamente un administrador
   inicial provisionado por stdin privado. Bootstrap protegido y token rotado.
 - Claude Haiku: conversación SSE real en 5.6 segundos, herramienta de búsqueda,
-  fuente de Humanizar y uso de tokens distinto de cero. Otra conversación real
+  fuente del corpus de ejemplo de entonces y uso de tokens distinto de cero. Otra conversación real
   se visualizó en Chromium con recomendaciones, fuentes y trazas.
 - Reinicio controlado del contenedor API: historial PostgreSQL conservado y refresh
   de la sesión anterior válido. Logout revocó la familia y refresh devolvió 401.
@@ -286,7 +295,7 @@ del host estaban disponibles; se preparó FastEmbed de 384 dimensiones.
 La CLI `specify-cli==1.0.7` se instaló desde PyPI y se ejecutó en directorios
 temporales aislados, sin sustituir herramientas globales.
 
-El [repositorio público](https://github.com/stevenvo780/humanizar-ai-agent) dispone
+El [repositorio público](https://github.com/stevenvo780/humanizar-ai-agent) (nombre heredado) dispone
 de código fuente preparado con CI, escaneo de publicación y exclusión
 de configuración local, datos y sesiones. El escaneo final y la publicación los
 realiza el integrador después de completar los gates. El escaneo de Git es una

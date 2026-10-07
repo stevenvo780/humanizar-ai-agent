@@ -13,8 +13,12 @@ const PRIVATE_RESPONSE_HEADERS = {
   'x-vercel-enable-rewrite-caching': '0',
 };
 
-/** Every non-API route can serve the SPA, so every one of them carries the same policy. */
-export const NON_API_ROUTE = '^/(?!api(?:/|$)).*$';
+/**
+ * Paths owned by the backend: the /api namespace and the public exam endpoint /preguntar.
+ * Every other route can serve the SPA, so every one of them carries the same policy.
+ */
+export const NON_API_ROUTE = '^/(?!api(?:/|$)|preguntar(?:/|$)).*$';
+const BACKEND_ROUTE = '^/(?:api|preguntar)(?:/.*)?$';
 
 export const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -79,12 +83,15 @@ export function createDeploymentConfig(environment: DeploymentEnvironment): Depl
   )
     throw new Error('Las credenciales no pueden usar variables públicas VITE_.');
 
-  const apiRewrite = routes.rewrite('/api/:path(.*)?', `${apiOrigin}/api/:path`, {
+  const backendProxy = {
     // The SDK emits "$ORIGIN_SECRET" plus env metadata, never the environment value.
     requestHeaders: { 'x-origin-secret': deploymentEnv('ORIGIN_SECRET') },
     responseHeaders: PRIVATE_RESPONSE_HEADERS,
     respectOriginCacheControl: false,
-  });
+  };
+  const apiRewrite = routes.rewrite('/api/:path(.*)?', `${apiOrigin}/api/:path`, backendProxy);
+  // The exam endpoint lives at the API root, outside /api: exactly POST /preguntar.
+  const askRewrite = routes.rewrite('/preguntar', `${apiOrigin}/preguntar`, backendProxy);
 
   return {
     framework: 'vite',
@@ -107,10 +114,11 @@ export function createDeploymentConfig(environment: DeploymentEnvironment): Depl
         headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
         continue: true,
       },
-      { src: '^/api(?:/.*)?$', headers: PRIVATE_RESPONSE_HEADERS, continue: true },
+      { src: BACKEND_ROUTE, headers: PRIVATE_RESPONSE_HEADERS, continue: true },
       apiRewrite,
+      askRewrite,
       { handle: 'filesystem' },
-      // An API failure must remain an API response instead of falling through to HTML.
+      // A backend failure must remain a backend response instead of falling through to HTML.
       { src: NON_API_ROUTE, dest: '/index.html' },
     ],
   } satisfies DeploymentConfig;

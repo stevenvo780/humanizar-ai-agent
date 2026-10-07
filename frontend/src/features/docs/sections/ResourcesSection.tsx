@@ -1,6 +1,7 @@
 import { ArrowUpRight, BookOpen, GitBranch, Globe2, ListChecks } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { DocsSection } from '../DocsSection';
+import { ExamEndpointCard } from '../ExamEndpointCard';
 import { ExternalLink } from '../ExternalLink';
 import { resourceGroups, type ResourceIcon } from '../docsLinks';
 
@@ -19,6 +20,7 @@ export function ResourcesSection() {
         enlaces externos se abren en una pestaña nueva; los documentos apuntan a la rama{' '}
         <code>dev</code> del repositorio público.
       </p>
+      <ExamEndpointCard />
       <div className="docs-link-groups">
         {resourceGroups.map((group) => (
           <article

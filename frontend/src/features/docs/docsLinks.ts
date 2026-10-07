@@ -1,10 +1,19 @@
 /** Public links shown on the technical page. Only public URLs: no hosts, IPs or settings. */
+// The GitHub repository keeps its original (legacy) name: renaming it would break deployments.
 export const REPOSITORY_URL = 'https://github.com/stevenvo780/humanizar-ai-agent';
 export const REPOSITORY_BRANCH = 'dev';
 export const REPOSITORY_SLUG = new URL(REPOSITORY_URL).pathname.slice(1);
-export const PUBLIC_APP_URL = 'https://humanizar-ai-agent.vercel.app';
+export const PUBLIC_APP_URL = 'https://softop-ai-agent.vercel.app';
 export const API_DOCS_PATH = '/api/docs';
 export const OPENAPI_PATH = '/api/openapi.json';
+
+/** The technical exam endpoint: public, at the API root, proxied by the same origin. */
+export const EXAM_ENDPOINT_URL = `${PUBLIC_APP_URL}/preguntar`;
+export const EXAM_CURL = [
+  `curl -X POST ${EXAM_ENDPOINT_URL} \\`,
+  "  -H 'Content-Type: application/json' \\",
+  `  -d '{"pregunta": "¿Cómo hago una devolución?"}'`,
+].join('\n');
 
 /** Every repository file the page links to; a unit test checks that each one exists. */
 export const REPOSITORY_FILES = [
@@ -32,6 +41,7 @@ export const REPOSITORY_FILES = [
   'specs/002-exam-adaptation/tasks.md',
   'specs/002-exam-adaptation/research.md',
   'specs/002-exam-adaptation/quickstart.md',
+  'softop-rag/README.md',
 ] as const;
 export type RepositoryFile = (typeof REPOSITORY_FILES)[number];
 
@@ -67,7 +77,7 @@ export const resourceGroups: readonly ResourceGroup[] = [
     links: [
       {
         label: 'Aplicación pública',
-        detail: 'Asistente desplegado en Vercel',
+        detail: 'Asistente Softop desplegado en Vercel',
         href: PUBLIC_APP_URL,
       },
       {
@@ -116,12 +126,13 @@ export const resourceGroups: readonly ResourceGroup[] = [
       file('docs/RAG.md', 'RAG', 'Vectores y recuperación'),
       file('docs/MCP.md', 'MCP', 'Servidor autenticado'),
       file('docs/ADMIN.md', 'Administración', 'Cuentas, roles y clientes'),
+      file('softop-rag/README.md', 'Entrega softop-rag', 'POST /preguntar independiente'),
     ],
   },
   {
     id: 'spec-kit',
     title: 'Artefactos de Spec Kit',
-    description: '001 implementada y cerrada; 002 preparada para el enunciado.',
+    description: '001 es la base implementada; 002 adapta la base al enunciado de Softop.',
     icon: 'spec',
     links: [
       file('.specify/memory/constitution.md', 'Constitución', 'Principios del proyecto'),
@@ -134,8 +145,8 @@ export const resourceGroups: readonly ResourceGroup[] = [
         '001 · Checklist',
         'Calidad de los requisitos',
       ),
-      file('specs/002-exam-adaptation/spec.md', '002 · Especificación', 'Plantilla del enunciado'),
-      file('specs/002-exam-adaptation/tasks.md', '002 · Tareas', 'Pendientes del examen'),
+      file('specs/002-exam-adaptation/spec.md', '002 · Especificación', 'POST /preguntar con RAG'),
+      file('specs/002-exam-adaptation/tasks.md', '002 · Tareas', 'Trabajo del enunciado'),
       file('specs/002-exam-adaptation/research.md', '002 · Research', 'Requisito → archivos'),
       file('specs/002-exam-adaptation/quickstart.md', '002 · Quickstart', 'Escenarios Q0–Q10'),
     ],

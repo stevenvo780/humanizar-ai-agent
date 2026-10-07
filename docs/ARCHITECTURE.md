@@ -44,6 +44,14 @@ que las permitidas. El trabajo síncrono de autenticación y recuperación se ej
 fuera del event loop. La ingesta mantiene su exclusión hasta terminar el trabajo
 real, incluso si el cliente cancela la subida.
 
+`POST /preguntar` (raíz, sin `/api`) es la ruta pública de la prueba Softop:
+`{"pregunta"}` → `{"respuesta"}`. Recupera tres fragmentos con el mismo `KnowledgeStore`,
+inyecta sólo ese contexto en un prompt restrictivo y devuelve la respuesta del modelo.
+Sin contexto relevante contesta "No encuentro esa información en las preguntas
+frecuentes." sin llamar al modelo. Comparte con `POST /api/ask` el módulo
+`agent/rag.py` (recuperación, prompt y llamada); no usa sesión, pero tiene límite por IP
+y ocupa un hueco del límite global de chats.
+
 Qdrant local guarda vectores y SQLite conserva documentos y fragmentos bajo DATA_DIR.
 Otra base relacional persistente, `application.sqlite3`, guarda cuentas, sesiones,
 conversaciones, mensajes y solicitudes. La configuración de Anthropic procede
@@ -67,8 +75,8 @@ Los errores temporales conservan la sesión; los rechazos de autenticación se
 informan de forma diferenciada. No recibe claves del proveedor.
 
 La identidad, el enlace, las preguntas sugeridas y el catálogo de productos son
-configurables. Humanizar permanece como ejemplo de Softop; otro nombre no hereda
-productos o enlaces de esa empresa. Las recomendaciones siguen exigiendo evidencia
+configurables por variables de entorno; la instancia publicada usa Softop, sin
+catálogo de productos ni enlace. Las recomendaciones siguen exigiendo evidencia
 documental aunque un producto figure en la configuración.
 
 El sandbox acepta nombres de comandos definidos. Ejecuta argumentos fijos sin shell,
@@ -76,7 +84,7 @@ con límites de tiempo, salida y recursos. Solo ese servicio ejecuta procesos de
 terminal para el producto; el host de la API no ejecuta instrucciones del modelo.
 Compose no publica su puerto y no le entrega credenciales o el socket Docker.
 
-Vercel sirve la aplicación React y reenvía `/api` al origen HTTPS. Un header privado
+Vercel sirve la aplicación React y reenvía `/api` y `/preguntar` al origen HTTPS. Un header privado
 del proxy identifica esas peticiones; el origen rechaza acceso directo sin él.
 La cookie de refresh y el JWT se mantienen bajo el origen de la web. El proxy
 evita almacenar respuestas privadas en caché y el backend mantiene el presupuesto
@@ -95,10 +103,11 @@ backend/app/
 ├── manage.py          CLI de operación (create-admin, mcp-login)
 ├── core/              settings, redacción de secretos, límites de petición
 ├── api/               schemas, dependencies, errors y routes/ (un router por recurso)
-├── agent/             company_agent (bucle), provider, prompt, grounding, fallback, demo
+├── agent/             company_agent (bucle), provider, prompt, grounding, fallback, demo,
+│                      rag (RAG de un turno para /api/ask y /preguntar)
 ├── tools/             definitions (contrato), registry (validación/redacción/tiempos),
 │   └── handlers/      un handler por herramienta, agrupados por dominio, en HANDLERS
-├── knowledge/         ingesta, PDF, embeddings, store Qdrant y corpus inicial
+├── knowledge/         ingesta, PDF, embeddings, store Qdrant y carga del corpus inicial
 ├── accounts/          passwords, tokens, rate_limit, schemas, dependencies, router
 ├── persistence/       contracts, models, factory, signing
 │   ├── sqlite/        cuentas, sesiones y conversaciones

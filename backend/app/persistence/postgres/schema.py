@@ -19,7 +19,11 @@ from sqlalchemy import (
 from sqlalchemy.engine import Connection
 from sqlalchemy.schema import CreateSchema
 
-from app.persistence.postgres.connection import APPLICATION_ID, advisory_lock
+from app.persistence.postgres.connection import (
+    APPLICATION_ID,
+    LEGACY_APPLICATION_ID,
+    advisory_lock,
+)
 
 
 class PostgresTables:
@@ -123,7 +127,14 @@ class PostgresTables:
         )
 
     def initialize(self, connection: Connection) -> None:
-        """Create a new schema or reuse ours; never write into another application's tables."""
+        """Create a new schema or reuse ours; never write into another application's tables.
+
+        A schema created before the identity rename still carries ``LEGACY_APPLICATION_ID``;
+        it is ours, so its marker is rewritten to ``APPLICATION_ID`` under the same locks.
+        """
+        # Lock keys derive from the identity: also hold the key a pre-rename release takes,
+        # so an old and a new instance never initialize the same schema concurrently.
+        advisory_lock(connection, self.schema, "initialize", application=LEGACY_APPLICATION_ID)
         advisory_lock(connection, self.schema, "initialize")
         inspector = inspect(connection)
         existing = set(inspector.get_table_names(schema=self.schema))
@@ -131,7 +142,13 @@ class PostgresTables:
             if self.marker.name not in existing:
                 raise ValueError("DATABASE_SCHEMA contiene tablas de otra aplicación.")
             identity = connection.execute(select(self.marker.c.application)).scalar_one_or_none()
-            if identity != APPLICATION_ID:
+            if identity == LEGACY_APPLICATION_ID:
+                connection.execute(
+                    self.marker.update()
+                    .where(self.marker.c.id == 1)
+                    .values(application=APPLICATION_ID)
+                )
+            elif identity != APPLICATION_ID:
                 raise ValueError("DATABASE_SCHEMA pertenece a otra aplicación.")
         connection.execute(CreateSchema(self.schema, if_not_exists=True))
         self.metadata.create_all(connection)

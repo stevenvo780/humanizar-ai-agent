@@ -4,8 +4,8 @@ import { ExternalLink } from '../ExternalLink';
 import { REPOSITORY_URL, repositoryFile } from '../docsLinks';
 
 const LOCAL_COMMANDS = [
-  `git clone ${REPOSITORY_URL}.git`,
-  'cd humanizar-ai-agent',
+  `git clone ${REPOSITORY_URL}.git softop-ai-agent`,
+  'cd softop-ai-agent',
   'make setup',
   'make check',
   'make dev',

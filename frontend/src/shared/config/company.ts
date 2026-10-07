@@ -24,56 +24,31 @@ export function safeCompanyWebsite(value: unknown): string | null {
 export function companyPresentation(config: Config | null, identity: CompanyIdentity | null) {
   const company = config?.company_name ?? identity?.company_name ?? 'la empresa';
   const assistant = config?.assistant_name ?? identity?.assistant_name ?? 'Asistente';
-  const humanizar = company.trim().toLowerCase() === 'humanizar';
   const currentIdentity = identity?.company_name === company ? identity : null;
-  const website =
-    safeCompanyWebsite(currentIdentity?.website) ??
-    (humanizar && currentIdentity?.website === undefined ? 'https://humanizar.tech/' : null);
-  const defaults: QuickPrompt[] = humanizar
-    ? [
-        {
-          title: 'Productos y servicios',
-          subtitle: 'Productos y servicios para ti.',
-          question: `¿Qué productos y servicios ofrece ${company}?`,
-        },
-        {
-          title: 'Agentes de IA a medida',
-          subtitle: 'Explora cómo pueden ayudarte.',
-          question: `¿Cómo funcionan los agentes de IA a medida de ${company}?`,
-        },
-        {
-          title: 'Hablemos de tu proyecto',
-          subtitle: 'Contacto y solicitud de demostración.',
-          question: `¿Cómo puedo contactar a ${company} para solicitar una demostración?`,
-        },
-        {
-          title: 'Conoce Cauce V3',
-          subtitle: 'Pregunta por la plataforma.',
-          question: '¿Qué es Cauce V3?',
-        },
-      ]
-    : [
-        {
-          title: 'Productos y servicios',
-          subtitle: 'Conoce lo que ofrece la empresa.',
-          question: `¿Qué productos y servicios ofrece ${company}?`,
-        },
-        {
-          title: 'Encuentra una solución',
-          subtitle: 'Consulta la documentación disponible.',
-          question: `¿Cómo puede ayudarme ${company}?`,
-        },
-        {
-          title: 'Contacto',
-          subtitle: 'Encuentra los canales documentados.',
-          question: `¿Cómo puedo contactar a ${company}?`,
-        },
-        {
-          title: 'Ayuda y soporte',
-          subtitle: 'Resuelve tus dudas con fuentes.',
-          question: `¿Qué opciones de soporte ofrece ${company}?`,
-        },
-      ];
+  const website = safeCompanyWebsite(currentIdentity?.website);
+  // Neutral defaults: the backend publishes the company's own suggested questions.
+  const defaults: QuickPrompt[] = [
+    {
+      title: 'Qué ofrece',
+      subtitle: 'Conoce las funciones documentadas.',
+      question: `¿Qué funciones ofrece ${company}?`,
+    },
+    {
+      title: 'Primeros pasos',
+      subtitle: 'Aprende a realizar una tarea paso a paso.',
+      question: `¿Cómo empiezo a usar ${company}?`,
+    },
+    {
+      title: 'Resolver un problema',
+      subtitle: 'Encuentra la solución documentada.',
+      question: `¿Qué hago si algo no funciona como espero en ${company}?`,
+    },
+    {
+      title: 'Ayuda y soporte',
+      subtitle: 'Resuelve tus dudas con fuentes.',
+      question: `¿Qué opciones de soporte ofrece ${company}?`,
+    },
+  ];
   // Only an absent list falls back to defaults; an explicit empty list hides the suggestions.
   const questions = currentIdentity?.suggested_questions;
   const prompts = questions
@@ -86,5 +61,5 @@ export function companyPresentation(config: Config | null, identity: CompanyIden
           },
       )
     : defaults;
-  return { company, assistant, humanizar, website, prompts };
+  return { company, assistant, website, prompts };
 }

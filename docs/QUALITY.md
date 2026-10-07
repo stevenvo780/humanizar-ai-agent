@@ -1,10 +1,9 @@
 # Auditoría de calidad y adaptación
 
-Revisión del 7 de octubre de 2026. El proyecto prepara la prueba técnica de
-Softop; Humanizar sigue siendo la empresa de ejemplo y su corpus actual.
-Los requisitos del examen todavía no se conocen. La preparación permite cambiar
-perfil, documentos y herramientas; no acredita resolver cualquier examen en
-veinte minutos.
+Revisión del 7 de octubre de 2026. El proyecto resolvió la prueba técnica de Softop
+(`POST /preguntar` con RAG sobre sus FAQ, en `softop-rag/` e integrado en Lumen) y,
+a petición del dueño, usa Softop como identidad y corpus. La preparación permite cambiar
+perfil, documentos y herramientas; no acredita resolver cualquier examen en veinte minutos.
 
 ## Hallazgos y correcciones
 
@@ -15,7 +14,7 @@ veinte minutos.
 | El importador intentaba subir sin sesión | Importación local por defecto; `--upload` explícito con JWT y destino HTTP loopback numérico | Cero HTTP por defecto, rechazo previo al ZIP y errores 401/403 sin credenciales |
 | MCP no tenía sesión con la API protegida | Login interactivo, sesión privada ligada al origen y renovación coordinada | `backend/tests/mcp/test_mcp_auth.py`: login, permisos, origen, renovación, fallos y archivos privados |
 | Colecciones remotas competían entre corpus | Namespace persistente del corpus y modelo; reconstrucción sin borrar colecciones ajenas | `backend/tests/knowledge/test_storage.py`: dos corpus y embeddings; servidor Qdrant real verificado el 2026-10-07 (EXAM_RECIPES.md) |
-| Otro perfil heredaba productos y enlaces de Humanizar | Perfil y catálogo configurables; valores de Humanizar sólo para su perfil | `backend/tests/business/test_company_configuration.py`, `frontend/src/shared/config/company.test.ts` |
+| Otro perfil heredaba productos y enlaces de la empresa de ejemplo | Perfil y catálogo configurables por variables, sin valores de una empresa concreta en el código | `backend/tests/business/test_company_configuration.py`, `frontend/src/shared/config/company.test.ts` |
 | Catálogo y esquemas duplicados; argumentos vacíos para herramientas nuevas | Metadatos centrales compartidos con Claude/API y formularios derivados | `backend/tests/tools/test_tools.py`, `frontend/src/features/tools/toolSchema.test.ts` |
 | Refresh con 429, 5xx o fallo de red cerraba la sesión | Conservar sesión ante errores temporales; distinguir rechazo de autenticación | `frontend/src/shared/api/auth.test.ts` |
 | Finalización SSE sin anuncio accesible | Región de estado que anuncia sólo la respuesta completada | `frontend/src/features/chat/ChatAnnouncement.test.ts` y Chromium sintético |
@@ -32,9 +31,9 @@ veinte minutos.
    `001-company-agent` como base. El chequeo no cambia la selección activa.
 3. Configurar `COMPANY_NAME`, `COMPANY_DESCRIPTION`, `ASSISTANT_NAME`,
    `COMPANY_WEBSITE`, `COMPANY_SUGGESTED_QUESTIONS` y `COMPANY_PRODUCTS` en el
-   entorno del backend. Los dos últimos son arrays JSON; `null` selecciona el
-   ejemplo de Humanizar sólo para Humanizar y `[]` desactiva esas sugerencias
-   o productos. Los documentos siguen siendo la evidencia de las respuestas.
+   entorno del backend. Los dos últimos son arrays JSON; `null` usa valores
+   genéricos y `[]` desactiva esas sugerencias o productos. Los documentos siguen
+   siendo la evidencia de las respuestas.
 4. Añadir cada herramienta en `backend/app/tools/definitions.py` y su handler en
    `backend/app/tools/handlers/`, registrado en `HANDLERS`; el registro valida, redacta y mide. El esquema admite string, number/integer,
    boolean y parámetros opcionales; por sí solo no concede ejecución ni permisos.

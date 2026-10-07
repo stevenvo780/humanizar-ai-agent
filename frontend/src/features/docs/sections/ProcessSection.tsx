@@ -40,8 +40,9 @@ export function ProcessSection() {
               ))}
             </ol>
             <p>
-              001 está implementada y cerrada. 002 está preparada, con research, quickstart y
-              tareas, y espera el enunciado real.{' '}
+              001 es la base implementada y cerrada. 002 adapta esa base al enunciado de Softop:{' '}
+              <code>POST /preguntar</code> con RAG sobre las preguntas frecuentes de su software
+              para ópticas, entregado en <code>softop-rag</code> e integrado en esta plataforma.{' '}
               <ExternalLink href={repositoryFile('docs/SPECKIT.md')}>Ver SPECKIT.md</ExternalLink>
             </p>
           </div>
@@ -88,10 +89,10 @@ export function ProcessSection() {
           <div>
             <h3>Desplegar y ensayar la recuperación</h3>
             <p>
-              Vercel sirve el frontend y reenvía <code>/api</code> por el mismo origen. FastAPI y el
-              sandbox se ejecutan en Docker en un VPS; PostgreSQL usa TLS verificado. Cada
-              publicación parte de un backup coordinado y la restauración se ensayó en un entorno
-              aislado.{' '}
+              Vercel sirve el frontend y reenvía <code>/api</code> y <code>/preguntar</code> por el
+              mismo origen. FastAPI y el sandbox se ejecutan en Docker en un VPS; PostgreSQL usa TLS
+              verificado. Cada publicación parte de un backup coordinado y la restauración se ensayó
+              en un entorno aislado.{' '}
               <ExternalLink href={repositoryFile('docs/DEPLOYMENT.md')}>
                 Ver DEPLOYMENT.md
               </ExternalLink>

@@ -91,13 +91,13 @@ async def test_refresh_rotates_file_and_retries_search_without_printing_secrets(
     def handle(request: httpx.Request) -> httpx.Response:
         methods.append(request.method)
         if request.url.path == "/api/auth/refresh":
-            assert request.headers["X-Requested-With"] == "Humanizar"
-            assert request.headers["Cookie"] == "humanizar_refresh=synthetic-refresh"
+            assert request.headers["X-Requested-With"] == "Lumen"
+            assert request.headers["Cookie"] == "lumen_refresh=synthetic-refresh"
             return httpx.Response(
                 200,
                 json={"access_token": "replacement-access"},
                 headers={
-                    "Set-Cookie": "humanizar_refresh=replacement-refresh; HttpOnly; Path=/api/auth"
+                    "Set-Cookie": "lumen_refresh=replacement-refresh; HttpOnly; Path=/api/auth"
                 },
             )
         if request.headers.get("Authorization") == "Bearer replacement-access":
@@ -137,7 +137,7 @@ async def test_two_mcp_clients_share_one_refresh_and_preserve_rotated_family(
                 200,
                 json={"access_token": "replacement-access"},
                 headers={
-                    "Set-Cookie": "humanizar_refresh=replacement-refresh; HttpOnly; Path=/api/auth"
+                    "Set-Cookie": "lumen_refresh=replacement-refresh; HttpOnly; Path=/api/auth"
                 },
             )
         if request.headers.get("Authorization") == "Bearer replacement-access":

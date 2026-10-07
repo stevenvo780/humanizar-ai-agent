@@ -10,9 +10,10 @@ from fastapi.routing import APIRoute
 
 from app.accounts.dependencies import identity_store, require_user
 from app.accounts.passwords import hash_password, verify_password
-from app.accounts.rate_limit import request_limiter
+from app.accounts.rate_limit import client_key, request_limiter
 from app.accounts.schemas import LoginRequest, PublicUser, SessionResponse, SignupRequest
 from app.accounts.tokens import (
+    CSRF_HEADER_VALUE,
     REFRESH_COOKIE,
     access_claims,
     clear_refresh_cookie,
@@ -58,7 +59,7 @@ def _session(request: Request, response: Response, user: User) -> SessionRespons
 
 
 def _csrf(request: Request) -> None:
-    if request.headers.get("X-Requested-With") != "Humanizar":
+    if request.headers.get("X-Requested-With") != CSRF_HEADER_VALUE:
         raise HTTPException(403, "Solicitud de sesión no permitida.")
 
 
@@ -72,9 +73,7 @@ def setup(payload: SignupRequest, request: Request, response: Response) -> Sessi
     settings: Settings | None = getattr(request.app.state, "settings", None)
     expected = settings.auth_bootstrap_token.get_secret_value() if settings is not None else ""
     supplied = request.headers.get("X-Bootstrap-Token", "")
-    request_limiter(request).check(
-        "setup:" + (request.client.host if request.client else "unknown")
-    )
+    request_limiter(request).check("setup:" + client_key(request))
     if expected and not secrets.compare_digest(supplied.encode(), expected.encode()):
         raise HTTPException(403, "La configuración inicial requiere autorización privada.")
     try:
@@ -91,9 +90,7 @@ def setup(payload: SignupRequest, request: Request, response: Response) -> Sessi
 @router.post("/register", response_model=SessionResponse)
 def register(payload: SignupRequest, request: Request, response: Response) -> SessionResponse:
     # Public signup hashes with Argon2: bound it per client like failed logins.
-    request_limiter(request).check(
-        "register:" + (request.client.host if request.client else "unknown")
-    )
+    request_limiter(request).check("register:" + client_key(request))
     try:
         user = identity_store(request).register_customer(
             payload.name, payload.email, hash_password(payload.password.get_secret_value())
@@ -108,7 +105,7 @@ def register(payload: SignupRequest, request: Request, response: Response) -> Se
 @router.post("/login", response_model=SessionResponse)
 def login(payload: LoginRequest, request: Request, response: Response) -> SessionResponse:
     limiter = request_limiter(request)
-    address = request.client.host if request.client else "unknown"
+    address = client_key(request)
     # Only failed logins count, so a presenter can sign in and out without a lockout.
     limiter.check(address, record=False)
     user = identity_store(request).get_user_by_email(payload.email)

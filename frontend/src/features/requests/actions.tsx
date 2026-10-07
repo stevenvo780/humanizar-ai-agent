@@ -108,7 +108,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
       const result = await api.confirmAction(proposal.tool, proposal.input, trace.id);
       if (result.status === 'error') throw new Error(result.output);
       setResults((current) => ({ ...current, [trace.id]: result }));
-      window.dispatchEvent(new Event('humanizar-requests-changed'));
+      window.dispatchEvent(new Event('lumen-requests-changed'));
     } catch (err) {
       setErrors((current) => ({ ...current, [trace.id]: errorMessage(err) }));
     } finally {

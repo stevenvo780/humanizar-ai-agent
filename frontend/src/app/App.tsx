@@ -25,7 +25,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
   const [selectedSection, setSelectedSection] = useState<WorkspaceSection>('assistant');
   const workspace = useWorkspaceData(isAdmin);
   const { config, health, documents, online, loading } = workspace;
-  const { company, assistant, humanizar, prompts } = workspace.presentation;
+  const { company, assistant, prompts } = workspace.presentation;
   const chat = useChat({
     userId: user.id,
     online,
@@ -124,7 +124,6 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                   config={config}
                   assistant={assistant}
                   company={company}
-                  humanizar={humanizar}
                   prompts={prompts}
                   userName={user.name}
                 />
@@ -165,7 +164,6 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
           onClose={overlays.closeHelp}
           company={company}
           assistant={assistant}
-          humanizar={humanizar}
           isAdmin={isAdmin}
           demoMode={config?.mode === 'demo'}
         />

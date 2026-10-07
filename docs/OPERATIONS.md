@@ -4,11 +4,17 @@ Este runbook se ejecuta por un operador autorizado. Los comandos de despliegue
 actúan sobre el proyecto Compose `humanizar-ai-agent`; las comprobaciones públicas
 no necesitan credenciales ni realizan llamadas de pago al modelo.
 
+El proyecto Compose, su volumen, las rutas `/opt/humanizar-ai-agent/...`, el repositorio
+GitHub, el proyecto Vercel y los nombres privados del servicio libpq y del directorio de
+backups conservan el nombre heredado de la primera empresa de ejemplo: renombrarlos
+rompería el despliegue o separaría los datos. La empresa configurada es Softop y el
+dominio público es [softop-ai-agent.vercel.app](https://softop-ai-agent.vercel.app).
+
 ## Estado registrado el 2026-10-07
 
 | Componente | Evidencia y estado |
 | --- | --- |
-| Frontend | [humanizar-ai-agent.vercel.app](https://humanizar-ai-agent.vercel.app), revisión `9ac20b0`, despliegue Vercel **READY**. |
+| Frontend | Proyecto Vercel `humanizar-ai-agent` (nombre heredado), revisión `9ac20b0`, despliegue **READY**; dominio público actual [softop-ai-agent.vercel.app](https://softop-ai-agent.vercel.app). |
 | Fuente pública | [Repositorio GitHub](https://github.com/stevenvo780/humanizar-ai-agent), rama de producción `dev`. |
 | Configuración privada | El operador preparó `.env.production` y `.env.vercel`, modo `0600` e ignorados por Git; `.env` local se conservó. |
 | PostgreSQL | Comprobación de sólo lectura del operador: PostgreSQL **18.6**, **TLS 1.3** y schema dedicado existente. No se modificaron datos. |
@@ -32,6 +38,8 @@ Checklist de esta actualización:
 - [ ] Confirmar lectura de documentos y gestión de clientes con la sesión admin.
 - [x] Ensayar restauración de los backups en un entorno aislado (PostgreSQL temporal sin red y directorio temporal, 2026-10-07).
 - [x] Preparar Fedora en el destino solicitado (make setup y make check, 2026-10-07).
+- [ ] Publicar la identidad Softop, el corpus `knowledge/softop` y `POST /preguntar`
+  siguiendo [Cambio de identidad a Softop](#cambio-de-identidad-a-softop-y-preguntar).
 
 ## Rutas y configuración privada
 
@@ -104,7 +112,8 @@ la configuración con `docker compose config` sin `--quiet`.
 
 ## Backup coordinado antes del despliegue
 
-Preparar de forma privada un servicio libpq llamado `humanizar`, con autenticación
+Preparar de forma privada un servicio libpq llamado `humanizar` (nombre heredado ya
+configurado en el VPS), con autenticación
 y TLS `verify-full` verificado. Proteger su archivo de servicio y su archivo de
 contraseñas; no poner la URL o una contraseña en argumentos. Comprobar que `pg_dump` es compatible
 con la versión del servidor: un cliente de una versión mayor anterior no puede
@@ -193,12 +202,12 @@ No usar `make docker` para este despliegue: apunta al stack local.
 
 ```bash
 curl --fail --silent --show-error http://127.0.0.1:8087/api/health
-curl --fail --silent --show-error https://humanizar-ai-agent.vercel.app/api/health
-curl --fail --silent --show-error https://humanizar-ai-agent.vercel.app/api/auth/status
+curl --fail --silent --show-error https://softop-ai-agent.vercel.app/api/health
+curl --fail --silent --show-error https://softop-ai-agent.vercel.app/api/auth/status
 curl --fail --silent --show-error --output /dev/null \
-  https://humanizar-ai-agent.vercel.app/api/docs
+  https://softop-ai-agent.vercel.app/api/docs
 curl --fail --silent --show-error --output /dev/null \
-  https://humanizar-ai-agent.vercel.app/api/openapi.json
+  https://softop-ai-agent.vercel.app/api/openapi.json
 ```
 
 La salud pública de la nueva API debe incluir ambas capacidades a `true`.
@@ -213,6 +222,47 @@ El proxy del VPS debe exigir su header privado de origen, preservar SSE y cookie
 y pasar el protocolo HTTPS. Nunca enviar `ORIGIN_SECRET` en un comando curl visible.
 La prueba desde Vercel usa el rewrite ya configurado. El puerto `8087` sigue
 limitado a loopback; no abrirlo a Internet para solventar un error de proxy.
+
+## Cambio de identidad a Softop y `/preguntar`
+
+Esta actualización cambia la empresa configurada, sustituye el corpus inicial y añade la
+ruta pública `POST /preguntar`. Se aplica con el procedimiento anterior (backup coordinado,
+fast-forward, `check/up/status`) y estos pasos adicionales:
+
+1. Antes de `up`, editar en el archivo privado sólo estas claves, con un editor y sin
+   imprimirlo: `COMPANY_NAME`, `COMPANY_DESCRIPTION`, `ASSISTANT_NAME`, `COMPANY_WEBSITE`
+   (vacío), `COMPANY_SUGGESTED_QUESTIONS`, `COMPANY_PRODUCTS=[]` y
+   `KNOWLEDGE_DIR=knowledge/softop`. Los valores públicos exactos están en
+   [config/production.env.example](../config/production.env.example).
+2. Tras `up`, el volumen `/data` conserva los documentos del corpus anterior:
+   `KNOWLEDGE_DIR` sólo añade archivos que falten por nombre y nunca borra. Con la sesión
+   del administrador, eliminar en **Documentación** todo documento que no sea uno de los
+   diez `faq-*.md` (o `DELETE /api/documents/{id}`); el borrado retira también sus
+   fragmentos y vectores. Sin este paso, `/preguntar` y el chat podrían recuperar texto
+   ajeno a las FAQ.
+3. Cambian el emisor y la audiencia JWT, la cookie de refresh y el header
+   `X-Requested-With` (ahora `Lumen`): las sesiones existentes dejan de valer y cada usuario
+   vuelve a iniciar sesión; la sesión MCP se renueva con `mcp-login`. El schema
+   PostgreSQL migra su identificador de aplicación al arrancar, dentro del lock de
+   inicialización; no hay que tocar tablas ni datos.
+4. Vercel debe desplegar la revisión que incluye el rewrite de `/preguntar` con el mismo
+   header privado que `/api`; el proxy del VPS debe dejar pasar esa ruta al upstream.
+5. Smoke público, sin sesión. Cada llamada con contexto consume el proveedor:
+
+```bash
+curl --fail --silent --show-error https://softop-ai-agent.vercel.app/api/company
+curl --silent --show-error -X POST https://softop-ai-agent.vercel.app/preguntar \
+  -H 'content-type: application/json' \
+  -d '{"pregunta": "¿Cómo cierro caja al final del día?"}'
+curl --silent --show-error -X POST https://softop-ai-agent.vercel.app/preguntar \
+  -H 'content-type: application/json' \
+  -d '{"pregunta": "¿Cuál es la capital de Francia?"}'
+```
+
+Esperado: `company_name` Softop; una respuesta `{"respuesta": ...}` basada en la FAQ de
+cierre de caja; para la pregunta ajena, `"No encuentro esa información en las preguntas
+frecuentes."`. La ruta admite 30 preguntas cada 5 minutos por IP (429 con `Retry-After`)
+y comparte el límite global de chats concurrentes.
 
 ## Administrador y cambios de configuración
 
@@ -295,6 +345,8 @@ terminar la comprobación. El ensayo de restauración no se da por ejecutado aqu
 | `check` falla | Revisar propiedad y modo `0600`, formato literal, TLS, schema y orígenes HTTPS en privado. No imprimir el archivo. |
 | `up` falla | Ejecutar `status` y revisar logs privados del servicio afectado; comprobar CA, PostgreSQL, volumen y memoria. |
 | Vercel responde 502 o 403 | Comprobar origen HTTPS y coherencia del header privado entre proxy y Vercel, sin exponerlo. |
+| `/preguntar` devuelve HTML o 404/405 | Revisar que el despliegue Vercel incluya su rewrite y que el proxy del VPS reenvíe esa ruta, no sólo `/api`. |
+| `/preguntar` cita texto ajeno a las FAQ | Quedan documentos del corpus anterior en `/data`: eliminarlos desde **Documentación**. |
 | No aparece **Clientes** o el lector | Comprobar los flags del health público y la revisión del backend; un frontend nuevo no los inventa. |
 | El modelo figura como `demo` | Revisar `LLM_MODE` y la presencia de una clave válida en el entorno backend, luego recrear API. El health no demuestra una llamada de pago. |
 | 429 en login o chat | Esperar y reducir concurrencia; conservar autenticación y los límites. No reiniciar repetidamente para saltarlos. |

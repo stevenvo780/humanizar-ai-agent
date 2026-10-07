@@ -27,6 +27,8 @@ from app.persistence.postgres import (
     PostgresBusinessStore,
     connection_options,
 )
+from app.persistence.postgres.connection import APPLICATION_ID, LEGACY_APPLICATION_ID
+from app.persistence.postgres.schema import PostgresTables
 
 
 @pytest.fixture
@@ -269,6 +271,38 @@ def test_schema_rejects_existing_unrelated_tables_without_modification(
         engine.dispose()
 
 
+def test_legacy_schema_identity_is_rewritten_and_foreign_identity_rejected(
+    postgres_settings: Settings,
+) -> None:
+    database = PostgresApplicationDatabase(postgres_settings)
+    try:
+        owner = database.bootstrap_admin("Admin", "admin@example.test", "synthetic-hash")
+    finally:
+        database.close()
+    marker = PostgresTables(postgres_settings.database_schema).marker
+    url, options = connection_options(postgres_settings.database_url.get_secret_value())
+    engine = create_engine(url, connect_args=options, hide_parameters=True)
+    try:
+        with engine.begin() as connection:
+            connection.execute(marker.update().values(application=LEGACY_APPLICATION_ID))
+        reopened = PostgresApplicationDatabase(postgres_settings)
+        try:
+            user = reopened.get_user_by_email("admin@example.test")
+            assert user is not None and user.id == owner.id
+        finally:
+            reopened.close()
+        with engine.begin() as connection:
+            assert connection.execute(select(marker.c.application)).scalar_one() == APPLICATION_ID
+            connection.execute(marker.update().values(application="another-application-v1"))
+        with pytest.raises(ValueError, match="otra aplicación"):
+            PostgresApplicationDatabase(postgres_settings)
+        with engine.begin() as connection:
+            identity: str = connection.execute(select(marker.c.application)).scalar_one()
+            assert identity == "another-application-v1"
+    finally:
+        engine.dispose()
+
+
 def test_postgres_factory_does_not_open_or_migrate_legacy_sqlite(
     postgres_settings: Settings, tmp_path: Path
 ) -> None:
@@ -302,10 +336,10 @@ def test_postgres_api_login_history_and_business_are_compatible(
             "/api/auth/login", json={"email": "owner@example.test", "password": password}
         )
         assert login.status_code == 200
-        refreshed = client.post("/api/auth/refresh", headers={"X-Requested-With": "Humanizar"})
+        refreshed = client.post("/api/auth/refresh", headers={"X-Requested-With": "Lumen"})
         assert refreshed.status_code == 200
         assert (
-            client.post("/api/auth/logout", headers={"X-Requested-With": "Humanizar"}).status_code
+            client.post("/api/auth/logout", headers={"X-Requested-With": "Lumen"}).status_code
             == 204
         )
         invalidated = {"Authorization": "Bearer " + str(refreshed.json()["access_token"])}

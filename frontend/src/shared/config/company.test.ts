@@ -14,17 +14,17 @@ const config: Config = {
 };
 
 describe('configured company presentation', () => {
-  it('keeps Humanizar defaults only for Humanizar', () => {
-    const humanizar = companyPresentation(
-      { ...config, company_name: 'Humanizar', assistant_name: 'Humanizar IA' },
+  it('uses neutral defaults that name only the configured company', () => {
+    const softop = companyPresentation(
+      { ...config, company_name: 'Softop', assistant_name: 'Asistente Softop' },
       null,
     );
-    expect(humanizar.website).toBe('https://humanizar.tech/');
-    expect(humanizar.prompts.some((prompt) => prompt.question.includes('Cauce V3'))).toBe(true);
+    expect(softop.website).toBeNull();
+    expect(softop.prompts.length).toBeGreaterThan(0);
+    expect(softop.prompts.some((prompt) => prompt.question.includes('Softop'))).toBe(true);
     const other = companyPresentation(config, null);
-    expect(other.website).toBeNull();
-    expect(JSON.stringify(other)).not.toContain('Humanizar');
-    expect(JSON.stringify(other)).not.toContain('Cauce');
+    expect(JSON.stringify(other)).not.toContain('Softop');
+    expect(Object.keys(other).sort()).toEqual(['assistant', 'company', 'prompts', 'website']);
   });
 
   it('uses published questions and website without leaking a stale company identity', () => {
@@ -80,7 +80,7 @@ describe('configured company presentation', () => {
     expect(isCompanyIdentity({ ...config, suggested_questions: [''] })).toBe(false);
     expect(isCompanyIdentity({ ...config, suggested_questions: [4] })).toBe(false);
     expect(
-      isCompanyIdentity({ ...config, suggested_questions: Array<string>(9).fill('Pregunta') }),
+      isCompanyIdentity({ ...config, suggested_questions: Array<string>(13).fill('Pregunta') }),
     ).toBe(false);
   });
 });

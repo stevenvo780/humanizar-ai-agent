@@ -55,7 +55,7 @@ def test_rejects_private_paths_without_reading_them(filename: str) -> None:
         ".mcp.json",
         ".claude/skills/speckit-plan/SKILL.md",
         ".github/workflows/quality.yml",
-        "backend/knowledge/humanizar/humanizar-empresa.md",
+        "backend/knowledge/softop/faq-10-como-cierro-caja-al-final-del-dia.md",
         "frontend/src/features/docs/DocsPage.tsx",
     ],
 )
