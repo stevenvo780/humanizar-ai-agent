@@ -112,7 +112,11 @@ def allowed_path(relative: Path) -> bool:
         return False
     if len(parts) == 1:
         return parts[0] in ROOT_FILES
-    if relative.as_posix() in {"config/env.example", "frontend/nginx.conf"}:
+    if relative.as_posix() in {
+        "config/env.example",
+        "config/production.env.example",
+        "frontend/nginx.conf",
+    }:
         return True
     if parts[0] in {".claude", ".agents"}:
         return relative.as_posix() == ".claude/settings.json" or (

@@ -197,6 +197,7 @@ def test_packager_allowlist_and_no_overwrite(tmp_path: Path) -> None:
         ".agents/skills/speckit-specify/SKILL.md",
         ".github/workflows/quality.yml",
         "config/env.example",
+        "config/production.env.example",
         "frontend/nginx.conf",
         "frontend/.vercelignore",
         ".env.example",
@@ -207,6 +208,7 @@ def test_packager_allowlist_and_no_overwrite(tmp_path: Path) -> None:
     blocked = [
         ".env",
         "backend/.env.production",
+        "config/production.env",
         "backend/data/database.json",
         "frontend/node_modules/pkg/index.js",
         ".vercel/project.json",
