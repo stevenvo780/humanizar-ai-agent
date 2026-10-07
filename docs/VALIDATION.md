@@ -60,6 +60,10 @@ al validar prerequisitos. Mapa de hallazgos y adaptación en [QUALITY.md](QUALIT
 
 ## Publicación y configuración de este workspace
 
+El cierre de esta revisión, commit público auditado `a53e89d`, frontend Vercel
+READY, smoke público y pasos pendientes está en
+[el registro de publicación](releases/2026-10-07-audit.md).
+
 Comprobación del 2026-10-07, 10:28 UTC: web, documentación y Swagger productivos
 responden HTTP 200. La API activa sigue en modo Anthropic con Haiku 4.5; todavía
 no declara `document_reading` ni `customer_management`, y OpenAPI no ofrece GET de
