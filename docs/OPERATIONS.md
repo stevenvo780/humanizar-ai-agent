@@ -8,11 +8,11 @@ no necesitan credenciales ni realizan llamadas de pago al modelo.
 
 | Componente | Evidencia y estado |
 | --- | --- |
-| Frontend | [humanizar-ai-agent.vercel.app](https://humanizar-ai-agent.vercel.app), revisión `16e9ac2`, despliegue Vercel **READY**. |
+| Frontend | [humanizar-ai-agent.vercel.app](https://humanizar-ai-agent.vercel.app), revisión `9ac20b0`, despliegue Vercel **READY**. |
 | Fuente pública | [Repositorio GitHub](https://github.com/stevenvo780/humanizar-ai-agent), rama de producción `dev`. |
 | Configuración privada | El operador preparó `.env.production` y `.env.vercel`, modo `0600` e ignorados por Git; `.env` local se conservó. |
 | PostgreSQL | Comprobación de sólo lectura del operador: PostgreSQL **18.6**, **TLS 1.3** y schema dedicado existente. No se modificaron datos. |
-| API del VPS | Gestión de clientes y lectura de documentos implementadas y probadas con datos aislados. El VPS ejecuta `0ecb292`; acceso SSH recuperado el 2026-10-07, **actualización pendiente**. |
+| API del VPS | Gestión de clientes y lectura de documentos implementadas y probadas con datos aislados. `9ac20b0` desplegada el 2026-10-07 con backup previo; ambos flags verificados por HTTPS. |
 | Capacidades de la UI | **Clientes** requiere `features.customer_management: true`; el lector requiere `features.document_reading: true`, declarados por la API real. |
 | Fedora | `~/Documentos/repos/SoftopPrueba` presente; `make setup` y `make check` pasaron el 2026-10-07. |
 
@@ -23,14 +23,14 @@ inicial está en [DEPLOYMENT.md](DEPLOYMENT.md).
 
 Checklist de esta actualización:
 
-- [x] Frontend `16e9ac2` READY en Vercel.
+- [x] Frontend `9ac20b0` servido por Vercel (CSP y assets inmutables comprobados).
 - [x] Archivos privados preparados y `.env` local preservado por el operador.
 - [x] PostgreSQL 18.6 y TLS 1.3 comprobados en una conexión de sólo lectura.
 - [x] Recuperar el acceso SSH autorizado al VPS (2026-10-07).
-- [ ] Validar la revisión candidata y completar el backup coordinado.
-- [ ] Actualizar API con `check/up/status` y comprobar ambos flags por HTTPS.
+- [x] Validar la revisión candidata (`make check`) y completar el backup coordinado.
+- [x] Actualizar API con `check/up/status` y comprobar ambos flags por HTTPS.
 - [ ] Confirmar lectura de documentos y gestión de clientes con la sesión admin.
-- [ ] Ensayar restauración de los backups en un entorno aislado.
+- [x] Ensayar restauración de los backups en un entorno aislado (PostgreSQL temporal sin red y directorio temporal, 2026-10-07).
 - [x] Preparar Fedora en el destino solicitado (make setup y make check, 2026-10-07).
 
 ## Rutas y configuración privada

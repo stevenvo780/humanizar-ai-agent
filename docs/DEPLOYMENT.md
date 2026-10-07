@@ -7,9 +7,8 @@ de login, Haiku, TLS, sandbox y persistencia están en [VALIDATION.md](VALIDATIO
 
 **Estado al 2026-10-07:** el frontend publicado está disponible en
 Vercel; la revisión y comprobaciones vigentes están en [VALIDATION.md](VALIDATION.md).
-El despliegue de la nueva API con gestión de clientes, lectura de
-documentos sigue pendiente: el VPS ejecuta todavía la revisión `0ecb292`; el acceso
-SSH del operador se recuperó el 2026-10-07, pero la actualización no se ha ejecutado.
+Frontend y API publicados en `9ac20b0` el 2026-10-07, tras un backup coordinado de
+PostgreSQL y `/data`; la salud HTTPS declara gestión de clientes y lectura de documentos.
 En Fedora, el portátil Fedora 44 ya contiene el checkout en `~/Documentos/repos/SoftopPrueba` (enlace simbólico a un disco de datos); con uv 0.11.21, `make setup` y `make check` pasaron allí el 2026-10-07.
 El operador preparó `.env.production` y `.env.vercel` privados, modo `0600` e
 ignorados por Git, preservando `.env` local. Su comprobación de sólo lectura
