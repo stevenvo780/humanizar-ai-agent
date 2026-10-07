@@ -90,8 +90,22 @@ Consulta [las instrucciones de RAG](docs/RAG.md) antes de cambiar el proveedor.
 SQLite guarda usuarios, sesiones, conversaciones, mensajes y solicitudes comerciales
 en `DATA_DIR/application.sqlite3`. Documentos y vectores
 persisten junto a esa base. No hay cuentas ni contraseñas predeterminadas.
+Si configuras `DATABASE_URL`, esos registros relacionales se guardan en PostgreSQL
+dentro de un schema dedicado; Qdrant y el corpus conservan su volumen persistente.
 Las solicitudes son registros reales de esta aplicación; no envían notificaciones
 ni confirman reuniones externas.
+
+## Despliegue y portátil
+
+La web se despliega en Vercel y envía `/api` al backend FastAPI por HTTPS. La API,
+Qdrant y el sandbox se ejecutan en el VPS con Docker; PostgreSQL guarda los datos
+relacionales. `ANTHROPIC_API_KEY`, `DATABASE_URL` y los secretos de autenticación
+pertenecen al entorno privado del backend. Vercel utiliza `API_ORIGIN` y un secreto
+del proxy; ninguna credencial utiliza el prefijo público `VITE_`.
+
+[DEPLOYMENT.md](docs/DEPLOYMENT.md) describe las variables, aprovisionamiento,
+comprobaciones, backups y repetición. [FEDORA.md](docs/FEDORA.md) prepara la copia
+en Documentos, Python, Node, Claude Code y Spec Kit para presentar desde el portátil.
 
 Para adaptar otra empresa, cambia la identidad en `.env`, vacía `KNOWLEDGE_DIR`
 y utiliza un `DATA_DIR` distinto, o apunta `KNOWLEDGE_DIR` a tus archivos Markdown/TXT.

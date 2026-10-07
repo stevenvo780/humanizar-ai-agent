@@ -16,6 +16,26 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # Disposable loopback-only CI credentials, never production configuration.
+      LUMEN_TEST_DATABASE_URL: postgresql+psycopg://lumen_test:lumen_test@127.0.0.1:5432/lumen_test?sslmode=disable
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_USER: lumen_test
+          POSTGRES_PASSWORD: lumen_test
+          POSTGRES_DB: lumen_test
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --cpus 1
+          --memory 512m
+          --pids-limit 128
+          --health-cmd "pg_isready -U lumen_test -d lumen_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

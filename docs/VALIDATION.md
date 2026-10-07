@@ -7,18 +7,22 @@ la prueba, todavía desconocidos.
 
 | Componente | Evidencia |
 | --- | --- |
-| Backend | Ruff, formato, mypy estricto en app y pruebas, 140 pruebas |
-| Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 76 pruebas |
-| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 25 pruebas y build |
+| Backend | Ruff, formato, mypy estricto en app y pruebas, 186 pruebas incluidas 12 PostgreSQL |
+| Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 77 pruebas |
+| Helpers de despliegue | 28 pruebas offline de configuración, rutas y ejecución privada |
+| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 60 pruebas y build |
 | Dependencias web | npm audit: 0 vulnerabilidades en la comprobación del frontend |
-| Configuración | JSON válido, Compose principal y override local válidos |
+| Configuración | JSON válido; Compose local y producción; proxy Vercel tipado |
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total actual: **241 pruebas aprobadas**. La base anterior de 214 pruebas también
+Total actual: **351 pruebas**. Las 12 de PostgreSQL se activan con
+`LUMEN_TEST_DATABASE_URL` apuntando exclusivamente a una base temporal loopback
+`lumen_test`; cada prueba crea y elimina su propio schema aleatorio. Nunca apuntar
+esa variable a la base de la empresa. La base anterior de 214 pruebas también
 se verificó desde un clon descargado del repositorio público con Python 3.12.3
 en backend y sandbox. La comprobación actual utiliza Python 3.11.15 en backend
-y 3.12 en sandbox; las 140 pruebas del backend también pasaron en un entorno
+y 3.12 en sandbox; las 140 pruebas del backend anterior también pasaron en un entorno
 aislado con Python 3.12.3. Docker apunta a Python 3.12. Mypy utiliza
 objetivo 3.12 para interpretar los stubs PEP 695 de NumPy, manteniendo el código
 compatible con Python 3.11 mediante Ruff. Existe una advertencia externa de deprecación
@@ -92,10 +96,18 @@ las filas legacy se conservan, se ignoran y no alteran el JWT persistente.
 La auditoría de publicación rechaza directorios de entorno privados, sesiones Claude
 con variaciones de mayúsculas y el puntero local de Spec Kit, incluido un índice Git real.
 
+La revisión de despliegue cubrió configuración de Vercel sin secretos serializados,
+validación TLS y URL PostgreSQL, preservación de schemas ajenos, locks de sesiones
+e idempotencia. Bootstrap con dos procesos independientes creó exactamente un
+administrador. Se corrigieron parámetros vacíos/duplicados y puertos inválidos antes
+de construir la conexión. Los helpers requieren secretos de JWT y bootstrap para
+producción. La publicación real se registra por separado del inventario automatizado.
+
 ## Pendientes y límites
 
-- El daemon Docker no responde. Compose y Dockerfiles están preparados; no se
-  ejecutaron builds ni procesos de terminal del producto en este host.
+- El daemon Docker del entorno local no responde. Las pruebas PostgreSQL utilizaron
+  un contenedor temporal aislado en el VPS, accesible sólo por un túnel loopback.
+  Los builds y el sandbox productivo se verifican en el VPS durante el despliegue.
 - CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
   locales, auditoría de paths, Gitleaks e integración Docker. El runner remoto no
   inició su ejecución; el workflow no cuenta como validación de Docker.
@@ -103,9 +115,12 @@ con variaciones de mayúsculas y el puntero local de Spec Kit, incluido un índi
   clave privada. Los controles automatizados del ciclo, errores y presupuestos
   utilizan proveedores simulados; las llamadas reales locales se registran arriba.
 - Qdrant remoto no probado; modo local persistente comprobado.
-- PDF requiere texto extraíble, sin OCR. El historial autenticado persiste en SQLite.
-- Hosting público de la web queda fuera de esta base local. Autenticación multiusuario
-  con roles ya está implementada y comprobada. SQLite se utiliza como BD relacional.
+- PDF requiere texto extraíble, sin OCR. SQLite local o PostgreSQL remoto conservan
+  cuentas, sesiones, historial y solicitudes; Qdrant persiste en un volumen del VPS.
+- El hosting público utiliza Vercel para React y un VPS para FastAPI/sandbox.
+  Procedimiento y variables documentados en [DEPLOYMENT.md](DEPLOYMENT.md).
+  Fedora dispone de un helper de preparación; ejecutar en el equipo real requiere
+  su acceso SSH y la autenticación interactiva local de Claude Code.
 - Las solicitudes se registran localmente; no hay envío externo ni reserva de agenda.
 
 ## Archivos y repetición
@@ -138,7 +153,8 @@ temporales aislados, sin sustituir herramientas globales.
 El [repositorio público](https://github.com/stevenvo780/humanizar-ai-agent) dispone
 de código fuente preparado con CI, escaneo de publicación y exclusión
 de configuración local, datos y sesiones. El escaneo final y la publicación los
-realiza el integrador después de completar los gates; no acreditan hosting de la web.
+realiza el integrador después de completar los gates. El escaneo de Git es una
+comprobación distinta de la verificación del hosting y sus servicios.
 
 Para repetir: `make setup`, `make check`, `make dev`. Para terminal real, activa
 Docker y usa `make docker` o el override local de `make dev`. Para Anthropic,

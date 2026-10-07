@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 BLOCKED_DIRECTORIES = frozenset(
     {
         ".codex",
+        ".vercel",
         ".venv",
         "venv",
         "node_modules",

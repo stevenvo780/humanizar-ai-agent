@@ -65,7 +65,7 @@ def test_knowledge_constructor_failure_releases_qdrant_lock(
     ("failure_stage", "expected_closed"),
     [
         ("KnowledgeStore", {"database"}),
-        ("BusinessStore", {"database", "knowledge"}),
+        ("create_business_store", {"database", "knowledge"}),
         ("CompanyAgent", {"database", "knowledge", "business", "registry"}),
     ],
 )

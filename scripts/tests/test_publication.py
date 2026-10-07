@@ -21,6 +21,7 @@ SPEC.loader.exec_module(auditor)
         "backend/.env.private/.env.example",
         "data/application.sqlite3",
         ".codex/agent-parity-manifest.json",
+        "frontend/.vercel/project.json",
         "backend/private.key",
         ".application-secret",
         ".claude/settings.local.json",

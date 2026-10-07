@@ -2,6 +2,11 @@
 
 ## Antes de la prueba
 
+La preparación de Fedora está en [FEDORA.md](FEDORA.md). El despliegue con frontend
+Vercel, backend Docker y PostgreSQL está en [DEPLOYMENT.md](DEPLOYMENT.md). Para una
+presentación sin red, deja `DATABASE_URL` vacío y usa SQLite local con datos propios;
+configura por separado una clave privada si necesitas llamadas reales a Anthropic.
+
 1. Abre la web y crea tu administrador. Prepara una credencial Anthropic propia.
    Configura `ANTHROPIC_API_KEY` en el `.env` privado del backend, reinicia la API
    y verifica una respuesta con el modo Anthropic visible.

@@ -1,0 +1,51 @@
+# Deploy CLI runs from the repository root; Vercel Root Directory is frontend.
+# Only the frontend source tree is needed by the remote build.
+*
+!frontend/
+!frontend/**
+
+# Keep all private configuration and runtime state excluded after the allowlist.
+**/.env*
+**/*.env
+**/*.env.*
+**/.npmrc
+**/.git/**
+**/.vercel/**
+**/.codex/**
+**/.claude/**
+**/.agents/**
+**/.application-secret*
+**/settings.local*
+**/credentials*
+**/secrets/**
+**/sessions/**
+**/node_modules/**
+**/.venv/**
+**/venv/**
+**/data/**
+**/material/**
+**/artifacts/**
+**/logs/**
+**/dist/**
+**/coverage/**
+**/playwright-report/**
+**/test-results/**
+**/.pytest_cache/**
+**/.mypy_cache/**
+**/.ruff_cache/**
+**/__pycache__/**
+**/*.pyc
+**/*.token
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.sqlite*
+**/*.db
+**/*.log
+**/*.zip
+**/*.tar*
+
+# These services run on the VPS, not in the Vercel frontend build.
+backend/
+sandbox/

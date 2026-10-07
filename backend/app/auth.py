@@ -20,11 +20,12 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
 from app.database import (
     REFRESH_SECONDS,
-    ApplicationDatabase,
     RegistrationUnavailable,
     SetupAlreadyComplete,
 )
 from app.database import User as User
+from app.persistence import IdentityStore, PersistenceUnavailable
+from app.settings import Settings
 
 CURRENT_USER_ID: ContextVar[str | None] = ContextVar("current_user_id", default=None)
 ISSUER = "humanizar-assistant"
@@ -91,6 +92,8 @@ class SafeAuthRoute(APIRoute):
                 raise HTTPException(
                     422, "Datos inválidos. Revisá los campos y sus límites."
                 ) from None
+            except PersistenceUnavailable:
+                raise HTTPException(503, "El almacenamiento no está disponible.") from None
 
         return safe_handler
 
@@ -122,8 +125,8 @@ class LoginRateLimiter:
 router = APIRouter(prefix="/api/auth", tags=["authentication"], route_class=SafeAuthRoute)
 
 
-def _database(request: Request) -> ApplicationDatabase:
-    database: ApplicationDatabase = request.app.state.database
+def _database(request: Request) -> IdentityStore:
+    database: IdentityStore = request.app.state.database
     return database
 
 
@@ -132,7 +135,7 @@ def hash_password(password: str) -> str:
         return _passwords.hash(password)
 
 
-def _access(database: ApplicationDatabase, user: User, session_id: str) -> str:
+def _access(database: IdentityStore, user: User, session_id: str) -> str:
     now = datetime.now(UTC)
     return jwt.encode(
         {
@@ -177,7 +180,7 @@ def _unauthorized() -> HTTPException:
     )
 
 
-def _claims(database: ApplicationDatabase, token: str) -> tuple[str, str]:
+def _claims(database: IdentityStore, token: str) -> tuple[str, str]:
     if len(token) > 8192:
         raise _unauthorized()
     try:
@@ -229,6 +232,11 @@ def status(request: Request) -> dict[str, bool]:
 
 @router.post("/setup", response_model=SessionResponse)
 def setup(payload: SignupRequest, request: Request, response: Response) -> SessionResponse:
+    settings: Settings | None = getattr(request.app.state, "settings", None)
+    expected = settings.auth_bootstrap_token.get_secret_value() if settings is not None else ""
+    supplied = request.headers.get("X-Bootstrap-Token", "")
+    if expected and not secrets.compare_digest(supplied.encode(), expected.encode()):
+        raise HTTPException(403, "La configuración inicial requiere autorización privada.")
     try:
         user = _database(request).bootstrap_admin(
             payload.name, payload.email, hash_password(payload.password.get_secret_value())

@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from pydantic import SecretStr
 
 from app.settings import Settings
 from app.storage import KnowledgeStore
@@ -17,6 +18,9 @@ def settings(tmp_path: Path) -> Settings:
         llm_mode="demo",
         seed_demo=False,
         auth_enabled=False,
+        database_url=SecretStr(""),
+        jwt_secret=SecretStr(""),
+        auth_bootstrap_token=SecretStr(""),
         mcp_enabled=False,
         sandbox_url="http://127.0.0.1:1",
     )

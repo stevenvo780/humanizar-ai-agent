@@ -16,12 +16,14 @@ ROOT_FILES = {
     "LICENSE.md",
     ".env.example",
     ".gitignore",
+    ".vercelignore",
     ".mcp.json",
     ".editorconfig",
     ".dockerignore",
     "compose.yml",
     "compose.yaml",
     "compose.local.yaml",
+    "compose.production.yaml",
     "docker-compose.yml",
     "docker-compose.yaml",
     "Makefile",
@@ -72,6 +74,7 @@ ALLOWED_SUFFIXES = {
 BLOCKED_PARTS = {
     ".git",
     ".codex",
+    ".vercel",
     "node_modules",
     ".venv",
     "venv",
@@ -121,7 +124,14 @@ def allowed_path(relative: Path) -> bool:
         parts[0] in ALLOWED_TREES
         and (
             relative.suffix.casefold() in ALLOWED_SUFFIXES
-            or relative.name in {"Dockerfile", ".dockerignore", ".gitignore", ".prettierignore"}
+            or relative.name
+            in {
+                "Dockerfile",
+                ".dockerignore",
+                ".gitignore",
+                ".vercelignore",
+                ".prettierignore",
+            }
         )
         and relative.name != ".npmrc"
     )

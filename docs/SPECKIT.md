@@ -28,6 +28,13 @@ que publiquen o creen ramas automáticamente.
 reserva la adaptación a un enunciado todavía desconocido: todas sus tareas están
 pendientes. Las features no dependen del nombre de la rama Git en la versión 1.0.7.
 
+La base también incluye PostgreSQL opcional y el despliegue Vercel/VPS descrito en
+[DEPLOYMENT.md](DEPLOYMENT.md). Para presentar desde otro equipo, preparar primero
+la copia de [FEDORA.md](FEDORA.md). Esas capacidades están disponibles para adaptar
+el brief; no cambian el estado pendiente de `002` ni requieren reinstalar Spec Kit.
+La configuración privada y `.specify/feature.json` se crean localmente, sin incluir
+secretos ni rutas absolutas en el repositorio público.
+
 `make setup` crea, si falta, `.specify/feature.json` con la ruta relativa de `001`.
 Ese archivo es estado local ignorado por el scaffolding oficial. Al cambiar feature,
 el CLI actualiza el puntero; no se distribuyen rutas absolutas de una laptop.

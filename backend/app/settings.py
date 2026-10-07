@@ -1,7 +1,8 @@
+import re
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -9,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=ROOT / ".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=ROOT / ".env", env_file_encoding="utf-8", extra="ignore", hide_input_in_errors=True
     )
     anthropic_api_key: SecretStr = SecretStr("")
     llm_mode: Literal["auto", "demo", "anthropic"] = "auto"
@@ -21,6 +22,10 @@ class Settings(BaseSettings):
     seed_demo: bool = True
     knowledge_dir: Path | None = None
     auth_enabled: bool = True
+    database_url: SecretStr = SecretStr("")
+    database_schema: str = "lumen"
+    jwt_secret: SecretStr = SecretStr("")
+    auth_bootstrap_token: SecretStr = SecretStr("")
     embedding_provider: Literal["hash", "fastembed"] = "hash"
     fastembed_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     fastembed_threads: int = Field(default=2, ge=1, le=8)
@@ -45,6 +50,24 @@ class Settings(BaseSettings):
         "http://127.0.0.1:4173",
         "http://localhost:3000",
     ]
+
+    @field_validator("database_schema")
+    @classmethod
+    def dedicated_schema(cls, value: str) -> str:
+        if (
+            not re.fullmatch(r"[a-z][a-z0-9_]{0,62}", value)
+            or value in {"public", "information_schema"}
+            or value.startswith("pg_")
+        ):
+            raise ValueError("DATABASE_SCHEMA debe ser un schema dedicado válido.")
+        return value
+
+    @field_validator("jwt_secret", "auth_bootstrap_token")
+    @classmethod
+    def private_secret(cls, value: SecretStr) -> SecretStr:
+        if value.get_secret_value() and len(value.get_secret_value()) < 32:
+            raise ValueError("Los secretos privados deben tener al menos 32 caracteres.")
+        return value
 
     @model_validator(mode="after")
     def verify_mode(self) -> "Settings":

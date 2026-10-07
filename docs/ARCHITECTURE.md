@@ -38,6 +38,9 @@ Qdrant local guarda vectores y SQLite conserva documentos y fragmentos bajo DATA
 Otra base relacional persistente, `application.sqlite3`, guarda cuentas, sesiones,
 conversaciones, mensajes y solicitudes. La configuración de Anthropic procede
 exclusivamente del entorno privado del backend; ninguna ruta HTTP acepta claves.
+En producción, `DATABASE_URL` selecciona PostgreSQL para esos datos, con transacciones
+y un schema dedicado. SQLite sigue siendo la opción local sin red. El volumen de
+Qdrant y los archivos de conocimiento permanece en el backend Docker.
 JWT usa claves persistentes privadas, Argon2 protege contraseñas y el refresh está
 en una cookie HttpOnly. Logout revoca la familia de sesiones rotadas.
 El servidor obtiene el historial por usuario; descarta el historial enviado por el cliente.
@@ -53,6 +56,12 @@ El sandbox acepta nombres de comandos definidos. Ejecuta argumentos fijos sin sh
 con límites de tiempo, salida y recursos. Solo ese servicio ejecuta procesos de
 terminal para el producto; el host de la API no ejecuta instrucciones del modelo.
 Compose no publica su puerto y no le entrega credenciales o el socket Docker.
+
+Vercel sirve la aplicación React y reenvía `/api` al origen HTTPS. Un header privado
+del proxy identifica esas peticiones; el origen rechaza acceso directo sin él.
+La cookie de refresh y el JWT se mantienen bajo el origen de la web. El proxy
+evita almacenar respuestas privadas en caché y el backend mantiene el presupuesto
+de ejecución durante toda la respuesta SSE. Ver docs/DEPLOYMENT.md.
 
 Esta base incluye acceso multiusuario con roles administrador y cliente. Cuotas por
 tenant, despliegue público, OCR, navegador autónomo y ejecución arbitraria de código

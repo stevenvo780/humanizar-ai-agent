@@ -15,9 +15,7 @@ from starlette.requests import Request
 from app.agent import AgentFailure, CompanyAgent, MessageProvider
 from app.auth import CURRENT_USER_ID, User, require_admin, require_user
 from app.auth import router as auth_router
-from app.business import BusinessStore
 from app.concurrency import run_sync
-from app.database import ApplicationDatabase
 from app.ingestion import IngestionError, parse_upload
 from app.knowledge_bootstrap import load_initial_knowledge
 from app.models import (
@@ -30,6 +28,8 @@ from app.models import (
     ToolTrace,
     UploadResponse,
 )
+from app.persistence import BusinessRepository, IdentityStore, PersistenceUnavailable
+from app.persistence_factory import create_business_store, create_identity_store
 from app.request_guard import RequestGuard
 from app.sample_data import DEMO_DOCUMENTS
 from app.security import redact
@@ -92,14 +92,14 @@ def create_app(
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         async with AsyncExitStack() as resources:
-            database = await asyncio.to_thread(ApplicationDatabase, config.data_dir)
+            database = await asyncio.to_thread(create_identity_store, config)
             resources.push_async_callback(asyncio.to_thread, database.close)
             store = await asyncio.to_thread(KnowledgeStore, config)
             resources.push_async_callback(asyncio.to_thread, store.close)
             if config.seed_demo and config.company_name.casefold() == "forma":
                 await asyncio.to_thread(store.seed, DEMO_DOCUMENTS)
             await asyncio.to_thread(load_initial_knowledge, store, config)
-            business = await asyncio.to_thread(BusinessStore, config.data_dir)
+            business = await asyncio.to_thread(create_business_store, config, database)
             resources.push_async_callback(asyncio.to_thread, business.close)
             registry = ToolRegistry(config, store, business)
             resources.push_async_callback(registry.close)
@@ -175,7 +175,7 @@ def create_app(
     async def open_conversation(request: ChatRequest, user: User | None) -> ChatRequest:
         if user is None:
             return request
-        database: ApplicationDatabase = api.state.database
+        database: IdentityStore = api.state.database
         try:
             identifier = await run_sync(
                 database.create_conversation, user.id, request.session_id, request.message[:90]
@@ -187,7 +187,7 @@ def create_app(
     async def with_server_history(request: ChatRequest, user: User | None) -> ChatRequest:
         if user is None or request.session_id is None:
             return request
-        database: ApplicationDatabase = api.state.database
+        database: IdentityStore = api.state.database
         records = await run_sync(database.conversation_history, user.id, request.session_id)
         bounded: list[HistoryMessage] = []
         characters = 0
@@ -209,7 +209,7 @@ def create_app(
 
     async def save_exchange(user: User | None, request: ChatRequest, result: ChatResponse) -> None:
         if user is not None and request.session_id is not None:
-            database: ApplicationDatabase = api.state.database
+            database: IdentityStore = api.state.database
             await run_sync(
                 database.save_exchange,
                 user.id,
@@ -233,6 +233,12 @@ def create_app(
     @api.exception_handler(AgentFailure)
     async def agent_error(_request: Request, exc: AgentFailure) -> JSONResponse:
         return JSONResponse(status_code=503, content={"detail": exc.message, "code": exc.code})
+
+    @api.exception_handler(PersistenceUnavailable)
+    async def persistence_error(_request: Request, _exc: PersistenceUnavailable) -> JSONResponse:
+        return JSONResponse(
+            status_code=503, content={"detail": "El almacenamiento no está disponible."}
+        )
 
     @api.exception_handler(RequestValidationError)
     async def validation_error(_request: Request, _exc: RequestValidationError) -> JSONResponse:
@@ -368,24 +374,24 @@ def create_app(
 
     @api.get("/api/requests", dependencies=[Depends(bearer)])
     async def my_requests(user: Annotated[User, Depends(require_user)]) -> dict[str, Any]:
-        business: BusinessStore = api.state.business
+        business: BusinessRepository = api.state.business
         return {"requests": await run_sync(business.list_requests, user.id)}
 
     @api.get("/api/admin/requests", dependencies=[Depends(bearer)])
     async def admin_requests(_user: Annotated[User, Depends(require_admin)]) -> dict[str, Any]:
-        business: BusinessStore = api.state.business
+        business: BusinessRepository = api.state.business
         return {"requests": await run_sync(business.list_all_requests)}
 
     @api.get("/api/conversations", dependencies=[Depends(bearer)])
     async def conversations(user: Annotated[User, Depends(require_user)]) -> dict[str, Any]:
-        database: ApplicationDatabase = api.state.database
+        database: IdentityStore = api.state.database
         return {"conversations": await run_sync(database.list_conversations, user.id)}
 
     @api.delete("/api/conversations/{identifier}", status_code=204, dependencies=[Depends(bearer)])
     async def remove_conversation(
         identifier: str, user: Annotated[User, Depends(require_user)]
     ) -> Response:
-        database: ApplicationDatabase = api.state.database
+        database: IdentityStore = api.state.database
         try:
             removed = await run_sync(database.delete_conversation, user.id, identifier)
         except PermissionError as exc:

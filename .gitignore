@@ -30,6 +30,7 @@ Lumen-source*.zip
 *.log
 .DS_Store
 /.codex/
+.vercel/
 /.claude/cache/
 /.claude/debug/
 /.claude/projects/

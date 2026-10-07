@@ -74,7 +74,7 @@ function Architecture() {
         <span>
           <Network size={16} /> Un contrato claro entre cada pieza
         </span>
-        <span>REST + SSE · Datos persistentes</span>
+        <span>Vercel → VPS · REST + SSE</span>
       </figcaption>
       <div className="docs-diagram-scroll">
         <svg
@@ -84,11 +84,12 @@ function Architecture() {
         >
           <title id="architecture-title">Arquitectura de Humanizar IA</title>
           <desc id="architecture-description">
-            El navegador React usa REST y SSE para comunicarse con FastAPI. FastAPI valida JWT,
-            consulta SQLite, recupera evidencia de Qdrant y coordina el ciclo de herramientas de
-            Claude Haiku. El registro de herramientas accede al sandbox aislado y las acciones
-            confirmadas se guardan en SQLite. El servidor MCP consulta la identidad pública de la
-            misma API por HTTP.
+            React se sirve desde Vercel. Las llamadas REST y SSE del mismo origen pasan por un
+            rewrite que añade una cabecera privada hacia FastAPI en Docker en el VPS. La API valida
+            JWT, consulta PostgreSQL con TLS en el schema lumen, recupera evidencia de Qdrant local
+            y coordina Claude Haiku y el sandbox aislado. SQLite es la alternativa local opcional.
+            MCP consulta la misma API por HTTP. Este diagrama describe la configuración preparada;
+            la comprobación del despliegue público se registra por separado.
           </desc>
           <defs>
             <marker
@@ -105,35 +106,31 @@ function Architecture() {
           <g fill="none" stroke="#587e70" strokeWidth="1.2" markerEnd="url(#docs-arrow)">
             <path d="M164 90h48" />
             <path d="M362 90h54" />
-            <path d="M512 120v42" />
-            <path d="M285 120v42" />
+            <path d="M502 120v42" />
+            <path d="M502 120v20H285v22" />
             <path d="M285 218v49" />
-            <path d="M362 190h54" />
-            <path d="M589 190h39v101h-39" />
+            <path d="M362 298h32V190h22" />
             <path d="M285 298h131" />
-            <path d="M164 298h23V90h25" strokeDasharray="4 5" />
+            <path d="M164 298h23V38h315v22" strokeDasharray="4 5" />
           </g>
           <g className="diagram-labels" fill="#7b9a8b" fontSize="9">
             <text x="177" y="78">
               REST/SSE
             </text>
             <text x="376" y="78">
-              auth
+              HTTPS
             </text>
-            <text x="300" y="144">
+            <text x="300" y="132">
               agente
             </text>
             <text x="529" y="144">
-              sesiones
+              datos
             </text>
             <text x="375" y="178">
-              consulta
+              persiste
             </text>
             <text x="299" y="247">
               tool_use
-            </text>
-            <text x="638" y="244">
-              registra
             </text>
             <text x="18" y="250">
               stdio · identidad por HTTP
@@ -151,59 +148,59 @@ function Architecture() {
           </g>
           <g className="diagram-node-titles" fill="#d0e4d8" fontSize="12">
             <text x="32" y="85">
-              React + TypeScript
+              React · Vercel
             </text>
             <text x="32" y="292">
               MCP read-only
             </text>
             <text x="230" y="85">
-              FastAPI
+              Rewrite protegido
             </text>
             <text x="434" y="85">
-              JWT + Argon2
+              FastAPI · VPS Docker
             </text>
             <text x="230" y="185">
               Claude Haiku 4.5
             </text>
             <text x="434" y="185">
-              SQLite + Qdrant
+              PostgreSQL + Qdrant
             </text>
             <text x="230" y="292">
               Herramientas
             </text>
             <text x="434" y="292">
-              Acciones + sandbox
+              Sandbox Docker
             </text>
           </g>
           <g fill="#819c8f" fontSize="9">
             <text x="32" y="104">
-              Cliente y administración
+              TypeScript · Cliente web
             </text>
             <text x="32" y="311">
               Misma API · sin secretos
             </text>
             <text x="230" y="104">
-              Orquestación y permisos
+              Mismo origen · header privado
             </text>
             <text x="434" y="104">
-              Refresh rotativo · roles
+              JWT · roles · orquestación
             </text>
             <text x="230" y="203">
               Ciclo nativo y limitado
             </text>
             <text x="434" y="203">
-              Relacional + vectorial
+              SQL con TLS · Qdrant local
             </text>
             <text x="230" y="311">
               Registro compartido
             </text>
             <text x="434" y="311">
-              Confirmación · aislamiento
+              Presets · aislamiento
             </text>
           </g>
           <g fill="#658878" fontSize="8">
             <text x="14" y="376">
-              Los secretos permanecen en el backend.
+              SQLite opcional para desarrollo local. Secretos fuera del navegador.
             </text>
             <text x="416" y="376">
               La terminal solo ejecuta presets en su servicio aislado.
@@ -212,8 +209,9 @@ function Architecture() {
         </svg>
       </div>
       <p>
-        El navegador consume la API. La API concentra permisos, recuperación, persistencia y
-        ejecución; el modelo recibe resultados de herramientas, no acceso directo a los servicios.
+        El navegador conserva llamadas a <code>/api</code> en el mismo origen. El proxy añade la
+        cabecera privada en el servidor; la API concentra permisos, recuperación, persistencia y
+        ejecución. El modelo recibe resultados de herramientas, no acceso directo a las bases.
       </p>
     </figure>
   );
@@ -336,22 +334,22 @@ export default function DocsPage() {
                 <Sparkles size={12} /> Claude Haiku
               </span>
               <span>
-                <Database size={12} /> Qdrant + SQLite
+                <Database size={12} /> PostgreSQL + Qdrant
               </span>
             </div>
             <div className="docs-evidence-heading">
               <span>
-                <FileCheck2 size={13} /> ÚLTIMA BASE VERIFICADA
+                <FileCheck2 size={13} /> EVIDENCIA REGISTRADA
               </span>
-              <time dateTime="2026-10-07T00:20:00Z">7 de octubre de 2026 · 00:20 UTC</time>
+              <time dateTime="2026-10-07">7 de octubre de 2026</time>
             </div>
             <div className="docs-metrics">
               <div>
                 <span className="docs-metric-number">
-                  241<span> / pruebas</span>
+                  351<span> / pruebas</span>
                 </span>
-                <p>Aprobadas en la base registrada</p>
-                <small>127 backend · 71 sandbox y utilidades · 16 web</small>
+                <p>En la base de comprobación</p>
+                <small>186 API · 77 sandbox/scripts · 28 despliegue · 60 web</small>
               </div>
               <div>
                 <span className="docs-metric-title">
@@ -369,8 +367,8 @@ export default function DocsPage() {
               </div>
             </div>
             <p className="docs-snapshot-note">
-              Los resultados son una referencia fechada de la última base verificada; esta página no
-              ejecuta comprobaciones en vivo.
+              El inventario y la evidencia están fechados; esta página no ejecuta comprobaciones en
+              vivo. El despliegue público requiere su propio smoke de extremo a extremo.
             </p>
           </section>
           <Section
@@ -380,9 +378,11 @@ export default function DocsPage() {
             title="Piezas pequeñas. Responsabilidades claras."
           >
             <p>
-              React presenta la experiencia del cliente y la administración. FastAPI valida cada
-              petición y coordina el agente. Qdrant recupera evidencia semántica; SQLite conserva
-              las cuentas, sesiones, conversaciones y solicitudes.
+              Vercel sirve React y dirige <code>/api</code> al backend mediante un rewrite
+              protegido. FastAPI y el sandbox se ejecutan en Docker en un VPS. PostgreSQL conserva
+              cuentas, sesiones, conversaciones y solicitudes; Qdrant recupera evidencia desde su
+              índice local persistente. SQLite sigue disponible para desarrollo local sin base
+              remota.
             </p>
             <Architecture />
             <div className="docs-two-columns">
@@ -494,11 +494,12 @@ export default function DocsPage() {
                 <span className="docs-data-icon lavender">
                   <Database size={21} />
                 </span>
-                <h3>SQLite · datos de la aplicación</h3>
+                <h3>PostgreSQL · datos de la aplicación</h3>
                 <p>
-                  Cuentas, familias de sesiones, conversaciones, mensajes y solicitudes. El
-                  historial se obtiene por propietario; el servidor ignora el historial que envía el
-                  cliente autenticado.
+                  Cuentas, familias de sesiones, conversaciones, mensajes y solicitudes en un schema
+                  dedicado <code>lumen</code>, con TLS y verificación del certificado y del
+                  hostname. SQLite es la alternativa local. El historial se obtiene por propietario;
+                  el servidor ignora el historial que envía el cliente autenticado.
                 </p>
               </article>
             </div>
@@ -521,10 +522,11 @@ export default function DocsPage() {
                 <ChevronRight size={15} />
               </summary>
               <p>
-                El despliegue con Qdrant local utiliza un único worker de API. Un cambio de modelo
-                de embeddings requiere reconciliar la colección; no se mezclan espacios vectoriales
-                incompatibles. Qdrant remoto es configurable, pero no forma parte de la verificación
-                registrada.
+                Qdrant local utiliza un único worker de API y un volumen persistente en el VPS.
+                PostgreSQL usa un schema exclusivo del proyecto; los secretos de conexión se
+                configuran únicamente en el backend. Un cambio de embeddings requiere reconciliar la
+                colección; no se mezclan espacios vectoriales incompatibles. Qdrant remoto sigue
+                siendo opcional y no forma parte de la verificación registrada.
               </p>
             </details>
           </Section>
@@ -541,8 +543,9 @@ export default function DocsPage() {
                   <h3>JWT en memoria, contraseñas con Argon2</h3>
                   <p>
                     El token de acceso permanece solo en memoria del navegador. Las contraseñas se
-                    almacenan como hashes Argon2; no hay credenciales predeterminadas. La primera
-                    cuenta configura al administrador.
+                    almacenan como hashes Argon2; no hay credenciales predeterminadas. En
+                    producción, el primer administrador se provisiona por CLI privado antes de
+                    publicar; el bootstrap HTTP exige un token privado del operador.
                   </p>
                 </div>
               </article>
@@ -551,9 +554,10 @@ export default function DocsPage() {
                 <div>
                   <h3>Refresh rotativo y revocación de familia</h3>
                   <p>
-                    Una cookie HttpOnly mantiene la sesión. El refresh rota sus credenciales y el
-                    logout revoca la familia completa. Refresh y logout requieren un encabezado de
-                    verificación; el cliente reintenta una sola vez al recibir un 401.
+                    La configuración HTTPS utiliza una cookie Secure y HttpOnly. El refresh rota sus
+                    credenciales y el logout revoca la familia completa. Refresh y logout requieren
+                    un encabezado de verificación; el cliente reintenta una sola vez al recibir un
+                    401. El smoke del despliegue debe comprobar estos atributos en el entorno real.
                   </p>
                 </div>
               </article>
@@ -641,8 +645,9 @@ export default function DocsPage() {
               <p>
                 La última base verificó handshake, catálogo MCP y <code>company_info</code> sobre la
                 API real. La búsqueda protegida exige sesión: un MCP sin autenticación no tiene
-                acceso. Compose y los Dockerfiles fueron validados; la ejecución real del sandbox
-                queda pendiente de un daemon Docker disponible.
+                acceso. La receta de VPS define la API y el sandbox con Docker Compose y aislamiento
+                del sandbox. Sus comprobaciones de código no sustituyen ejecutar presets y revisar
+                streaming y persistencia en el despliegue correspondiente.
               </p>
             </details>
           </Section>
@@ -653,13 +658,14 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La última base registrada reúne <strong>241 pruebas aprobadas</strong> y
-              verificaciones de formato, tipos y build. Los resultados describen esa base; cualquier
-              cambio posterior debe volver a pasar sus comprobaciones.
+              La base cuenta con <strong>351 pruebas</strong>, incluidas pruebas reales de
+              persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
+              describe la base registrada; cada cambio posterior debe volver a pasar sus
+              comprobaciones.
             </p>
             <div className="docs-quality-table-wrap">
               <table className="docs-quality-table">
-                <caption>Comprobaciones registradas el 7 de octubre de 2026 · 00:20 UTC</caption>
+                <caption>Inventario y evidencia registrados el 7 de octubre de 2026</caption>
                 <thead>
                   <tr>
                     <th scope="col">Capa</th>
@@ -671,17 +677,24 @@ export default function DocsPage() {
                   <tr>
                     <th scope="row">API y agente</th>
                     <td>
-                      Ruff, formato, mypy estricto, recuperación, autenticación y herramientas
+                      Ruff, formato, mypy estricto, agente, autenticación y persistencia PostgreSQL
                     </td>
                     <td>
-                      <strong>140</strong>
+                      <strong>186</strong>
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">Sandbox y utilidades</th>
                     <td>Ruff, formato, tipos, límites de ejecución, importación y empaquetado</td>
                     <td>
-                      <strong>76</strong>
+                      <strong>77</strong>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Helpers de despliegue</th>
+                    <td>Orígenes, TLS, secretos, bootstrap y configuración reproducible</td>
+                    <td>
+                      <strong>28</strong>
                     </td>
                   </tr>
                   <tr>
@@ -690,7 +703,7 @@ export default function DocsPage() {
                       ESLint con tipos, hooks y accesibilidad; Prettier; TypeScript; Vitest; build
                     </td>
                     <td>
-                      <strong>25</strong>
+                      <strong>60</strong>
                     </td>
                   </tr>
                 </tbody>
@@ -713,8 +726,10 @@ export default function DocsPage() {
             <p>
               Las pruebas relevantes cubren UTF-8 fragmentado y errores SSE; refresh y logout;
               confirmaciones permitidas; aislamiento de cuentas, ingesta, citas y presupuestos del
-              agente. El smoke de navegador registrado comprobó registro, acceso, historial,
-              solicitudes y ausencia de errores JavaScript y overflow móvil.
+              agente. PostgreSQL tiene pruebas de integración sobre una base real con TLS. Las rutas
+              de Vercel se compilan y validan sin serializar secretos. El smoke de navegador local
+              registrado comprobó registro, acceso, historial, solicitudes y ausencia de errores
+              JavaScript y overflow móvil; no acredita todavía el despliegue público.
             </p>
           </Section>
           <Section
@@ -726,13 +741,14 @@ export default function DocsPage() {
             <div className="docs-status-grid">
               <div className="docs-status-verified">
                 <span>
-                  <CheckCheck size={17} /> Comprobado localmente
+                  <CheckCheck size={17} /> Comprobado en pruebas
                 </span>
                 <ul>
                   <li>Acceso por cuenta, roles y sesiones revocables.</li>
-                  <li>Persistencia local y recuperación semántica.</li>
+                  <li>Persistencia PostgreSQL con TLS y recuperación semántica local.</li>
                   <li>Chat con fuentes, solicitudes confirmadas e inbox admin.</li>
                   <li>Identidad MCP y verificaciones de código.</li>
+                  <li>Configuración Vercel y helpers de despliegue validados.</li>
                   <li>
                     Claude Haiku 4.5: llamada autenticada, ejecución real del agente con MCP y
                     recuperación de documentación con fuentes verificadas localmente.
@@ -748,8 +764,11 @@ export default function DocsPage() {
                     Cada instalación requiere su propia clave de Anthropic en el backend y verificar
                     la conexión.
                   </li>
-                  <li>Docker: el daemon no estaba disponible en la última validación.</li>
-                  <li>Qdrant remoto y despliegue público: fuera de esa verificación.</li>
+                  <li>
+                    Despliegue público: confirmar acceso, cookies HTTPS, SSE y sandbox de extremo a
+                    extremo, además de persistencia tras reinicio del VPS.
+                  </li>
+                  <li>Qdrant remoto: opcional, fuera de la verificación registrada.</li>
                   <li>PDF escaneado: no incluye OCR.</li>
                 </ul>
               </div>
@@ -813,6 +832,34 @@ export default function DocsPage() {
                 <div>
                   <h3>README y arranque</h3>
                   <p>Preparación y comandos reproducibles</p>
+                </div>
+                <ArrowUpRight size={17} />
+              </a>
+              <a
+                href={`${REPOSITORY_URL}/blob/dev/docs/DEPLOYMENT.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="docs-resource-icon lavender">
+                  <Network size={22} />
+                </span>
+                <div>
+                  <h3>Vercel, VPS y PostgreSQL</h3>
+                  <p>Despliegue, persistencia y comprobación</p>
+                </div>
+                <ArrowUpRight size={17} />
+              </a>
+              <a
+                href={`${REPOSITORY_URL}/blob/dev/docs/FEDORA.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="docs-resource-icon">
+                  <Terminal size={22} />
+                </span>
+                <div>
+                  <h3>Preparar Fedora</h3>
+                  <p>Entorno de desarrollo y dependencias</p>
                 </div>
                 <ArrowUpRight size={17} />
               </a>

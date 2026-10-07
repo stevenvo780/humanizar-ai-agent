@@ -1,0 +1,81 @@
+# Run through scripts/deploy-vps.py; keep the private environment outside this tree.
+services:
+  api:
+    build: ./backend
+    env_file:
+      - path: ${LUMEN_PRODUCTION_ENV:?Set an absolute private environment path}
+        format: raw
+    environment:
+      DATA_DIR: /data
+      AUTH_ENABLED: "true"
+      QDRANT_URL: ""
+      SANDBOX_URL: http://sandbox:8001
+      LUMEN_API_URL: http://127.0.0.1:8000
+    # Only the dedicated API network and the host reverse proxy may reach this port.
+    command:
+      - uv
+      - run
+      - --no-sync
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "1"
+      - --no-access-log
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+    ports:
+      - "127.0.0.1:${LUMEN_API_PORT:-8087}:8000"
+    volumes:
+      - knowledge:/data
+    networks: [api, tools]
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 1g
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+    restart: unless-stopped
+
+  sandbox:
+    build: ./sandbox
+    networks: [tools]
+    read_only: true
+    tmpfs:
+      - /tmp:size=8m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 32
+    mem_limit: 160m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+    restart: unless-stopped
+
+volumes:
+  knowledge:
+
+networks:
+  api:
+  tools:
+    internal: true

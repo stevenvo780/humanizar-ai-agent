@@ -16,7 +16,6 @@ from mcp.client.stdio import stdio_client
 from mcp.types import TextContent
 
 from app.business import (
-    BusinessStore,
     BusinessValidationError,
     RequestKind,
     validate_details,
@@ -25,6 +24,7 @@ from app.business import (
 from app.calculator import calculate
 from app.concurrency import run_sync
 from app.models import Source, ToolTrace
+from app.persistence import BusinessRepository
 from app.security import redact, safe_input
 from app.settings import Settings
 from app.storage import KnowledgeStore
@@ -84,7 +84,7 @@ class ToolResult:
 
 class ToolRegistry:
     def __init__(
-        self, settings: Settings, store: KnowledgeStore, business: BusinessStore | None = None
+        self, settings: Settings, store: KnowledgeStore, business: BusinessRepository | None = None
     ) -> None:
         self.settings = settings
         self.store = store
@@ -294,7 +294,7 @@ class ToolRegistry:
             raise ValueError("Parámetro vacío, inválido o demasiado extenso.")
         return value.strip()
 
-    def _business_for_user(self, user_id: str | None) -> BusinessStore:
+    def _business_for_user(self, user_id: str | None) -> BusinessRepository:
         if user_id is None:
             raise BusinessValidationError(
                 "Inicia sesión para consultar o registrar tus solicitudes."

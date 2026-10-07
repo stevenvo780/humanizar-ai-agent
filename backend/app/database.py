@@ -78,11 +78,18 @@ def _master_secret(directory: Path) -> bytes:
             os.close(descriptor)
 
 
+def signing_secret(data_dir: Path, override: bytes | None = None) -> bytes:
+    data_dir.mkdir(parents=True, exist_ok=True)
+    if override is not None:
+        return override
+    return hmac.digest(_master_secret(data_dir), b"humanizar.access.v1", "sha256")
+
+
 class ApplicationDatabase:
-    def __init__(self, data_dir: Path) -> None:
+    def __init__(self, data_dir: Path, jwt_secret: bytes | None = None) -> None:
         data_dir.mkdir(parents=True, exist_ok=True)
         master = _master_secret(data_dir)
-        self._jwt_secret = hmac.digest(master, b"humanizar.access.v1", "sha256")
+        self._jwt_secret = jwt_secret or hmac.digest(master, b"humanizar.access.v1", "sha256")
         self._lock = threading.RLock()
         path = data_dir / "application.sqlite3"
         if path.is_symlink():

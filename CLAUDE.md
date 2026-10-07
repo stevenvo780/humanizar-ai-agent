@@ -16,7 +16,7 @@ allowed build commands constitute an OS sandbox for Claude Code.
 - backend/app: FastAPI, settings, document ingestion, persistent Qdrant retrieval,
   bounded Anthropic Haiku tool loop, demo mode, SSE and MCP server.
 - backend/app/auth.py and database.py: JWT, Argon2, rotating refresh/session families,
-  roles, SQLite conversations and business requests. Anthropic credentials come
+  roles, SQLite or PostgreSQL conversations and business requests. Anthropic credentials come
   exclusively from the backend environment; no browser configuration endpoint.
 - backend/knowledge/humanizar: public sourced initial corpus. Clear KNOWLEDGE_DIR
   and use a new DATA_DIR when adapting another company.
@@ -46,6 +46,12 @@ allowed build commands constitute an OS sandbox for Claude Code.
 Claude Code starts with Opus 5.5 via project settings or `make claude` (CLI >=2.1.280).
 `CLAUDE_CODE_MODEL` overrides the Make target; `opus` is a supported family alias.
 The website keeps its separate Anthropic Haiku configuration.
+Production: docs/DEPLOYMENT.md; Vercel serves the frontend and proxies `/api` to
+the persistent Docker backend. DATABASE_URL selects PostgreSQL with a dedicated
+DATABASE_SCHEMA and verified TLS. Local SQLite remains available offline.
+Prepare a Fedora presentation copy with docs/FEDORA.md. Deployment secrets are
+provided privately to the relevant runtime, never copied as whole environment files
+or placed in source, browser bundles, commands or documentation.
 API docs: http://127.0.0.1:8000/api/docs. Local UI: http://127.0.0.1:5173.
 Docker UI: http://127.0.0.1:8080. MCP requires a running API; inspect `/mcp`.
 Read docs/SPECKIT.md for feature selection: 001 is the implemented baseline;

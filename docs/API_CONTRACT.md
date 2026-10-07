@@ -21,6 +21,14 @@ refresh cookie. Access JWT lasts 30 minutes; refresh lasts seven days.
 require `X-Requested-With: Humanizar`. `GET /auth/me` returns the authenticated user.
 The browser keeps access tokens only in memory.
 
+Production configures `AUTH_BOOTSTRAP_TOKEN`: `/auth/setup` then requires a matching
+`X-Bootstrap-Token` header. The token is never exposed by `/auth/status` or other
+responses. Provision the administrator privately before publishing the frontend:
+`python -m app.manage create-admin` inside the API container, or `--stdin-json`
+with `{name,email,password}` over private stdin. The CLI emits no session or JWT.
+Password limits remain 6–128 characters. Once an administrator exists, bootstrap
+returns 409 and all public registrations create customers.
+
 `GET /api/health`: `{status: "ok", mode: "demo" | "anthropic", model: string, embedding: string, tools: {sandbox: boolean, mcp: boolean}}`.
 
 `GET /api/config`: `{company_name: string, company_description: string, assistant_name: string, model: string, mode: "demo" | "anthropic", embedding: string, max_upload_mb: number}`.
@@ -91,7 +99,23 @@ Backend settings: `ANTHROPIC_API_KEY`, `LLM_MODE=demo|anthropic|auto`,
 `COMPANY_NAME=Humanizar`, `COMPANY_DESCRIPTION`,
 `ASSISTANT_NAME=Humanizar IA`, `DATA_DIR`, `AUTH_ENABLED=true`, `SEED_DEMO=false`,
 `KNOWLEDGE_DIR=knowledge/humanizar`, `EMBEDDING_PROVIDER=hash|fastembed`, `QDRANT_URL`,
-`SANDBOX_URL`, `MCP_ENABLED=true`. Relative `KNOWLEDGE_DIR` resolves from backend/;
+`SANDBOX_URL`, `MCP_ENABLED=true`, `DATABASE_URL`, `DATABASE_SCHEMA=lumen`,
+`JWT_SECRET`, `AUTH_BOOTSTRAP_TOKEN`. Relative `KNOWLEDGE_DIR` resolves from backend/;
 Markdown/TXT source documents are loaded once per filename without replacing uploads.
 Root `.env` is never sent to the frontend or sandbox. API uses a single worker with
 local Qdrant storage.
+
+An empty `DATABASE_URL` selects persistent SQLite. PostgreSQL uses a dedicated
+schema and requires verified TLS for remote connections. The production URL has
+the form `postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=verify-full&sslrootcert=system`,
+with URL-encoded credentials supplied privately. Only `sslmode` and `sslrootcert`
+query options are accepted. Accounts, refresh families, histories and business
+requests keep the same HTTP contract on either database. PostgreSQL bootstrap,
+refresh/revocation and confirmed actions use transactions and interprocess locks.
+Health/config never return database URLs, secrets or credentials.
+
+The deployed browser uses Vercel's same-origin rewrite for `/api`, including SSE,
+Swagger and OpenAPI. A server-side `ORIGIN_SECRET` protects access to the VPS proxy;
+it is separate from API authentication and is never included in browser headers.
+HTTPS sets the refresh cookie's Secure flag. API responses must not be cached.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for environment placement and verification.
