@@ -15,6 +15,8 @@ def settings(tmp_path: Path) -> Settings:
 
     return TestSettings(
         data_dir=tmp_path,
+        company_name="Forma",
+        embedding_provider="hash",
         llm_mode="demo",
         seed_demo=False,
         auth_enabled=False,

@@ -6,6 +6,8 @@ SECRET_PATTERN = re.compile(
     r"sk-ant-[A-Za-z0-9_-]{12,}|sk-[A-Za-z0-9_-]{24,}|"
     r"gh[pousr]_[A-Za-z0-9]{20,}|AKIA[A-Z0-9]{16}|"
     r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|"
+    r"(?i:(?:proxy-)?authorization)[\"']?\s*[:=]\s*[\"']?"
+    r"(?i:basic|bearer)\s+[A-Za-z0-9._~+/=-]+|"
     r"(?i:ANTHROPIC_API_KEY|QDRANT_API_KEY|API_TOKEN|PASSWORD)[\"']?\s*[:=]\s*"
     r"[\"']?[^\s\"']{6,}"
 )

@@ -24,11 +24,21 @@ flowchart LR
 El navegador solo consume FastAPI. La API posee configuración, ingesta, recuperación
 y orquestación. El registro de herramientas se comparte entre el agente y la vista
 de herramientas, para que la demostración pruebe el mismo comportamiento.
+Las definiciones de herramientas centralizan catálogo y esquemas de entrada;
+`/api/tools` publica esos esquemas para formularios tipados. Una herramienta nueva
+requiere registrar su ejecutor permitido, pero sus campos simples ya pueden aparecer
+sin añadir otro selector por nombre en el frontend. Los handlers del sandbox siguen
+siendo una allowlist independiente: publicar un esquema no autoriza ejecutar shell.
 
 Cada consulta recupera evidencia y limita turnos, tokens y llamadas. Las herramientas
 devuelven resultados estructurados y se registran con duración y estado. Los eventos
 SSE permiten mostrar avances sin inventar cadenas de razonamiento. Los errores del
 proveedor se informan sin exponer claves ni mensajes internos sensibles.
+Si faltan citas válidas, el texto libre del modelo se sustituye por incertidumbre
+o por una representación determinista del resultado pertinente de la herramienta.
+Una calculadora exitosa no valida afirmaciones sobre la empresa. Las citas y la
+similitud permiten inspeccionar evidencia; no garantizan por sí solas su implicación
+semántica, que debe comprobarse con los casos de aceptación del brief.
 Un límite global compartido por REST y SSE evita iniciar más llamadas de modelo
 que las permitidas. El trabajo síncrono de autenticación y recuperación se ejecuta
 fuera del event loop. La ingesta mantiene su exclusión hasta terminar el trabajo
@@ -44,13 +54,22 @@ Qdrant y los archivos de conocimiento permanece en el backend Docker.
 JWT usa claves persistentes privadas, Argon2 protege contraseñas y el refresh está
 en una cookie HttpOnly. Logout revoca la familia de sesiones rotadas.
 El servidor obtiene el historial por usuario; descarta el historial enviado por el cliente.
-La API funciona con un único worker;
-un servidor Qdrant externo permite cambiar esa restricción. La selección del embedding
+La API se despliega con un único worker. Un servidor Qdrant externo evita el lock de
+su driver local, pero una instalación multiproceso necesita verificar también la
+concurrencia de los metadatos y la ingesta. La selección del embedding
 define un espacio vectorial: no mezclar modelos en una colección ya poblada.
 
 El servidor MCP consulta la identidad pública por HTTP y no abre otro escritor
-sobre Qdrant. La búsqueda de documentos requiere ahora autenticación; el MCP
-sin sesión no accede a ese endpoint protegido. No recibe claves del proveedor.
+sobre Qdrant. La búsqueda de documentos requiere una sesión autenticada: su CLI
+de login guarda tokens en un archivo privado ligado al origen, con renovación
+acotada. Un JWT explícito puede proporcionarse en el entorno del proceso MCP.
+Los errores temporales conservan la sesión; los rechazos de autenticación se
+informan de forma diferenciada. No recibe claves del proveedor.
+
+La identidad, el enlace, las preguntas sugeridas y el catálogo de productos son
+configurables. Humanizar permanece como ejemplo de Softop; otro nombre no hereda
+productos o enlaces de esa empresa. Las recomendaciones siguen exigiendo evidencia
+documental aunque un producto figure en la configuración.
 
 El sandbox acepta nombres de comandos definidos. Ejecuta argumentos fijos sin shell,
 con límites de tiempo, salida y recursos. Solo ese servicio ejecuta procesos de

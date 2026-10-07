@@ -33,11 +33,15 @@
 - Optional PostgreSQL persistence with a dedicated schema, verified TLS and transactional session handling.
 - Vercel same-origin API proxy to the HTTPS Docker backend, with authenticated sessions and streamed tool activity.
 - Admin-only customer creation and paginated public account fields, with fixed customer roles and unchanged administrator cookies.
-- Readable text, single section navigation, visible upload and document-reading controls, sufficient contrast and responsive layouts without horizontal page overflow.
+- Single section navigation, visible upload and document-reading controls; text at
+  least 12 CSS px, text contrast at least 4.5:1, keyboard-operable controls and no
+  horizontal page overflow at viewport widths of 320, 390 and 1440 CSS px. Chat
+  completion is announced once to assistive technology without announcing every token.
 
 ## Scope limits
 
-This baseline is configured for Humanizar using public official information.
+This baseline prepares the Softop technical assessment and remains configured for
+Humanizar using public official information until the owner requests a company change.
 Actual assessment acceptance criteria, company identity and tool policies still
 come from the brief. PDF OCR, external message delivery, automatic calendar booking
 and arbitrary autonomous code execution are outside this implementation.

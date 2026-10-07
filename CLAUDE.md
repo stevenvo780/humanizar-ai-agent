@@ -1,6 +1,8 @@
 # Lumen — company knowledge agent
 
 This is a prepared technical-assessment baseline, not the unknown exam solution.
+The assessment project is Softop; Humanizar remains its example company until the
+owner explicitly asks to change company identity and knowledge.
 The website is a customer-facing company assistant. Claude Code is the development
 tool used during the exam with Opus 5.5. The website's configurable API model defaults
 to Haiku; these are separate roles. Keep visitor/customer language in the product.
@@ -60,7 +62,7 @@ Read docs/SPECKIT.md for feature selection: 001 is the implemented baseline;
 ## Rules
 
 No frontend secrets. No real API credentials in source, logs, prompts or generated
-artifacts. Do not read .env: refer to .env.example and ask the user to set values
+artifacts. Do not read .env: refer to config/env.example and ask the user to set values
 locally. Demo mode is extractive, not an LLM. Hash vectors are lexical, not semantic.
 Optional semantic embeddings download a model; disclose that initialization step.
 Never silently fall back from a failed live Anthropic request into a demo answer.

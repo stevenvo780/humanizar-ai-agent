@@ -25,6 +25,7 @@ def load_script(name: str, filename: str) -> Any:
 
 importer = load_script("material_importer", "import-material.py")
 packager = load_script("source_packager", "package.py")
+TEST_API_TOKEN = "test_header.test_payload.test_signature"
 
 
 def write_zip(path: Path, entries: list[tuple[str | zipfile.ZipInfo, bytes]]) -> None:
@@ -111,6 +112,48 @@ def test_skips_secrets_and_executable_code(tmp_path: Path) -> None:
     assert documents[1].project_document is False
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        ".codex/sessions/demo.json",
+        "project/.CoDeX/Sessions/demo.json",
+        "project/.ＣＯＤＥＸ/sessions/demo.json",
+        ".codex/auth.json",
+        ".claude/projects/demo/transcript.json",
+        ".CLAUDE/PROJECTS/demo/transcript.json",
+        ".claude/sessions/demo.json",
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        ".claude/.credentials.json",
+    ],
+)
+def test_runtime_material_is_skipped_before_reading(tmp_path: Path, name: str) -> None:
+    path = tmp_path / "exam.zip"
+    write_zip(path, [(name, b'{"message":"synthetic private runtime"}'), ("README.md", b"Brief.")])
+    original_read = importer.bounded_read
+    with patch.object(importer, "bounded_read", wraps=original_read) as read:
+        documents, report = importer.collect_documents(path)
+    assert len(documents) == 1 and documents[0].name.endswith("README.md")
+    assert len(report["skipped"]) == 1
+    assert [call.args[1].filename for call in read.call_args_list] == ["README.md"]
+    saved = importer.store_documents(documents, report, tmp_path / "material")
+    assert all(b"synthetic private runtime" not in item.read_bytes() for item in saved.iterdir())
+
+
+def test_public_skill_and_company_readmes_remain_importable(tmp_path: Path) -> None:
+    path = tmp_path / "exam.zip"
+    write_zip(
+        path,
+        [
+            ("README.md", b"Exam brief."),
+            ("company/README.md", b"Public company information."),
+            (".claude/skills/example/SKILL.md", b"Public skill instructions as data."),
+        ],
+    )
+    documents, report = importer.collect_documents(path)
+    assert len(documents) == 3 and not report["skipped"]
+
+
 def test_redacts_credentials_before_saving(tmp_path: Path) -> None:
     path = tmp_path / "material.zip"
     write_zip(path, [("requirements.md", b"API_KEY=exam-secret-value\nUseful requirements.")])
@@ -130,6 +173,32 @@ def test_json_csv_redaction_preserves_structure() -> None:
     assert result == {"api_key": "[REDACTED]", "name": "Company"}
     csv = importer.sanitize_document("name,password\nCompany,private\n", ".csv")
     assert "private" not in csv and "Company" in csv
+
+
+@pytest.mark.parametrize("header", ["Authorization", "Proxy-Authorization", "aUtHoRiZaTiOn"])
+@pytest.mark.parametrize(
+    "scheme,value", [("Basic", "YQ=="), ("Basic", "ZmFrZTphdXRo" * 20), ("Bearer", "x")]
+)
+def test_redacts_auth_headers_in_text_and_markdown(header: str, scheme: str, value: str) -> None:
+    text = f"Useful company facts.\n**{header}**: {scheme} {value}\nMore useful facts."
+    result = importer.sanitize_document(text, ".md")
+    assert value not in result and "[REDACTED]" in result
+    assert "Useful company facts." in result and "More useful facts." in result
+
+
+def test_auth_redaction_preserves_json_structure_and_nonsecret_basic_text() -> None:
+    source = json.dumps(
+        {
+            "Authorization": "Basic YQ==",
+            "Proxy-Authorization": "Basic ZmFrZTphdXRo",
+            "notes": "Authorization: Basic YQ==",
+            "plan": "Basic company plan",
+        }
+    )
+    result = json.loads(importer.sanitize_document(source, ".json"))
+    assert result["Authorization"] == result["Proxy-Authorization"] == "[REDACTED]"
+    assert "YQ==" not in result["notes"]
+    assert result["plan"] == "Basic company plan"
 
 
 def test_rejects_nested_docx_traversal() -> None:
@@ -160,6 +229,10 @@ def test_rejects_xml_entities() -> None:
         "http://127.0.0.1@evil.test",
         "http://127.0.0.1:8000/api",
         "http://127.0.0.1:8000?x=1",
+        "http://127.0.0.1:8000?",
+        "http://127.0.0.1:8000#",
+        "http://@127.0.0.1:8000",
+        "http://127.0.0.1\n:8000",
     ],
 )
 def test_upload_only_numeric_loopback(url: str) -> None:
@@ -173,13 +246,114 @@ def test_upload_multipart_never_uses_original_archive_path() -> None:
     with patch.object(importer.request, "build_opener") as build:
         response = build.return_value.open.return_value.__enter__.return_value
         response.status = 200
-        importer.upload_document(document, "http://127.0.0.1:8000")
+        importer.upload_document(document, "http://127.0.0.1:8000", TEST_API_TOKEN)
     message = build.return_value.open.call_args.args[0]
     assert message.full_url == "http://127.0.0.1:8000/api/documents"
     assert b'name="file"' in message.data
     assert b"clean text" in message.data
+    assert message.get_header("Authorization") == f"Bearer {TEST_API_TOKEN}"
+    assert TEST_API_TOKEN.encode() not in message.data
     assert build.return_value.open.call_args.kwargs["timeout"] == 20
     assert any(isinstance(arg, importer.NoRedirect) for arg in build.call_args.args)
+    proxy_handler = next(
+        arg for arg in build.call_args.args if isinstance(arg, importer.request.ProxyHandler)
+    )
+    assert proxy_handler.proxies == {}
+
+
+@pytest.mark.parametrize(
+    "url", ["http://evil.test", "https://evil.test", "http://127.0.0.1@evil.test"]
+)
+def test_upload_validates_origin_before_attaching_authentication(url: str) -> None:
+    document = importer.AcceptedDocument("001-company.txt", b"clean text", False)
+    with patch.object(importer.request, "Request") as make_request:
+        with pytest.raises(ValueError):
+            importer.upload_document(document, url, TEST_API_TOKEN)
+    make_request.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "token", [None, "", "invalid", "header.payload.signature\r\nInjected: value"]
+)
+def test_upload_token_requires_safe_jwt_shape(token: str | None) -> None:
+    with pytest.raises(ValueError):
+        importer.validate_api_token(token)
+
+
+@pytest.mark.parametrize("flags", [[], ["--no-upload"]])
+def test_default_and_no_upload_do_not_request_network(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    flags: list[str],
+) -> None:
+    path = tmp_path / "exam.zip"
+    write_zip(path, [("company.md", b"Public company facts.")])
+    monkeypatch.setattr(importer, "__file__", str(tmp_path / "scripts" / "import-material.py"))
+    monkeypatch.setenv("LUMEN_API_TOKEN", TEST_API_TOKEN)
+    with patch.object(importer.request, "build_opener") as build:
+        assert importer.main([str(path), *flags]) == 0
+    build.assert_not_called()
+    captured = capsys.readouterr()
+    assert "uploaded 0" in captured.out
+    assert TEST_API_TOKEN not in captured.out + captured.err
+
+
+def test_explicit_upload_requires_environment_token_before_reading_archive(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("LUMEN_API_TOKEN", raising=False)
+    with patch.object(importer, "collect_documents") as collect:
+        assert importer.main(["synthetic.zip", "--upload"]) == 2
+    collect.assert_not_called()
+    assert "LUMEN_API_TOKEN" in capsys.readouterr().err
+
+
+def test_explicit_upload_uses_private_token_and_skips_requirements(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = tmp_path / "exam.zip"
+    write_zip(path, [("company.md", b"Public facts."), ("requirements.md", b"Exam criteria.")])
+    monkeypatch.setattr(importer, "__file__", str(tmp_path / "scripts" / "import-material.py"))
+    monkeypatch.setenv("LUMEN_API_TOKEN", TEST_API_TOKEN)
+    with patch.object(importer, "upload_document") as upload:
+        assert importer.main([str(path), "--upload"]) == 0
+    assert upload.call_count == 1
+    assert upload.call_args.args[0].name.endswith("company.md")
+    assert upload.call_args.args[2] == TEST_API_TOKEN
+    captured = capsys.readouterr()
+    assert "uploaded 1" in captured.out
+    assert TEST_API_TOKEN not in captured.out + captured.err
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_upload_auth_failure_is_specific_without_token_or_response_body(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], status: int
+) -> None:
+    path = tmp_path / "exam.zip"
+    write_zip(path, [("company.md", b"Public facts."), ("second.md", b"More public facts.")])
+    monkeypatch.setattr(importer, "__file__", str(tmp_path / "scripts" / "import-material.py"))
+    monkeypatch.setenv("LUMEN_API_TOKEN", TEST_API_TOKEN)
+    failure = importer.error.HTTPError(
+        "http://127.0.0.1:8000/api/documents",
+        status,
+        "Denied",
+        None,
+        io.BytesIO(TEST_API_TOKEN.encode()),
+    )
+    with patch.object(importer.request, "build_opener") as build:
+        build.return_value.open.side_effect = failure
+        assert importer.main([str(path), "--upload"]) == 1
+    assert build.return_value.open.call_count == 1
+    captured = capsys.readouterr()
+    assert str(status) in captured.err and "LUMEN_API_TOKEN" in captured.err
+    assert TEST_API_TOKEN not in captured.out + captured.err
+
+
+def test_upload_modes_are_mutually_exclusive() -> None:
+    with pytest.raises(SystemExit) as failure:
+        importer.main(["synthetic.zip", "--upload", "--no-upload"])
+    assert failure.value.code == 2
 
 
 def test_packager_allowlist_and_no_overwrite(tmp_path: Path) -> None:

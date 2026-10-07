@@ -21,7 +21,6 @@ import {
   MessageSquare,
   LogOut,
   Plus,
-  Search,
   ShieldCheck,
   Sparkles,
   Square,
@@ -42,9 +41,14 @@ import { SiteLink } from './navigation';
 import { workspaceNavigation } from './workspaceNavigation';
 import { useDialogFocus } from './useDialogFocus';
 import { DocumentReader } from './DocumentReader';
+import { ToolsPanel } from './ToolsPanel';
+import { toolLabel } from './toolSchema';
+import { companyPresentation } from './company';
+import { ChatAnnouncement, completedChatAnnouncement } from './ChatAnnouncement';
 import type {
   ChatMessage,
   Config,
+  CompanyIdentity,
   Conversation,
   DocumentList,
   Health,
@@ -58,6 +62,12 @@ import type {
 
 const EMPTY_MESSAGES: ChatMessage[] = [];
 const MOBILE_NAVIGATION = '(max-width: 760px)';
+const promptStyles = [
+  { icon: BookOpen, color: 'mint' },
+  { icon: WandSparkles, color: 'lavender' },
+  { icon: FileText, color: 'peach' },
+  { icon: Code2, color: 'blue' },
+];
 
 function subscribeMobileNavigation(listener: () => void): () => void {
   const query = window.matchMedia(MOBILE_NAVIGATION);
@@ -68,37 +78,6 @@ function subscribeMobileNavigation(listener: () => void): () => void {
 function mobileNavigationSnapshot(): boolean {
   return window.matchMedia(MOBILE_NAVIGATION).matches;
 }
-const prompts = [
-  {
-    icon: BookOpen,
-    color: 'mint',
-    title: 'Productos y servicios',
-    subtitle: 'Productos y servicios para ti.',
-    question: '¿Qué productos y servicios ofrece {company}?',
-  },
-  {
-    icon: WandSparkles,
-    color: 'lavender',
-    title: 'Agentes de IA a medida',
-    subtitle: 'Explora cómo pueden ayudarte.',
-    question: '¿Cómo funcionan los agentes de IA a medida de {company}?',
-  },
-  {
-    icon: FileText,
-    color: 'peach',
-    title: 'Hablemos de tu proyecto',
-    subtitle: 'Contacto y solicitud de demostración.',
-    question: '¿Cómo puedo contactar a {company} para solicitar una demostración?',
-  },
-  {
-    icon: Code2,
-    color: 'blue',
-    title: 'Conoce Cauce V3',
-    subtitle: 'Pregunta por la plataforma.',
-    question: '¿Qué es Cauce V3?',
-  },
-];
-
 function BrandMark({ small = false }: { small?: boolean }) {
   return (
     <span className={`brand-mark ${small ? 'brand-mark-small' : ''}`} aria-hidden="true">
@@ -202,20 +181,6 @@ function Trace({ trace }: { trace: ToolTrace }) {
       </div>
     </details>
   );
-}
-
-function toolLabel(name: string): string {
-  const labels: Record<string, string> = {
-    search_knowledge: 'Buscar documentación',
-    calculate: 'Calculadora',
-    terminal: 'Terminal aislada',
-    mcp_company_info: 'Información de empresa · MCP',
-    recommend_product: 'Recomendar producto',
-    create_demo_request: 'Solicitar demostración',
-    create_support_ticket: 'Crear ticket de soporte',
-    list_my_requests: 'Consultar mis solicitudes',
-  };
-  return labels[name] ?? name;
 }
 
 function SourceCard({ source, index }: { source: Source; index: number }) {
@@ -660,255 +625,6 @@ function Knowledge({
   );
 }
 
-function Tools({
-  tools,
-  online,
-  health,
-}: {
-  tools: ToolDefinition[];
-  online: boolean;
-  health: Health | null;
-}) {
-  const [selected, setSelected] = useState('calculate');
-  const [value, setValue] = useState('(120 + 80) * 2');
-  const [preset, setPreset] = useState('pwd');
-  const [running, setRunning] = useState(false);
-  const runningRef = useRef(false);
-  const [result, setResult] = useState<ToolTrace | null>(null);
-  const [error, setError] = useState('');
-  const definition = tools.find((tool) => tool.name === selected);
-  const [businessInput, setBusinessInput] = useState<Record<string, string>>({});
-  const [writeConfirmed, setWriteConfirmed] = useState(false);
-  const writeTool = selected === 'create_demo_request' || selected === 'create_support_ticket';
-  const fields: string[] =
-    selected === 'create_demo_request'
-      ? ['name', 'email', 'company', 'interest', 'needs']
-      : selected === 'create_support_ticket'
-        ? ['subject', 'description']
-        : [];
-  const fieldLabels: Record<string, string> = {
-    name: 'Nombre del contacto',
-    email: 'Correo del contacto',
-    company: 'Empresa',
-    interest: 'Producto o servicio de interés',
-    needs: 'Necesidad o proceso',
-    subject: 'Asunto',
-    description: 'Descripción',
-  };
-  const icons: Record<string, ReactNode> = {
-    calculate: <Code2 size={21} />,
-    terminal: <Terminal size={21} />,
-    search_knowledge: <Search size={21} />,
-    mcp_company_info: <Layers3 size={21} />,
-  };
-
-  async function run(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    if (runningRef.current || !online || !definition?.enabled) return;
-    runningRef.current = true;
-    setRunning(true);
-    setError('');
-    setResult(null);
-    const input: Record<string, unknown> =
-      selected === 'calculate'
-        ? { expression: value }
-        : selected === 'search_knowledge'
-          ? { query: value }
-          : selected === 'recommend_product'
-            ? { process: value }
-            : writeTool
-              ? businessInput
-              : selected === 'terminal'
-                ? { command: preset }
-                : {};
-    try {
-      setResult(await api.runTool(selected, input, writeTool && writeConfirmed));
-      if (writeTool && writeConfirmed)
-        window.dispatchEvent(new Event('humanizar-requests-changed'));
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      runningRef.current = false;
-      setRunning(false);
-      setWriteConfirmed(false);
-    }
-  }
-
-  return (
-    <section className="workspace-page" aria-labelledby="tools-title">
-      <div className="page-eyebrow">
-        <WandSparkles size={15} /> ADMINISTRACIÓN · HERRAMIENTAS
-      </div>
-      <h1 id="tools-title">
-        Una respuesta puede
-        <br />
-        <span>hacer mucho más.</span>
-      </h1>
-      <p className="page-intro">
-        Prueba las herramientas que el asistente puede usar para ayudarte.
-        <br className="desktop-break" /> Comprueba las integraciones y sus resultados reales.
-      </p>
-      <div className="tool-grid">
-        {tools.map((tool) => (
-          <button
-            className={`tool-card ${selected === tool.name ? 'selected' : ''}`}
-            key={tool.name}
-            aria-pressed={selected === tool.name}
-            disabled={running}
-            onClick={() => {
-              setSelected(tool.name);
-              setValue(tool.name === 'calculate' ? '(120 + 80) * 2' : 'servicios de la empresa');
-              setResult(null);
-              setError('');
-              setBusinessInput({});
-              setWriteConfirmed(false);
-            }}
-          >
-            <span className="tool-card-top">
-              <span className="tool-icon">{icons[tool.name] ?? <Code2 size={21} />}</span>
-              <span className={`tool-enabled ${tool.enabled ? '' : 'unavailable'}`}>
-                <StatusDot online={tool.enabled} />
-                {tool.enabled ? 'Habilitada' : 'No disponible'}
-              </span>
-            </span>
-            <strong>{toolLabel(tool.name)}</strong>
-            <p>{tool.description}</p>
-            <span className="tool-card-link">
-              Explorar herramienta <ArrowUpRight size={14} />
-            </span>
-          </button>
-        ))}
-      </div>
-      {!tools.length && (
-        <EmptyState icon={<WandSparkles size={24} />} title="Sin herramientas disponibles">
-          La lista se actualizará cuando el servidor esté conectado.
-        </EmptyState>
-      )}
-      {definition && (
-        <form className="tool-playground" onSubmit={(event) => void run(event)}>
-          <div className="playground-heading">
-            <span className="mini-label">PRUEBA LA HERRAMIENTA</span>
-            <h2>{toolLabel(selected)}</h2>
-          </div>
-          {selected === 'terminal' ? (
-            <>
-              <label htmlFor="tool-command">Comando permitido</label>
-              <select
-                id="tool-command"
-                value={preset}
-                onChange={(event) => setPreset(event.target.value)}
-              >
-                <option>pwd</option>
-                <option>ls</option>
-                <option>date</option>
-                <option>python --version</option>
-                <option>wc</option>
-              </select>
-              <p className="field-help">
-                Se ejecuta en el servicio aislado. Conexión:{' '}
-                {health?.tools.sandbox ? 'disponible' : 'no disponible'}.
-              </p>
-            </>
-          ) : selected === 'mcp_company_info' || selected === 'list_my_requests' ? (
-            <p className="field-help">
-              Esta consulta no requiere parámetros y devuelve información de la cuenta o empresa.
-            </p>
-          ) : writeTool ? (
-            <>
-              {fields.map((field) => (
-                <div key={field}>
-                  <label htmlFor={`tool-${field}`}>{fieldLabels[field] ?? field}</label>
-                  <input
-                    id={`tool-${field}`}
-                    type={field === 'email' ? 'email' : 'text'}
-                    value={businessInput[field] ?? ''}
-                    onChange={(event) =>
-                      setBusinessInput((current) => ({ ...current, [field]: event.target.value }))
-                    }
-                    required
-                    maxLength={2000}
-                    placeholder={fieldLabels[field] ?? field}
-                  />
-                </div>
-              ))}
-              <label className="tool-write-confirm">
-                <input
-                  type="checkbox"
-                  checked={writeConfirmed}
-                  onChange={(event) => setWriteConfirmed(event.target.checked)}
-                />
-                <span>
-                  Confirmo que quiero registrar esta solicitud con los datos indicados. No se
-                  enviarán mensajes externos.
-                </span>
-              </label>
-            </>
-          ) : (
-            <>
-              <label htmlFor="tool-input">
-                {selected === 'calculate'
-                  ? 'Expresión matemática'
-                  : selected === 'recommend_product'
-                    ? 'Proceso que necesitas resolver'
-                    : 'Consulta de documentación'}
-              </label>
-              <input
-                id="tool-input"
-                value={value}
-                onChange={(event) => setValue(event.target.value)}
-                required
-                placeholder={
-                  selected === 'calculate' ? '(120 + 80) * 2' : '¿Qué quieres encontrar?'
-                }
-              />
-            </>
-          )}
-          <button
-            className="primary-button tool-run"
-            disabled={
-              running ||
-              !online ||
-              !definition.enabled ||
-              (writeTool &&
-                (!writeConfirmed || fields.some((field) => !businessInput[field]?.trim()))) ||
-              (!writeTool &&
-                selected !== 'terminal' &&
-                selected !== 'mcp_company_info' &&
-                selected !== 'list_my_requests' &&
-                !value.trim())
-            }
-          >
-            {running ? <LoaderCircle size={16} className="spin" /> : <ArrowRight size={16} />}
-            {running
-              ? 'Ejecutando…'
-              : writeTool
-                ? 'Confirmar y registrar solicitud'
-                : 'Ejecutar herramienta'}
-          </button>
-          {error && (
-            <div className="notice error" role="alert">
-              {error}
-            </div>
-          )}
-          {result && (
-            <div className="tool-result" aria-live="polite">
-              <div>
-                <span className={result.status === 'error' ? 'result-error' : 'result-success'}>
-                  {result.status === 'error'
-                    ? 'La herramienta informó un error'
-                    : 'Ejecución completada'}
-                </span>
-                <span>{result.duration_ms} ms</span>
-              </div>
-              <pre>{result.output}</pre>
-            </div>
-          )}
-        </form>
-      )}
-    </section>
-  );
-}
-
 function Composer({
   draft,
   setDraft,
@@ -1015,6 +731,7 @@ function Composer({
 export default function App({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
   const [selectedSection, setSelectedSection] = useState<WorkspaceSection>('assistant');
   const [config, setConfig] = useState<Config | null>(null);
+  const [identity, setIdentity] = useState<CompanyIdentity | null>(null);
   const [health, setHealth] = useState<Health | null>(null);
   const [documents, setDocuments] = useState<DocumentList>({ documents: [], total_chunks: 0 });
   const [tools, setTools] = useState<ToolDefinition[]>([]);
@@ -1027,6 +744,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [streamStatus, setStreamStatus] = useState('');
+  const [announcement, setAnnouncement] = useState('');
   const [mobileMenu, setMobileMenu] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [storageError, setStorageError] = useState('');
@@ -1052,8 +770,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
   useDialogFocus(helpRef, showHelp, closeHelp, isMobile ? navigationToggleRef : undefined);
   const active = conversations.find((item) => item.id === activeId);
   const messages = active?.messages ?? EMPTY_MESSAGES;
-  const company = config?.company_name ?? 'Humanizar';
-  const assistant = config?.assistant_name ?? 'Humanizar IA';
+  const { company, assistant, humanizar, prompts } = companyPresentation(config, identity);
   const selected = [...messages].reverse().find((item) => item.role === 'assistant');
   const isAdmin = user.role === 'admin';
 
@@ -1067,9 +784,11 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
       api.health(),
       isAdmin ? api.documents() : Promise.resolve({ documents: [], total_chunks: 0 }),
       isAdmin ? api.tools() : Promise.resolve({ tools: [] }),
+      api.company(),
     ]);
-    const [configuration, healthResult, documentResult, toolResult] = results;
+    const [configuration, healthResult, documentResult, toolResult, companyResult] = results;
     if (configuration.status === 'fulfilled') setConfig(configuration.value);
+    if (companyResult.status === 'fulfilled') setIdentity(companyResult.value);
     if (healthResult.status === 'fulfilled') {
       setHealth(healthResult.value);
       setOnline(true);
@@ -1237,6 +956,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
     setActiveId(conversationId);
     setDraft('');
     setBusy(true);
+    setAnnouncement('');
     busyRef.current = true;
     setStreamStatus('Buscando el contexto adecuado…');
     const controller = new AbortController();
@@ -1260,6 +980,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               trace: [...item.trace.filter((trace) => trace.id !== event.trace.id), event.trace],
             }));
           if (event.type === 'done') {
+            setAnnouncement(completedChatAnnouncement(event.response, assistant));
             updateMessage(conversationId, assistantId, (item) => ({
               ...item,
               content: event.response.answer,
@@ -1308,6 +1029,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
 
   return (
     <div className="app-shell">
+      <ChatAnnouncement message={announcement} />
       <a className="skip-link" href="#main-content" inert={drawerOpen || showHelp}>
         Saltar al contenido
       </a>
@@ -1454,7 +1176,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
             <span className="profile-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
             <div>
               <strong>{user.name}</strong>
-              <span>{isAdmin ? 'Administrador' : 'Cliente de Humanizar'}</span>
+              <span>{isAdmin ? 'Administrador' : `Cliente de ${company}`}</span>
             </div>
             <button
               className="icon-button"
@@ -1545,7 +1267,9 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                           <span>en una conversación.</span>
                         </h1>
                         <p>
-                          Descubre servicios, explora agentes de IA y resuelve tus dudas.
+                          {humanizar
+                            ? 'Descubre servicios, explora agentes de IA y resuelve tus dudas.'
+                            : 'Descubre productos y servicios y resuelve tus dudas con fuentes.'}
                           <br className="desktop-break" /> Te ayudamos a dar el siguiente paso.
                         </p>
                       </div>
@@ -1554,25 +1278,31 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                         <ArrowDown size={13} />
                       </div>
                       <div className="prompt-grid">
-                        {prompts.map((prompt) => (
-                          <button
-                            className="prompt-card"
-                            key={prompt.title}
-                            disabled={!online || busy || historyLoading}
-                            onClick={() => void send(prompt.question.replace('{company}', company))}
-                          >
-                            <span className={`prompt-icon ${prompt.color}`}>
-                              <prompt.icon size={19} strokeWidth={1.7} />
-                            </span>
-                            <strong>{prompt.title}</strong>
-                            <p>{prompt.subtitle}</p>
-                            <ArrowUpRight className="prompt-arrow" size={17} />
-                          </button>
-                        ))}
+                        {prompts.map((prompt, index) => {
+                          const style = promptStyles[index % promptStyles.length] ?? {
+                            icon: BookOpen,
+                            color: 'mint',
+                          };
+                          return (
+                            <button
+                              className="prompt-card"
+                              key={`${index}-${prompt.question}`}
+                              disabled={!online || busy || historyLoading}
+                              onClick={() => void send(prompt.question)}
+                            >
+                              <span className={`prompt-icon ${style.color}`}>
+                                <style.icon size={19} strokeWidth={1.7} />
+                              </span>
+                              <strong>{prompt.title}</strong>
+                              <p>{prompt.subtitle}</p>
+                              <ArrowUpRight className="prompt-arrow" size={17} />
+                            </button>
+                          );
+                        })}
                       </div>
                     </section>
                   ) : (
-                    <section className="conversation" aria-label="Conversación">
+                    <section className="conversation" aria-label="Conversación" aria-busy={busy}>
                       <div className="conversation-heading">
                         <span>
                           <MessageSquare size={14} />
@@ -1681,7 +1411,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                 />
               )}
               {section === 'tools' && isAdmin && (
-                <Tools tools={tools} online={online} health={health} />
+                <ToolsPanel tools={tools} online={online} health={health} />
               )}
               {section === 'customers' && isAdmin && <CustomersPanel />}
               {section === 'requests' && (
@@ -1724,9 +1454,10 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               Resuelve tus dudas con {assistant}.
             </h2>
             <p>
-              Pregunta por productos, servicios, agentes de IA o demostraciones. El asistente
-              consulta la documentación de la empresa y puede usar herramientas para ayudarte. Abre
-              las fuentes para revisar la información de cada respuesta.
+              Pregunta por productos, servicios
+              {humanizar ? ', agentes de IA o demostraciones' : ' o ayuda'}. El asistente consulta
+              la documentación de la empresa y puede usar herramientas para ayudarte. Abre las
+              fuentes para revisar la información de cada respuesta.
             </p>
             <p>
               En <strong>Mis solicitudes</strong> puedes revisar las demostraciones y los tickets de

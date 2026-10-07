@@ -32,6 +32,7 @@ from app.models import (
     ActionConfirmation,
     ChatRequest,
     ChatResponse,
+    CompanyInfo,
     DocumentDetail,
     DocumentList,
     HealthResponse,
@@ -290,13 +291,15 @@ def create_app(
             "max_upload_mb": config.max_upload_mb,
         }
 
-    @api.get("/api/company")
-    def company() -> dict[str, str]:
-        return {
-            "company_name": redact(config.company_name),
-            "company_description": redact(config.company_description),
-            "assistant_name": redact(config.assistant_name),
-        }
+    @api.get("/api/company", response_model=CompanyInfo, response_model_exclude_none=True)
+    def company() -> CompanyInfo:
+        return CompanyInfo(
+            company_name=redact(config.company_name),
+            company_description=redact(config.company_description),
+            assistant_name=redact(config.assistant_name),
+            website=redact(config.website) if config.website else None,
+            suggested_questions=[redact(item) for item in config.suggested_questions],
+        )
 
     @api.get("/api/search")
     async def search(

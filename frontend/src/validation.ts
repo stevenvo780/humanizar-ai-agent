@@ -3,6 +3,7 @@ import type {
   ChatMessage,
   ChatResponse,
   Config,
+  CompanyIdentity,
   Conversation,
   CustomerAccount,
   CustomerAccountList,
@@ -17,6 +18,7 @@ import type {
   UploadResult,
   User,
 } from './types';
+import { safeCompanyWebsite } from './company';
 
 export type Validator<T> = (value: unknown) => value is T;
 
@@ -109,6 +111,25 @@ export function isConfig(value: unknown): value is Config {
   );
 }
 
+export function isCompanyIdentity(value: unknown): value is CompanyIdentity {
+  return (
+    isRecord(value) &&
+    typeof value.company_name === 'string' &&
+    value.company_name.trim().length > 0 &&
+    typeof value.company_description === 'string' &&
+    typeof value.assistant_name === 'string' &&
+    value.assistant_name.trim().length > 0 &&
+    (value.website === undefined || safeCompanyWebsite(value.website) !== null) &&
+    (value.suggested_questions === undefined ||
+      (isList(
+        value.suggested_questions,
+        (entry): entry is string =>
+          typeof entry === 'string' && entry.trim().length > 0 && entry.length <= 1000,
+      ) &&
+        value.suggested_questions.length <= 8))
+  );
+}
+
 export function isHealth(value: unknown): value is Health {
   return (
     isRecord(value) &&
@@ -195,7 +216,8 @@ function isTool(value: unknown): value is ToolDefinition {
     isRecord(value) &&
     typeof value.name === 'string' &&
     typeof value.description === 'string' &&
-    typeof value.enabled === 'boolean'
+    typeof value.enabled === 'boolean' &&
+    (value.input_schema === undefined || isRecord(value.input_schema))
   );
 }
 

@@ -13,17 +13,20 @@ import App from './App';
 import { api, errorMessage } from './api';
 import { logoutSession, refreshSession, setAccessToken } from './auth';
 import { ActionsProvider } from './actions';
-import type { Config, User } from './types';
+import type { CompanyIdentity, Config, User } from './types';
 import { SiteLink } from './navigation';
+import { companyPresentation } from './company';
 
 function AuthScreen({
   setup,
   config,
+  identity,
   onAuthenticated,
   initialError,
 }: {
   setup: boolean;
   config: Config | null;
+  identity: CompanyIdentity | null;
   onAuthenticated: (user: User) => void;
   initialError: string;
 }) {
@@ -35,7 +38,16 @@ function AuthScreen({
   const [error, setError] = useState(initialError);
   const submitting = useRef(false);
   const creating = setup || mode === 'register';
-  const assistant = config?.assistant_name ?? 'Humanizar IA';
+  const { company, assistant, humanizar, website } = companyPresentation(config, identity);
+  const brand = (
+    <>
+      <Sparkles size={29} strokeWidth={1.4} />
+      <span>
+        {assistant}
+        <i>.</i>
+      </span>
+    </>
+  );
 
   async function submit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -63,21 +75,17 @@ function AuthScreen({
   return (
     <div className="auth-layout">
       <section className="auth-story">
-        <a
-          href="https://humanizar.tech/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="auth-brand"
-        >
-          <Sparkles size={29} strokeWidth={1.4} />
-          <span>
-            {assistant}
-            <i>.</i>
-          </span>
-        </a>
+        {website ? (
+          <a href={website} target="_blank" rel="noopener noreferrer" className="auth-brand">
+            {brand}
+          </a>
+        ) : (
+          <div className="auth-brand">{brand}</div>
+        )}
         <div className="auth-editorial">
           <span className="page-eyebrow">
-            <span className="status-dot" /> SOFTWARE. AGENTES. POSIBILIDADES.
+            <span className="status-dot" />{' '}
+            {humanizar ? 'SOFTWARE. AGENTES. POSIBILIDADES.' : 'INFORMACIÓN. AYUDA. CONVERSACIÓN.'}
           </span>
           <h1>
             Las buenas preguntas
@@ -85,7 +93,7 @@ function AuthScreen({
             abren <span>nuevos caminos.</span>
           </h1>
           <p>
-            Conoce los productos de Humanizar, encuentra la solución para tu empresa y da el
+            Conoce los productos de {company}, encuentra la solución para tu empresa y da el
             siguiente paso con un asistente que conecta la información.
           </p>
           <div className="auth-orbit" aria-hidden="true">
@@ -107,7 +115,7 @@ function AuthScreen({
               <circle cx="239" cy="162" r="3" fill="#aaa2d2" />
             </svg>
             <span className="orbit-chip chip-one">
-              <Sparkles size={13} /> Agentes a medida
+              <Sparkles size={13} /> {humanizar ? 'Agentes a medida' : 'Información de la empresa'}
             </span>
             <span className="orbit-chip chip-two">
               <Check size={13} /> Respuestas con fuentes
@@ -115,10 +123,14 @@ function AuthScreen({
           </div>
         </div>
         <div className="auth-story-footer">
-          <span>Humanizar · Tecnología que resuelve.</span>
-          <a href="https://humanizar.tech/" target="_blank" rel="noopener noreferrer">
-            Conoce Humanizar <ChevronRight size={12} />
-          </a>
+          <span>
+            {company} · {humanizar ? 'Tecnología que resuelve.' : 'Información que conecta.'}
+          </span>
+          {website && (
+            <a href={website} target="_blank" rel="noopener noreferrer">
+              Conoce {company} <ChevronRight size={12} />
+            </a>
+          )}
         </div>
       </section>
       <main className="auth-form-panel">
@@ -283,6 +295,7 @@ export default function SessionApp() {
   const [user, setUser] = useState<User | null>(null);
   const [setup, setSetup] = useState(false);
   const [config, setConfig] = useState<Config | null>(null);
+  const [identity, setIdentity] = useState<CompanyIdentity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState(false);
@@ -303,6 +316,13 @@ export default function SessionApp() {
         setConfig(configuration);
       } catch {
         /* Brand fallback is available offline. */
+      }
+      try {
+        const company = await api.company();
+        if (revision !== bootstrapRevision.current) return;
+        setIdentity(company);
+      } catch {
+        /* Older APIs retain the configured company presentation. */
       }
       if (revision !== bootstrapRevision.current) return;
       if (!status.setup_required) {
@@ -355,7 +375,7 @@ export default function SessionApp() {
     return (
       <main className="session-loading">
         <Sparkles size={35} strokeWidth={1.3} />
-        <strong>Humanizar IA</strong>
+        <strong>{companyPresentation(config, identity).assistant}</strong>
         <span>
           <LoaderCircle size={14} className="spin" />
           Preparando tu espacio…
@@ -380,6 +400,7 @@ export default function SessionApp() {
         key={setup ? 'setup' : 'auth'}
         setup={setup}
         config={config}
+        identity={identity}
         onAuthenticated={(account) => {
           setSetup(false);
           setUser(account);

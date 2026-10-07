@@ -24,6 +24,14 @@ class HealthResponse(BaseModel):
     features: HealthFeatures = Field(default_factory=HealthFeatures)
 
 
+class CompanyInfo(BaseModel):
+    company_name: str
+    company_description: str
+    assistant_name: str
+    website: str | None = None
+    suggested_questions: list[str] = Field(default_factory=list)
+
+
 class Document(BaseModel):
     id: str
     name: str

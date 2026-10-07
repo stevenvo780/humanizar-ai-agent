@@ -6,6 +6,7 @@ import {
   isAuthStatus,
   isChatResponse,
   isConfig,
+  isCompanyIdentity,
   isConversationList,
   isCreatedCustomer,
   isCustomerAccountList,
@@ -95,6 +96,7 @@ export const api = {
       body: JSON.stringify({ tool, input, action_key: actionKey }),
     }),
   config: () => request('/config', isConfig),
+  company: () => request('/company', isCompanyIdentity),
   health: () => request('/health', isHealth),
   documents: () => request('/documents', isDocumentList),
   document: async (id: string, signal: AbortSignal) => {

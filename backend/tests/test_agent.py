@@ -1,3 +1,4 @@
+from base64 import b64encode
 from collections.abc import Iterator
 from typing import Any, Literal
 
@@ -8,6 +9,8 @@ from anthropic.types import Message, MessageParam, ToolParam
 from pydantic import SecretStr
 
 from app.agent import AgentFailure, CompanyAgent, TextCallback, grounded_sources
+from app.auth import CURRENT_USER_ID
+from app.business import BusinessStore
 from app.ingestion import ParsedDocument
 from app.models import ChatRequest, Source
 from app.settings import Settings
@@ -254,5 +257,169 @@ async def test_ungrounded_provider_claim_not_emitted(
         )
         assert "evidencia suficiente" in response.answer
         assert "Inventado" not in str(events) and "sk-ant" not in str(events)
+    finally:
+        await registry.close()
+
+
+@pytest.mark.parametrize(
+    "query,expected",
+    [
+        ("¿Quién es el CEO de Forma?", "evidencia suficiente"),
+        ("Calcula 1+1", "1+1 = 2"),
+    ],
+)
+async def test_calculation_never_authorizes_extra_company_claims(
+    settings: Settings, store: KnowledgeStore, query: str, expected: str
+) -> None:
+    provider = ScriptedProvider(
+        [
+            message(
+                [
+                    {
+                        "type": "tool_use",
+                        "id": "math",
+                        "name": "calculate",
+                        "input": {"expression": "1+1"},
+                    }
+                ],
+                "tool_use",
+            ),
+            message([{"type": "text", "text": "2. No hay problemas: el CEO es Inventado."}]),
+        ]
+    )
+    registry = ToolRegistry(settings, store)
+    emitted: list[dict[str, Any]] = []
+
+    async def emit(_event: str, payload: dict[str, Any]) -> None:
+        emitted.append(payload)
+
+    try:
+        response = await CompanyAgent(anthropic_settings(settings), registry, provider).answer(
+            ChatRequest(message=query), emit
+        )
+        assert expected in response.answer and response.sources == []
+        assert "Inventado" not in response.answer and "Inventado" not in str(emitted)
+        assert response.trace[0].status == "completed" and response.trace[0].output == "2"
+    finally:
+        await registry.close()
+
+
+@pytest.mark.parametrize("query", ["Hola", "CEO de Forma"])
+async def test_greeting_and_refusal_prefix_do_not_authorize_unsupported_prose(
+    settings: Settings, store: KnowledgeStore, query: str
+) -> None:
+    provider = ScriptedProvider(
+        [message([{"type": "text", "text": "No hay problemas, CEO Inventado."}])]
+    )
+    registry = ToolRegistry(settings, store)
+    try:
+        response = await CompanyAgent(anthropic_settings(settings), registry, provider).answer(
+            ChatRequest(message=query)
+        )
+        assert "Inventado" not in response.answer
+        assert (
+            "Hola" in response.answer
+            if query == "Hola"
+            else "evidencia suficiente" in response.answer
+        )
+    finally:
+        await registry.close()
+
+
+async def test_no_source_action_proposal_uses_actual_pending_state(
+    settings: Settings, store: KnowledgeStore
+) -> None:
+    business = BusinessStore(settings.data_dir)
+    registry = ToolRegistry(settings, store, business)
+    provider = ScriptedProvider(
+        [
+            message(
+                [
+                    {
+                        "type": "tool_use",
+                        "id": "support",
+                        "name": "create_support_ticket",
+                        "input": {"subject": "Acceso", "description": "Ayuda con acceso"},
+                    }
+                ],
+                "tool_use",
+            ),
+            message([{"type": "text", "text": "Ticket ya guardado y correo enviado."}]),
+        ]
+    )
+    context = CURRENT_USER_ID.set("synthetic-owner")
+    try:
+        response = await CompanyAgent(anthropic_settings(settings), registry, provider).answer(
+            ChatRequest(message="Necesito soporte")
+        )
+        assert "pendiente de tu confirmación" in response.answer
+        assert "correo enviado" not in response.answer
+        assert business.list_requests("synthetic-owner") == []
+    finally:
+        CURRENT_USER_ID.reset(context)
+        await registry.close()
+        business.close()
+
+
+async def test_mcp_identity_no_source_answer_uses_actual_configured_result(
+    settings: Settings, store: KnowledgeStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = ToolRegistry(settings.model_copy(update={"mcp_enabled": True}), store)
+
+    async def identity() -> str:
+        return '{"company_name":"Empresa Sintética","company_description":"Descripción aprobada"}'
+
+    monkeypatch.setattr(registry, "_mcp_company_info", identity)
+    provider = ScriptedProvider(
+        [
+            message(
+                [{"type": "tool_use", "id": "mcp", "name": "mcp_company_info", "input": {}}],
+                "tool_use",
+            ),
+            message([{"type": "text", "text": "CEO Inventado, soy Otra Empresa"}]),
+        ]
+    )
+    try:
+        response = await CompanyAgent(anthropic_settings(settings), registry, provider).answer(
+            ChatRequest(message="¿Quién eres?")
+        )
+        assert "Empresa Sintética" in response.answer and "Descripción aprobada" in response.answer
+        assert "Inventado" not in response.answer and "Otra Empresa" not in response.answer
+    finally:
+        await registry.close()
+
+
+async def test_retrieved_authorization_is_redacted_before_model_and_public_sources(
+    settings: Settings, store: KnowledgeStore
+) -> None:
+    secret = b64encode(b"synthetic:only").decode("ascii")
+    document = store.add_documents(
+        [ParsedDocument("legacy.md", "Servicio documentado.\nProxy-Authorization: Basic " + secret)]
+    )[0]
+    provider = ScriptedProvider(
+        [
+            message(
+                [
+                    {
+                        "type": "tool_use",
+                        "id": "search",
+                        "name": "search_knowledge",
+                        "input": {"query": "Servicio"},
+                    }
+                ],
+                "tool_use",
+            ),
+            message([{"type": "text", "text": "Servicio documentado [S1]."}]),
+        ]
+    )
+    registry = ToolRegistry(settings, store)
+    try:
+        response = await CompanyAgent(anthropic_settings(settings), registry, provider).answer(
+            ChatRequest(message="Servicio")
+        )
+        assert response.sources and secret not in response.model_dump_json()
+        assert secret not in str(provider.messages)
+        private = store.get_document(document.id)
+        assert private is not None and secret in private.content
     finally:
         await registry.close()

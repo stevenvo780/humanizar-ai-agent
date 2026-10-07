@@ -97,6 +97,32 @@ button:not(:disabled):active {
   white-space: nowrap;
   border: 0;
 }
+
+.tool-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.tool-fields > div {
+  margin-bottom: 14px;
+}
+.field-optional {
+  color: var(--muted);
+  font-size: 12px;
+}
+.tool-json:focus {
+  outline: 2px solid #a7e8cf;
+  outline-offset: 2px;
+}
+.tool-schema pre {
+  max-width: 100%;
+  overflow: auto;
+  font-size: 14px;
+}
+.prompt-card strong {
+  overflow-wrap: anywhere;
+}
 .skip-link {
   position: fixed;
   z-index: 100;

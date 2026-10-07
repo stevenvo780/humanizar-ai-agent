@@ -323,6 +323,10 @@ export default function DocsPage() {
               Una conversación sencilla por fuera. Una arquitectura con contratos, fuentes y límites
               claros por dentro. Así está construido Humanizar IA.
             </p>
+            <p className="docs-snapshot-note">
+              Base preparada para la prueba técnica de Softop. Humanizar es la empresa de ejemplo
+              actual; el perfil, los documentos y las herramientas se adaptan a los requisitos.
+            </p>
             <div className="docs-hero-tags">
               <span>
                 <Code2 size={12} /> React + TypeScript
@@ -346,10 +350,10 @@ export default function DocsPage() {
             <div className="docs-metrics">
               <div>
                 <span className="docs-metric-number">
-                  411<span> / pruebas</span>
+                  533<span> / pruebas</span>
                 </span>
                 <p>En la base de comprobación</p>
-                <small>213 API · 77 sandbox/scripts · 28 despliegue · 93 web</small>
+                <small>259 API · 120 sandbox/scripts · 28 despliegue · 126 web</small>
               </div>
               <div>
                 <span className="docs-metric-title">
@@ -368,7 +372,7 @@ export default function DocsPage() {
             </div>
             <p className="docs-snapshot-note">
               El inventario y la evidencia están fechados; esta página no ejecuta comprobaciones en
-              vivo. El despliegue público también pasó su smoke de extremo a extremo.
+              vivo. La actualización del backend auditado está pendiente del acceso SSH al VPS.
             </p>
           </section>
           <Section
@@ -455,7 +459,8 @@ export default function DocsPage() {
                   <p>
                     Antes de emitir la respuesta, se sanean y ordenan las referencias. Los
                     fragmentos consultados se pueden desplegar; si falta evidencia, el asistente lo
-                    indica.
+                    indica. Una herramienta exitosa no habilita afirmaciones ajenas a su resultado:
+                    sin citas válidas, sólo se muestran resultados deterministas pertinentes.
                   </p>
                 </div>
               </li>
@@ -649,9 +654,11 @@ export default function DocsPage() {
               <p>
                 La última base verificó handshake, catálogo MCP y <code>company_info</code> sobre la
                 API real. La búsqueda protegida exige sesión: un MCP sin autenticación no tiene
-                acceso. En el VPS se comprobaron los contenedores saludables, la red interna y el
-                preset real de Python. Streaming, sesiones y persistencia también se verificaron
-                desde Vercel, con una llamada autenticada a Haiku.
+                acceso. El CLI privado prepara una sesión ligada al origen, con renovación acotada;
+                sus credenciales permanecen fuera del código y del navegador. En el VPS se
+                comprobaron los contenedores saludables, la red interna y el preset real de Python.
+                Streaming, sesiones y persistencia también se verificaron desde Vercel, con una
+                llamada autenticada a Haiku.
               </p>
             </details>
           </Section>
@@ -662,7 +669,7 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La base cuenta con <strong>411 pruebas aprobadas</strong>, incluidas pruebas reales de
+              La base cuenta con <strong>533 pruebas aprobadas</strong>, incluidas pruebas reales de
               persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
               describe la base registrada; cada cambio posterior debe volver a pasar sus
               comprobaciones.
@@ -684,14 +691,14 @@ export default function DocsPage() {
                       Ruff, formato, mypy estricto, agente, autenticación y persistencia PostgreSQL
                     </td>
                     <td>
-                      <strong>213</strong>
+                      <strong>259</strong>
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">Sandbox y utilidades</th>
                     <td>Ruff, formato, tipos, límites de ejecución, importación y empaquetado</td>
                     <td>
-                      <strong>77</strong>
+                      <strong>120</strong>
                     </td>
                   </tr>
                   <tr>
@@ -707,7 +714,7 @@ export default function DocsPage() {
                       ESLint con tipos, hooks y accesibilidad; Prettier; TypeScript; Vitest; build
                     </td>
                     <td>
-                      <strong>93</strong>
+                      <strong>126</strong>
                     </td>
                   </tr>
                 </tbody>
@@ -735,6 +742,19 @@ export default function DocsPage() {
               despliegue público comprobó acceso, sesión renovable, historial, fuentes, Swagger y
               documentación, sin errores JavaScript ni overflow móvil. Un reinicio de la API
               conservó el historial y las sesiones.
+            </p>
+            <p>
+              La{' '}
+              <a
+                href={`${REPOSITORY_URL}/blob/dev/docs/QUALITY.md`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                auditoría de calidad y adaptación
+              </a>{' '}
+              relaciona cada hallazgo con su corrección y sus regresiones. Incluye importación local
+              segura, formularios derivados del esquema, sesiones ante fallos temporales, anuncio
+              accesible y verificaciones de Spec Kit que conservan la selección activa.
             </p>
           </Section>
           <Section
@@ -770,9 +790,9 @@ export default function DocsPage() {
                     la conexión.
                   </li>
                   <li>
-                    Lectura de documentos y gestión de clientes: código y pruebas completos;
-                    publicación de la API actualizada pendiente de recuperar el acceso SSH al VPS.
-                    La interfaz comprueba las capacidades del servidor antes de habilitarlas.
+                    Backend auditado, lectura de documentos y gestión de clientes: publicación de la
+                    API actualizada pendiente de recuperar el acceso SSH al VPS. La interfaz
+                    comprueba las capacidades del servidor antes de habilitarlas.
                   </li>
                   <li>
                     Fedora: instalación real pendiente de disponer del usuario y host SSH del

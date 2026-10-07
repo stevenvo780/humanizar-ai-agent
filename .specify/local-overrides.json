@@ -1,0 +1,10 @@
+{
+  "upstream_version": "1.0.7",
+  "files": {
+    ".specify/scripts/bash/check-prerequisites.sh": {
+      "upstream_sha256": "daa377146db4fb69912f42611a7b91c5d55873b3e3e27ed33bd8d67505826344",
+      "local_sha256": "aa74321bab9295531ffa8bb4af3965cac32a7e82870d0cbdc95662480c4836ce",
+      "reason": "Prerequisite validation must not persist the selected feature; workflow setup remains responsible for selection."
+    }
+  }
+}

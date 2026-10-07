@@ -70,14 +70,21 @@ bash .specify/scripts/bash/check-prerequisites.sh --json --require-spec --requir
 
 Ese comando comprueba existencia y rutas, no demuestra que el examen esté resuelto.
 Mantén `001` como referencia y escribe los requisitos de la prueba en `002`.
+La validación de prerequisitos es de sólo lectura, también con selectores explícitos:
+no crea ni cambia `.specify/feature.json`. Crear una feature o ejecutar su setup
+mantiene la selección explícita correspondiente. Un conjunto de regresión comprueba
+que validar `002` conserva el puntero de `001` y rechaza tareas inexistentes.
 
 ## Auditoría de la base
 
 La revisión de coherencia encontró cobertura cualitativa de los catorce requisitos
-en catorce tareas de implementación, sin conflictos críticos de constitución. Los diez
+mediante las tareas de implementación, sin conflictos críticos de constitución. Los diez
 requisitos originales se complementan con PostgreSQL, despliegue Vercel/Docker,
 gestión de clientes y legibilidad. La publicación de la nueva API de clientes tiene
 su propia tarea pendiente: T015, hasta recuperar acceso SSH y comprobar producción.
+T017 registra el lector pendiente en el VPS; T018, la copia y preparación en Fedora;
+T026, la publicación y comprobación del backend auditado. El listado canónico y
+el estado de las correcciones están en `specs/001-company-agent/tasks.md`.
 Se corrigieron permisos de ingesta, descripción del embedding por defecto y las
 referencias a la persistencia del historial. La matriz FR/T de `001` hace explícita
 esa cobertura; la evidencia de ejecución vive en [VALIDATION.md](VALIDATION.md).
@@ -85,7 +92,10 @@ esa cobertura; la evidencia de ejecución vive en [VALIDATION.md](VALIDATION.md)
 La CLI local informó versión 1.0.7 y `specify check` terminó correctamente.
 Se comprobó también la instalación fijada desde [PyPI](https://pypi.org/project/specify-cli/1.0.7/)
 en un directorio de herramientas aislado.
-Los 22 scripts/templates/skills coinciden con los hashes de sus dos manifiestos;
+Los dos manifiestos conservan los hashes originales de los 22 scripts/templates/skills.
+Se aplica una única corrección local a `check-prerequisites.sh` para que la inspección
+no persista el puntero. `.specify/local-overrides.json` registra el hash original,
+el hash corregido y su motivo; una prueba comprueba ambos manifiestos y esa excepción.
 los diez skills declaran nombres válidos y seis referencias de ejecución locales
 resuelven. Las referencias `metadata.source: templates/commands/...` indican
 procedencia upstream, no archivos adicionales que falten en el clon.

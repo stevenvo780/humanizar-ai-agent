@@ -21,7 +21,7 @@ from app.embeddings import QUESTION_WORDS, terms
 from app.models import ChatRequest, ChatResponse, Source, ToolTrace, Usage
 from app.security import redact
 from app.settings import Settings
-from app.tools import ToolRegistry
+from app.tools import ToolRegistry, normalized
 
 Emit = Callable[[str, dict[str, Any]], Awaitable[None]]
 TextCallback = Callable[[str], Awaitable[None]]
@@ -205,6 +205,78 @@ class CompanyAgent:
             "correo ni reservas externas. No prometas importes, tiempos ni reuniones confirmadas."
         )
 
+    def _without_sources(self, request: ChatRequest, trace: list[ToolTrace]) -> str:
+        """Replace unsupported prose with concrete results, not a truth-detecting regex."""
+        query = normalized(request.message)
+        identity = re.fullmatch(
+            r"[\s¿¡]*(?:hola|hello|hi|buenos dias|buenas tardes|gracias|quien eres|"
+            r"como te llamas|informacion de la empresa|company info)[!?¿¡.\s]*",
+            query,
+        )
+        arithmetic = any(char.isdigit() for char in query) and (
+            any(operator in query for operator in ("+", "-", "*", "/", "%"))
+            or any(
+                word in query
+                for word in ("calcula", "calculate", "iva", "total", "importe", "anual")
+            )
+        )
+        outputs: list[str] = []
+        for item in trace:
+            if item.status != "completed":
+                continue
+            if item.tool == "calculate" and arithmetic:
+                outputs.append(
+                    f"Resultado del cálculo: {item.input.get('expression', '')} = {item.output}"
+                )
+                continue
+            try:
+                value = json.loads(item.output)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(value, dict):
+                continue
+            if item.tool in {"create_demo_request", "create_support_ticket"}:
+                if value.get("requires_confirmation") is True:
+                    outputs.append(
+                        "La solicitud está pendiente de tu confirmación. Usa el botón de la "
+                        "interfaz para registrarla; todavía no se ha guardado ni enviado."
+                    )
+                elif isinstance(value.get("request"), dict):
+                    outputs.append(
+                        "Solicitud registrada localmente. No se ha enviado ninguna "
+                        "notificación ni confirmado una cita externa."
+                    )
+            elif item.tool == "list_my_requests" and isinstance(value.get("requests"), list):
+                records = value["requests"]
+                outputs.append(
+                    "Tus solicitudes locales:\n"
+                    + "\n".join(
+                        f"{record.get('kind', '')}: {record.get('status', '')}"
+                        for record in records
+                        if isinstance(record, dict)
+                    )
+                    if records
+                    else "No tienes solicitudes locales registradas."
+                )
+            elif item.tool == "terminal":
+                outputs.append("Resultado del preset en el sandbox:\n" + item.output)
+            elif item.tool == "mcp_company_info" and identity:
+                name = value.get("company_name")
+                description = value.get("company_description")
+                if isinstance(name, str) and isinstance(description, str):
+                    outputs.append(f"Identidad configurada: {name}. {description}")
+        if outputs:
+            return redact("\n\n".join(outputs))
+        if identity:
+            return (
+                f"Hola. Soy {redact(self.settings.assistant_name)}, asistente de "
+                f"{redact(self.settings.company_name)}. ¿En qué puedo ayudarte?"
+            )
+        return (
+            "No encontré evidencia suficiente en los documentos para responder. "
+            "Probá reformular la consulta o cargar la información que falta."
+        )
+
     async def _anthropic(self, request: ChatRequest, emit: Emit) -> ChatResponse:
         assert self.provider is not None
         messages: list[MessageParam] = [
@@ -254,24 +326,8 @@ class CompanyAgent:
                 if not answer:
                     raise AgentFailure("Claude devolvió una respuesta vacía.", "empty_response")
                 answer, cited = grounded_sources(answer, sources)
-                tool_evidence = any(
-                    item.status == "completed" and item.tool != "search_knowledge" for item in trace
-                )
-                conversational = re.fullmatch(
-                    r"\s*(?:hola|hello|hi|buenos dias|buenas tardes|gracias|quien eres|"
-                    r"como te llamas)[!?¿¡.\s]*",
-                    request.message.casefold(),
-                )
-                refusal = re.search(
-                    r"no (?:tengo|hay|encontr|dispongo|puedo|cuento)|"
-                    r"(?:don't|do not) (?:have|know)|not (?:available|found)",
-                    answer.casefold(),
-                )
-                if not cited and not tool_evidence and not conversational and not refusal:
-                    answer = (
-                        "No encontré evidencia suficiente en los documentos para responder. "
-                        "Probá reformular la consulta o cargar la información que falta."
-                    )
+                if not cited:
+                    answer = self._without_sources(request, trace)
                 # Emit only validated final text. Raw provider deltas may split secrets or
                 # contain unsupported citations; tool and status events remain live.
                 await emit("token", {"text": answer})

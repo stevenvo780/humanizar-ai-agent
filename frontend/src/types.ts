@@ -8,6 +8,14 @@ export interface Config {
   max_upload_mb: number;
 }
 
+export interface CompanyIdentity {
+  company_name: string;
+  company_description: string;
+  assistant_name: string;
+  website?: string;
+  suggested_questions?: string[];
+}
+
 export interface Health {
   status: string;
   mode: 'demo' | 'anthropic';
@@ -60,6 +68,7 @@ export interface ToolDefinition {
   name: string;
   description: string;
   enabled: boolean;
+  input_schema?: Record<string, unknown>;
 }
 
 export interface ChatResponse {

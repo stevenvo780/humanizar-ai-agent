@@ -17,7 +17,6 @@ class KnowledgeStore:
     def __init__(self, settings: Settings, embedder: Embedder | None = None) -> None:
         self.settings = settings
         self.embedder = embedder or create_embedder(settings)
-        self.collection = "lumen_" + self.embedder.signature.replace("-", "_")
         self._lock = threading.RLock()
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         with ExitStack() as resources:
@@ -39,6 +38,23 @@ class KnowledgeStore:
             # Preserve an optional column from an intermediate version without altering it.
             with self._db:
                 self._db.execute("BEGIN IMMEDIATE")
+                self._db.execute(
+                    "INSERT INTO flags (key,value) VALUES ('qdrant_namespace',?) "
+                    "ON CONFLICT(key) DO NOTHING",
+                    (uuid.uuid4().hex,),
+                )
+                namespace = str(
+                    self._db.execute(
+                        "SELECT value FROM flags WHERE key='qdrant_namespace'"
+                    ).fetchone()[0]
+                )
+                if len(namespace) != 32 or any(
+                    char not in "0123456789abcdef" for char in namespace
+                ):
+                    raise ValueError("La identidad persistente del corpus no es válida.")
+                self.collection = (
+                    "lumen_" + namespace + "_" + self.embedder.signature.replace("-", "_")
+                )
                 columns = {
                     str(row["name"]) for row in self._db.execute("PRAGMA table_info(documents)")
                 }

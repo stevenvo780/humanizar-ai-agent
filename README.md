@@ -3,6 +3,8 @@
 Asistente de atención al cliente con información empresarial, interfaz React/TypeScript, API
 FastAPI, recuperación en Qdrant, Claude Haiku, herramientas acotadas y MCP.
 Preparado para adaptar documentos y requisitos de una prueba técnica.
+El proyecto prepara la prueba de **Softop**; **Humanizar** se conserva como empresa
+de ejemplo hasta que el dueño solicite cambiar la identidad y el material.
 
 **Web publicada:** [Humanizar IA](https://humanizar-ai-agent.vercel.app) ·
 [Documentación técnica](https://humanizar-ai-agent.vercel.app/docs) ·
@@ -74,6 +76,7 @@ como deshabilitada hasta conectar el sandbox.
 - Crear cuentas de cliente, cerrar sesión y recuperar conversaciones desde la base de datos.
 - Subir TXT, Markdown, PDF de texto, DOCX, JSON, CSV o ZIP desde Documentación como administrador.
 - Probar calculadora, búsqueda, MCP y los presets de terminal disponibles.
+  La búsqueda MCP utiliza una sesión propia preparada con el [CLI privado](docs/MCP.md).
 - Recomendar productos según el proceso y preparar solicitudes de demo o soporte.
 - Confirmar cada solicitud antes de guardarla; consultar su ID en Mis solicitudes.
 - Revisar las solicitudes de clientes en la bandeja del administrador.
@@ -168,7 +171,8 @@ El workflow de GitHub repite esos controles, revisa el historial con Gitleaks y
 prepara un job de integración Docker. Su ejecución requiere un runner disponible;
 la evidencia local y los límites pendientes se documentan por separado.
 Consulta [la arquitectura](docs/ARCHITECTURE.md), [el contrato](docs/API_CONTRACT.md)
-y [el estado de validación](docs/VALIDATION.md). La gestión de documentos y cuentas
+y [el estado de validación](docs/VALIDATION.md). La [auditoría y guía de adaptación](docs/QUALITY.md)
+registra los hallazgos corregidos y los límites comprobados. La gestión de documentos y cuentas
 se explica en [Administración](docs/ADMIN.md).
 
 La implementación sigue las referencias oficiales de

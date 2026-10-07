@@ -1,24 +1,18 @@
 """Read-only MCP stdio transport. Keeps vector storage exclusively inside the API worker."""
 
-import os
-
-import httpx
 from mcp.server.fastmcp import FastMCP
+
+from app.mcp_auth import MCPAPIClient
 
 mcp = FastMCP("Lumen company knowledge")
 
 
 async def _get(path: str, params: dict[str, str] | None = None) -> str:
-    url = os.environ.get("LUMEN_API_URL", "http://127.0.0.1:8000").rstrip("/")
+    client = MCPAPIClient.from_environment(read_auth=path != "/api/company")
     try:
-        async with httpx.AsyncClient(timeout=8, follow_redirects=False) as client:
-            response = await client.get(url + path, params=params)
-            response.raise_for_status()
-            return response.text
-    except httpx.HTTPError as exc:
-        raise ValueError(
-            "Lumen API unavailable; start the API before using its MCP tools."
-        ) from exc
+        return await client.get(path, params)
+    finally:
+        await client.close()
 
 
 @mcp.tool()

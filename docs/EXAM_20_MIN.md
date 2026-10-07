@@ -15,6 +15,8 @@ configura por separado una clave privada si necesitas llamadas reales a Anthropi
    `/speckit-*`; puedes cambiar el modelo con `CLAUDE_CODE_MODEL`.
    Claude Code desarrolla la solución; el agente de la web atiende consultas de clientes
    mediante la API de Anthropic y el modelo configurado en el backend.
+   Prepara antes la sesión de búsqueda de [MCP](MCP.md) con `mcp-login`; la
+   identidad pública no necesita login, pero el corpus protegido sí.
 4. Si el entorno permite Docker, ejecuta `make docker` y prueba `python --version`
    en Herramientas. Sin Docker, el chat, la búsqueda y la calculadora siguen funcionando.
 5. Decide si necesitas embeddings semánticos y descarga el modelo antes, siguiendo
@@ -37,6 +39,12 @@ rúbricas, secretos o código de evaluación: solo documentos con hechos de empr
 El comando anterior guarda el material para inspección sin subirlo al corpus. Tras
 leerlo, carga únicamente los documentos empresariales desde la UI. También puedes
 subir un ZIP que contenga exclusivamente documentos de la empresa.
+La importación local es ahora el modo predeterminado; `--no-upload` sigue siendo
+un alias explícito. `--upload` requiere un JWT administrativo privado en
+`LUMEN_API_TOKEN` y sólo admite un origen HTTP numérico loopback. No pasar tokens
+como argumentos ni subir consignas automáticamente. Los directorios de sesiones
+y configuraciones privadas se excluyen antes de leer sus miembros; se redactan
+los encabezados de autenticación en el material de texto.
 
 Lee primero README, requisitos, rúbrica, ejemplos y archivos de entrada/salida.
 Identifica cinco decisiones: proveedor, almacenamiento, herramientas requeridas,

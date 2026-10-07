@@ -8,18 +8,18 @@ las pruebas PostgreSQL utilizan exclusivamente una instancia temporal aislada.
 
 | Componente | Evidencia |
 | --- | --- |
-| Backend | Ruff, formato, mypy estricto en 39 archivos, 213 pruebas incluidas 15 PostgreSQL |
-| Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 77 pruebas |
+| Backend | Ruff, formato, mypy estricto en 44 archivos, 259 pruebas incluidas 15 PostgreSQL |
+| Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 120 pruebas |
 | Helpers de despliegue | 28 pruebas offline de configuración, rutas y ejecución privada |
-| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 93 pruebas y build |
+| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 126 pruebas y build |
 | Dependencias web | npm audit: 0 vulnerabilidades en la comprobación del frontend |
 | Configuración | JSON válido; Compose local y producción; proxy Vercel tipado |
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total comprobado: **411 pruebas aprobadas** entre las puertas anteriores sin cambios
-y las suites afectadas de esta revisión, incluidas 213 pruebas backend con PostgreSQL
-temporal y 93 frontend. Las 15 de PostgreSQL se activan con
+Total comprobado: **533 pruebas aprobadas** en la ejecución completa de `scripts/check.sh`
+del 2026-10-07, 10:31 UTC, incluidas 259 pruebas backend con PostgreSQL
+temporal y 126 frontend. Las 15 de PostgreSQL se activan con
 `LUMEN_TEST_DATABASE_URL` apuntando exclusivamente a una base temporal loopback
 `lumen_test`; cada prueba crea y elimina su propio schema aleatorio. Nunca apuntar
 esa variable a la base de la empresa. La base anterior de 214 pruebas también
@@ -33,9 +33,34 @@ PostgreSQL 16 local efímero, cerrado y eliminado al terminar; la conexión prod
 previamente validada sigue siendo PostgreSQL 18.6. Existe una advertencia externa de deprecación
 de TestClient/httpx en cada suite Python; no impide los resultados.
 
+## Correcciones de esta auditoría
+
+La ejecución completa aprobó 259 pruebas backend, 120 de sandbox/scripts,
+28 de helpers y 126 frontend, sin omisiones PostgreSQL. Las 74 pruebas del
+importador y cuatro de Spec Kit forman parte de las 120, sin sumarlas dos veces.
+Ruff, formato, mypy estricto, ESLint, Prettier, TypeScript y build pasan.
+OpenAPI se exportó con configuración sintética sin cargar archivos privados.
+
+La revisión independiente aprobó 45 casos backend dirigidos y 17 de esquemas
+frontend; son subconjuntos del inventario anterior. MCP incluyó login/refresh
+contra API ASGI sintética y búsqueda por stdio con JWT real de una cuenta
+sintética. Qdrant remoto se simuló en memoria; no se acredita un servidor remoto.
+No se llamó a Anthropic para estos controles de regresión.
+
+Chromium con contratos HTTP sintéticos comprobó un formulario nuevo con argumentos
+correctos, Humanizar como perfil actual y otro perfil sin enlaces heredados,
+respuesta SSE con un solo anuncio final, móvil 320/390 px y cero errores
+JavaScript o desbordes. Esta comprobación no equivale a actualizar la API del VPS.
+La página técnica pública también pasó Chromium en 320/390/1440 px después de
+corregir el ancho de las tarjetas con rutas largas: sin desborde, errores JS ni
+solicitudes de autenticación, y con enlace al mapa de hallazgos.
+La paridad conserva 20 artefactos compatibles y el AGENTS.md manual; Spec Kit
+mantiene hashes upstream más un parche local documentado y no cambia su selección
+al validar prerequisitos. Mapa de hallazgos y adaptación en [QUALITY.md](QUALITY.md).
+
 ## Publicación y configuración de este workspace
 
-Comprobación del 2026-10-07, 04:51 UTC: web, documentación y Swagger productivos
+Comprobación del 2026-10-07, 10:28 UTC: web, documentación y Swagger productivos
 responden HTTP 200. La API activa sigue en modo Anthropic con Haiku 4.5; todavía
 no declara `document_reading` ni `customer_management`, y OpenAPI no ofrece GET de
 contenido. Publicar la API actualizada sigue pendiente de una sesión SSH autenticada:
@@ -66,8 +91,8 @@ sintéticos de destino pasaron; no equivalen a una instalación real en el port�
 
 - Lector de documentos: API protegida por rol admin, contenido completo persistente
   en nuevas cargas y migración aditiva compatible con la estructura anterior. Las
-  213 pruebas backend incluyen lectura, whitespace, reinicio, reconstrucción,
-  rollback, borrado y permisos; 93 frontend verifican el contrato y Markdown seguro.
+  pruebas backend incluyen lectura, whitespace, reinicio, reconstrucción,
+  rollback, borrado y permisos; las pruebas frontend verifican el contrato y Markdown seguro.
 - Chromium con API real y datos sintéticos: Markdown con títulos, listas, tablas,
   código y enlaces; vista de texto completo; documentos previos con aviso de
   reconstrucción; apertura con foco/desplazamiento, cierre, error y reintento,
@@ -211,13 +236,14 @@ producción. La publicación real se registra por separado del inventario automa
 ## Pendientes y límites
 
 - El daemon Docker del entorno local no responde. Las pruebas PostgreSQL utilizaron
-  un contenedor temporal aislado en el VPS, accesible sólo por un túnel loopback.
+  una instancia PostgreSQL 16 local efímera, exclusivamente en loopback,
+  cerrada y eliminada al terminar.
   Los builds y el sandbox productivo se verifican en el VPS durante el despliegue.
 - CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
   locales, auditoría de paths, Gitleaks, PostgreSQL temporal e integración Docker.
   El runner remoto no inició por bloqueo de facturación de la cuenta GitHub;
-  el workflow no cuenta como validación remota aprobada. Las 378 pruebas locales
-  y el smoke Docker/Vercel real se registran de forma independiente.
+  el workflow no cuenta como validación remota aprobada. Las 533 pruebas locales actuales
+  y el smoke Docker/Vercel de la publicación anterior se registran de forma independiente.
 - El clon público no contiene una credencial: cada instalación configura su propia
   clave privada. Los controles automatizados del ciclo, errores y presupuestos
   utilizan proveedores simulados; las llamadas reales locales se registran arriba.

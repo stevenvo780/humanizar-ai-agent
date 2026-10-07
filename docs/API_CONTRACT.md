@@ -63,6 +63,11 @@ omit it, allowing frontend and backend updates to occur independently.
 
 `GET /api/config`: `{company_name: string, company_description: string, assistant_name: string, model: string, mode: "demo" | "anthropic", embedding: string, max_upload_mb: number}`.
 
+`GET /api/company`: `{company_name: string, company_description: string, assistant_name: string, website?: string, suggested_questions: string[]}`.
+The optional website uses HTTP(S); suggestions have at most eight items. The
+frontend remains compatible with older responses containing only the three
+identity strings. Humanizar defaults only apply to the Humanizar profile.
+
 `GET /api/documents`: `{documents: Document[], total_chunks: number}`.
 
 `Document`: `{id: string, name: string, chunks: number, characters: number, created_at: string}`.
@@ -100,7 +105,12 @@ Streaming uses SSE (`text/event-stream`) with standard `event: NAME\ndata: JSON\
 - `done`: complete `ChatResponse`.
 - `error`: `{message: string, code: string}`.
 
-`GET /api/tools`: `{tools: {name: string, description: string, enabled: boolean}[]}`.
+`GET /api/tools`: `{tools: {name: string, description: string, enabled: boolean, input_schema: object}[]}`.
+The bounded JSON Schema has `type: "object"`, `properties`, `required` and
+`additionalProperties: false`. The same central definition is sent to Anthropic.
+The browser derives simple string/enum/number/boolean fields from that schema;
+older APIs without schemas retain compatible forms for their existing tools.
+Registering a schema does not register an executable handler or grant permissions.
 
 `POST /api/tools/run`: admin only, `{name: string, input: object, confirmed?: boolean}`,
 returns `ToolTrace`. Existing tools: `search_knowledge` (`query`), `calculate`
@@ -132,10 +142,17 @@ mode and model. SDK authentication errors are explicit; no silent demo fallback.
 The sandbox interface (port 8001) is `GET /health` and `POST /run` with `{command: string}` -> `{stdout: string, stderr: string, exit_code: number}`. No credentials, arbitrary shell, Docker socket or writable host mounts. Commands cannot make network requests; Compose attaches only an internal network. The API accesses it using `SANDBOX_URL`.
 
 The read-only MCP server lives at `backend/app/mcp_server.py`, invoked with `uv run --project backend --extra semantic python -m app.mcp_server`. It exposes company_info and search_knowledge via persistent API HTTP calls to avoid a second writer opening Qdrant local storage. Default URL `http://127.0.0.1:8000`, configurable with `LUMEN_API_URL`. `GET /api/company` exposes configured identity; `GET /api/search?query=...` returns `{sources: Source[]}` for MCP retrieval.
+Protected MCP searches use an explicit `LUMEN_API_TOKEN` or a private origin-bound
+session from `LUMEN_API_TOKEN_FILE`, created by the interactive `mcp-login` CLI.
+The API remains authenticated; public identity does not require a session.
+Refresh failures distinguish rejected credentials from transient unavailability
+and preserve the saved file on temporary errors. See `docs/MCP.md` for setup.
 
 Backend settings: `ANTHROPIC_API_KEY`, `LLM_MODE=demo|anthropic|auto`,
 `ANTHROPIC_MODEL=claude-haiku-4-5`, `MAX_CONCURRENT_CHATS=4`,
 `COMPANY_NAME=Humanizar`, `COMPANY_DESCRIPTION`,
+`COMPANY_WEBSITE`, `COMPANY_SUGGESTED_QUESTIONS` (JSON string array),
+`COMPANY_PRODUCTS` (JSON array of `{name, keywords}`),
 `ASSISTANT_NAME=Humanizar IA`, `DATA_DIR`, `AUTH_ENABLED=true`, `SEED_DEMO=false`,
 `KNOWLEDGE_DIR=knowledge/humanizar`, `EMBEDDING_PROVIDER=hash|fastembed`, `QDRANT_URL`,
 `SANDBOX_URL`, `MCP_ENABLED=true`, `DATABASE_URL`, `DATABASE_SCHEMA=lumen`,

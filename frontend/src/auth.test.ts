@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authenticatedFetch, logoutSession, refreshSession, setAccessToken } from './auth';
+import {
+  authenticatedFetch,
+  logoutSession,
+  refreshSession,
+  SessionRefreshError,
+  setAccessToken,
+} from './auth';
 
 afterEach(() => {
   setAccessToken(null);
@@ -12,6 +18,85 @@ const refreshed = {
 };
 
 describe('in-memory authenticated requests', () => {
+  it.each([503, 429])(
+    'preserves the session after 401 followed by a refresh %s',
+    async (status) => {
+      setAccessToken('test-retained-access');
+      vi.stubGlobal('window', new EventTarget());
+      const expired = vi.fn();
+      window.addEventListener('humanizar-session-expired', expired);
+      const mock = vi
+        .fn()
+        .mockResolvedValueOnce(new Response(null, { status: 401 }))
+        .mockResolvedValueOnce(new Response(null, { status }))
+        .mockResolvedValueOnce(new Response('ok'));
+      vi.stubGlobal('fetch', mock);
+      await expect(authenticatedFetch('/api/conversations')).rejects.toMatchObject({
+        name: 'SessionRefreshError',
+        status,
+      });
+      expect(expired).not.toHaveBeenCalled();
+      expect(mock).toHaveBeenCalledTimes(2);
+      await authenticatedFetch('/api/health');
+      const later = mock.mock.calls[2]?.[1] as RequestInit;
+      expect(new Headers(later.headers).get('Authorization')).toBe('Bearer test-retained-access');
+    },
+  );
+
+  it('preserves the session when a refresh fails on the network', async () => {
+    setAccessToken('test-retained-access');
+    vi.stubGlobal('window', new EventTarget());
+    const expired = vi.fn();
+    window.addEventListener('humanizar-session-expired', expired);
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockRejectedValueOnce(new TypeError('Synthetic offline'))
+      .mockResolvedValueOnce(new Response('ok'));
+    vi.stubGlobal('fetch', mock);
+    await expect(authenticatedFetch('/api/requests')).rejects.toBeInstanceOf(SessionRefreshError);
+    expect(expired).not.toHaveBeenCalled();
+    await authenticatedFetch('/api/health');
+    const later = mock.mock.calls[2]?.[1] as RequestInit;
+    expect(new Headers(later.headers).get('Authorization')).toBe('Bearer test-retained-access');
+  });
+
+  it.each([401, 403])(
+    'expires only when refresh rejects authentication with %s',
+    async (status) => {
+      setAccessToken('test-access');
+      vi.stubGlobal('window', new EventTarget());
+      const expired = vi.fn();
+      window.addEventListener('humanizar-session-expired', expired);
+      const mock = vi
+        .fn()
+        .mockResolvedValueOnce(new Response(null, { status: 401 }))
+        .mockResolvedValueOnce(new Response(null, { status }))
+        .mockResolvedValueOnce(new Response('ok'));
+      vi.stubGlobal('fetch', mock);
+      expect((await authenticatedFetch('/api/requests')).status).toBe(401);
+      expect(expired).toHaveBeenCalledOnce();
+      await authenticatedFetch('/api/health');
+      const later = mock.mock.calls[2]?.[1] as RequestInit;
+      expect(new Headers(later.headers).has('Authorization')).toBe(false);
+    },
+  );
+
+  it('can renew again after a temporary refresh failure without a loop', async () => {
+    setAccessToken('test-old-access');
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(refreshed)))
+      .mockResolvedValueOnce(new Response('ok'));
+    vi.stubGlobal('fetch', mock);
+    await expect(authenticatedFetch('/api/requests')).rejects.toBeInstanceOf(SessionRefreshError);
+    expect((await authenticatedFetch('/api/requests')).status).toBe(200);
+    expect(mock).toHaveBeenCalledTimes(5);
+  });
+
   it('refreshes once on 401 and retries with the new bearer token', async () => {
     setAccessToken('test-old-access');
     const mock = vi

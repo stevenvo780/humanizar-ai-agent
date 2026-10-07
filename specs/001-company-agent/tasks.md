@@ -18,6 +18,14 @@
 - [x] T016 FR-002/FR-008/FR-014: persist complete document text, migrate legacy metadata, add authenticated content API and safe Markdown/text reader, and verify storage, roles and browser behavior.
 - [ ] T017 FR-014: publish the document reader API/UI and verify reading from Vercel; requires an authenticated SSH connection to update the VPS API.
 - [ ] T018 FR-007: clone/update the public repository on the Fedora laptop in ~/Documentos/repos/SoftopPrueba and verify its local environment; requires a reachable SSH host/user and local tool authentication.
+- [x] T019 FR-001/FR-003: prevent unrelated successful tools from admitting unsupported company claims; preserve legitimate arithmetic and explicit action results with regression tests.
+- [x] T020 FR-002/FR-007: exclude session/runtime material before ZIP reads, redact authentication headers and make authenticated uploads explicit (`scripts/import-material.py`, `scripts/tests`).
+- [x] T021 FR-006/FR-008: add a private, authenticated MCP session flow with bounded refresh and distinct authentication/availability errors (`backend/app/mcp_server.py`, `backend/app/manage.py`).
+- [x] T022 FR-001/FR-002: isolate remote vector collections by a persistent corpus namespace without deleting existing knowledge (`backend/app/storage.py`, `backend/tests`).
+- [x] T023 FR-007/FR-010/FR-014: configure company identity/catalog and share tool input schemas with the typed frontend, preserving the Humanizar example (`backend/app`, `frontend/src`).
+- [x] T024 FR-008/FR-014: preserve the session on transient refresh errors and announce completed chat responses accessibly (`frontend/src`, `frontend/src/auth.test.ts`).
+- [x] T025 FR-007/FR-014: keep prerequisite checks read-only, document the local scaffold patch and use measurable UI acceptance criteria (`.specify`, `scripts/tests/test_speckit.py`, `docs`).
+- [ ] T026 FR-012: publish the audited backend and verify the public application with the final source revision; requires authenticated VPS access.
 
 Production Docker sandbox execution, real Haiku responses and PostgreSQL persistence
 were verified and are recorded in docs/VALIDATION.md. Remote Qdrant remains untested;

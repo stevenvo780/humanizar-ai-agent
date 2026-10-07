@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from app.calculator import calculate
-from app.security import safe_input
+from app.security import redact, safe_input
 from app.settings import Settings
 from app.storage import KnowledgeStore
 from app.tools import ToolRegistry
@@ -95,3 +95,35 @@ def test_trace_secret_redaction() -> None:
     assert clean["api_key"] == "[REDACTADO]"
     assert clean["nested"]["token"] == "[REDACTADO]"
     assert "sk-ant" not in clean["query"]
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "Authorization: Basic c3ludGhldGljOm9ubHk=",
+        '"Proxy-Authorization": "Basic c3ludGhldGljOm9ubHk="',
+        "authorization: Bearer synthetic.jwt.placeholder",
+    ],
+)
+def test_authorization_headers_redacted(header: str) -> None:
+    assert "c3ludGhldGlj" not in redact(header)
+    assert "synthetic.jwt" not in redact(header)
+    assert "[REDACTADO]" in redact(header)
+
+
+async def test_ui_and_provider_share_tool_contract(
+    settings: Settings, store: KnowledgeStore
+) -> None:
+    registry = ToolRegistry(settings, store)
+    try:
+        catalog = {item["name"]: item for item in registry.catalog()}
+        for schema in registry.schemas():
+            assert catalog[schema["name"]]["input_schema"] == schema["input_schema"]
+        catalog["calculate"]["input_schema"]["properties"].clear()
+        assert registry.catalog()[1]["input_schema"]["properties"]
+        blocked = await registry.run("unexpected_tool", {})
+        assert blocked.trace.status == "error"
+        invalid = await registry.run("calculate", {"expression": 123})
+        assert invalid.trace.status == "error"
+    finally:
+        await registry.close()

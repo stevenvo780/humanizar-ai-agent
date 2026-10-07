@@ -257,11 +257,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Company Api Company Get"
+                  "$ref": "#/components/schemas/CompanyInfo"
                 }
               }
             }
@@ -1000,6 +996,47 @@
           "session_id"
         ],
         "title": "ChatResponse"
+      },
+      "CompanyInfo": {
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "company_description": {
+            "type": "string",
+            "title": "Company Description"
+          },
+          "assistant_name": {
+            "type": "string",
+            "title": "Assistant Name"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "suggested_questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suggested Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_name",
+          "company_description",
+          "assistant_name"
+        ],
+        "title": "CompanyInfo"
       },
       "CustomerCreatedResponse": {
         "properties": {

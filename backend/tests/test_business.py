@@ -294,7 +294,7 @@ async def test_recommendation_requires_retrieved_document_evidence(
     settings: Settings,
     store: KnowledgeStore,
 ) -> None:
-    registry = ToolRegistry(settings, store)
+    registry = ToolRegistry(settings.model_copy(update={"company_name": "Humanizar"}), store)
     try:
         missing = await registry.run(
             "recommend_product", {"process": "Distribuidora de alimentos y rutas"}

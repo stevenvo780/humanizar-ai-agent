@@ -2,6 +2,8 @@
 """Inspect examiner ZIPs without extracting or executing their code.
 
 Run with ``uv run --project backend --extra semantic python scripts/import-material.py ZIP``.
+The default saves material locally without network requests. Explicit ``--upload``
+requires the private LUMEN_API_TOKEN environment variable for an administrator.
 Only sanitized text is persisted. PDF/DOCX company documents are converted to text;
 PDF support uses the backend's pypdf dependency. No project dependencies are imported.
 """
@@ -14,6 +16,7 @@ import hashlib
 import io
 import json
 import logging
+import os
 import re
 import resource
 import stat
@@ -56,7 +59,11 @@ FORBIDDEN_PARTS = {
     ".pypirc",
     ".netrc",
     ".password-store",
+    ".codex",
+    ".credentials.json",
 }
+CLAUDE_PRIVATE_PARTS = {"projects", "sessions", "transcripts", "history", "debug"}
+CLAUDE_PRIVATE_FILES = {"settings.json", "settings.local.json", "history.jsonl"}
 PROJECT_DOCUMENT = re.compile(
     r"(?:^|[/_. -])(?:readme|requirements?|requisitos?|consignas?|enunciado|spec|"
     r"specification|instructions?|instrucciones|architecture|arquitectura|tasks?|plan|"
@@ -69,7 +76,8 @@ SECRET_PATTERNS = (
     re.compile(
         r"\b(?:sk-ant-[\w-]{8,}|sk-[\w-]{16,}|gh[pousr]_[\w]{16,}|github_pat_[\w]{16,}|AKIA[A-Z0-9]{16})\b"
     ),
-    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{8,}"),
+    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+"),
+    re.compile(r"""(?im)\b(?:proxy[-_ ]?)?authorization\b[ \t*`"']*[:=][ \t]*[^\r\n]+"""),
     re.compile(
         r"""(?im)(["']?\b(?:[A-Z_]*(?:API_KEY|ACCESS_TOKEN|AUTH_TOKEN|SECRET|PASSWORD)|token|cookie)["']?\s*[:=,]\s*)(["']?)[^\r\n,;]+"""
     ),
@@ -79,6 +87,10 @@ SENSITIVE_FIELD = re.compile(r"(?i)(?:api[_-]?key|password|secret|token|cookie|a
 
 class UnsafeArchive(ValueError):
     """An archive failed structural validation; no members may be imported."""
+
+
+class UploadAuthenticationError(ValueError):
+    """An upload was rejected; its message never includes response bodies or tokens."""
 
 
 @dataclass(frozen=True)
@@ -141,7 +153,12 @@ def inspect_archive(archive: zipfile.ZipFile) -> list[tuple[zipfile.ZipInfo, str
 
 
 def forbidden(name: str) -> bool:
-    parts = name.casefold().split("/")
+    parts = unicodedata.normalize("NFKC", name).casefold().split("/")
+    for index, part in enumerate(parts[:-1]):
+        if part == ".claude" and (
+            parts[index + 1] in CLAUDE_PRIVATE_PARTS or parts[index + 1] in CLAUDE_PRIVATE_FILES
+        ):
+            return True
     return any(
         part in FORBIDDEN_PARTS
         or part.startswith(".env")
@@ -354,14 +371,16 @@ class NoRedirect(request.HTTPRedirectHandler):
 
 
 def validate_backend_url(url: str) -> str:
+    if any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in url):
+        raise ValueError("Backend URL must be an HTTP numeric loopback origin.")
     parsed = parse.urlsplit(url)
     if (
         parsed.scheme != "http"
         or parsed.hostname not in {"127.0.0.1", "::1"}
-        or parsed.username
-        or parsed.password
-        or parsed.query
-        or parsed.fragment
+        or parsed.username is not None
+        or parsed.password is not None
+        or "?" in url
+        or "#" in url
         or parsed.path not in {"", "/"}
     ):
         raise ValueError("Backend URL must be an HTTP numeric loopback origin.")
@@ -373,7 +392,18 @@ def validate_backend_url(url: str) -> str:
     return url.rstrip("/")
 
 
-def upload_document(document: AcceptedDocument, backend_url: str) -> None:
+def validate_api_token(token: str | None) -> str:
+    if (
+        token is None
+        or re.fullmatch(r"[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+", token) is None
+    ):
+        raise ValueError("Set LUMEN_API_TOKEN to an administrator JWT access token for --upload.")
+    return token
+
+
+def upload_document(document: AcceptedDocument, backend_url: str, api_token: str) -> None:
+    backend_url = validate_backend_url(backend_url)
+    api_token = validate_api_token(api_token)
     boundary = f"lumen-{uuid.uuid4().hex}"
     # Filename is generated, but quote it to ASCII for multipart interoperability.
     filename = re.sub(r"[^A-Za-z0-9._-]", "_", document.name)
@@ -386,40 +416,75 @@ def upload_document(document: AcceptedDocument, backend_url: str) -> None:
         f"{backend_url}/api/documents",
         data=payload,
         method="POST",
-        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        headers={
+            "Content-Type": f"multipart/form-data; boundary={boundary}",
+            "Authorization": f"Bearer {api_token}",
+        },
     )
     # Proxy environment and redirects cannot send document bodies to another service.
     opener = request.build_opener(request.ProxyHandler({}), NoRedirect())
-    with opener.open(message, timeout=20) as response:
-        if response.status != 200:
-            raise ValueError("Backend rejected document upload.")
-        response.read(64 * 1024)
+    try:
+        with opener.open(message, timeout=20) as response:
+            if response.status != 200:
+                raise ValueError("Backend rejected document upload.")
+            response.read(64 * 1024)
+    except error.HTTPError as exc:
+        if exc.code == 401:
+            raise UploadAuthenticationError(
+                "Upload authentication failed (401); refresh the administrator LUMEN_API_TOKEN."
+            ) from None
+        if exc.code == 403:
+            raise UploadAuthenticationError(
+                "Upload forbidden (403); LUMEN_API_TOKEN must belong to an administrator."
+            ) from None
+        raise
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("zip_path", type=Path)
     parser.add_argument("--backend-url", default="http://127.0.0.1:8000")
-    parser.add_argument(
-        "--no-upload",
+    upload_mode = parser.add_mutually_exclusive_group()
+    upload_mode.add_argument(
+        "--upload",
         action="store_true",
-        help="Inspect and save sanitized material only.",
+        help="Upload reviewed company documents to the local API using LUMEN_API_TOKEN.",
     )
+    upload_mode.add_argument(
+        "--no-upload",
+        action="store_false",
+        dest="upload",
+        help="Inspect and save sanitized material only (the default).",
+    )
+    parser.set_defaults(upload=False)
     args = parser.parse_args(argv)
     try:
         backend_url = validate_backend_url(args.backend_url)
+        api_token = validate_api_token(os.environ.get("LUMEN_API_TOKEN")) if args.upload else None
+    except ValueError:
+        print(
+            "Upload configuration rejected: use an HTTP numeric loopback origin and "
+            "set LUMEN_API_TOKEN to an administrator JWT for --upload.",
+            file=sys.stderr,
+        )
+        return 2
+    try:
         documents, report = collect_documents(args.zip_path)
         destination = Path(__file__).resolve().parent.parent / "material"
         target = store_documents(documents, report, destination)
         uploaded = 0
         failures = 0
-        if not args.no_upload:
+        if api_token is not None:
             for document in documents:
                 if document.project_document:
                     continue
                 try:
-                    upload_document(document, backend_url)
+                    upload_document(document, backend_url, api_token)
                     uploaded += 1
+                except UploadAuthenticationError as exc:
+                    failures += 1
+                    print(str(exc), file=sys.stderr)
+                    break
                 except (OSError, ValueError, error.URLError):
                     failures += 1
         print(f"Saved {len(documents)} sanitized documents to {target}.")

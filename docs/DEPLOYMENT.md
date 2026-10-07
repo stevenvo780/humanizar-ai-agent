@@ -5,8 +5,9 @@ Instancia publicada: [web](https://humanizar-ai-agent.vercel.app),
 [API](https://humanizar-ai-agent.vercel.app/api/docs). Los resultados observados
 de login, Haiku, TLS, sandbox y persistencia están en [VALIDATION.md](VALIDATION.md).
 
-**Estado al 2026-10-07:** el frontend de la revisión `f562cc9` está **READY** en
-Vercel. El despliegue de la nueva API con gestión de clientes y lectura de
+**Estado al 2026-10-07:** el frontend publicado está disponible en
+Vercel; la revisión y comprobaciones vigentes están en [VALIDATION.md](VALIDATION.md).
+El despliegue de la nueva API con gestión de clientes, lectura de
 documentos sigue pendiente de recuperar la autenticación SSH del VPS. La
 instalación Fedora prevista en `~/Documentos/repos/SoftopPrueba` está pendiente
 de conocer usuario e IP; no se presenta como instalada.
@@ -79,6 +80,9 @@ usar la auditoría de rutas y el escaneo de secretos establecidos por el reposit
 | `JWT_SECRET` | API, archivo privado | Obligatorio en producción, al menos 32 caracteres; mantenerlo estable. |
 | `AUTH_BOOTSTRAP_TOKEN` | API, archivo privado | Obligatorio en producción, al menos 32 caracteres; protege el bootstrap HTTP mediante `X-Bootstrap-Token`. |
 | `CORS_ORIGINS` | API | Array JSON de los orígenes HTTPS exactos del frontend. |
+| `COMPANY_NAME` / `COMPANY_DESCRIPTION` / `ASSISTANT_NAME` | API | Perfil público; Humanizar permanece como ejemplo actual de la base para Softop. |
+| `COMPANY_WEBSITE` | API | Enlace público opcional HTTP(S), sin credenciales. |
+| `COMPANY_SUGGESTED_QUESTIONS` / `COMPANY_PRODUCTS` | API | Arrays JSON; `null` usa el ejemplo sólo para Humanizar y `[]` lo desactiva. |
 | `LUMEN_PRODUCTION_ENV` | Helper/Compose | Ruta absoluta del archivo privado externo al checkout. |
 | `LUMEN_API_PORT` | Helper/Compose | Puerto loopback de la API, por defecto `8087`. |
 
@@ -91,6 +95,10 @@ variables de su proxy, preparadas en `.env.vercel` privado, no el archivo del ba
 El helper Vercel recibe variables de proceso y no carga ese archivo automáticamente.
 No leer ni imprimir estos archivos durante una revisión de código, publicación o
 prueba automatizada.
+
+La sesión MCP de desarrollo se prepara por separado con el
+[CLI de login privado](MCP.md); no forma parte del entorno Vercel ni se transfiere
+al portátil. El inventario de correcciones está en [QUALITY.md](QUALITY.md).
 
 La plantilla pública está en
 [config/production.env.example](../config/production.env.example). El archivo real

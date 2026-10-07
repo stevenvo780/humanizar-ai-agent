@@ -5,6 +5,21 @@ let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthResponse | null> | null = null;
 let sessionRevision = 0;
 
+export class SessionRefreshError extends Error {
+  constructor(
+    readonly status: number | null,
+    cause?: unknown,
+  ) {
+    super(
+      'No se pudo renovar la sesión temporalmente. Reintenta cuando el servicio esté disponible.',
+      {
+        cause,
+      },
+    );
+    this.name = 'SessionRefreshError';
+  }
+}
+
 export function setAccessToken(token: string | null): void {
   sessionRevision++;
   accessToken = token;
@@ -15,16 +30,23 @@ export async function refreshSession(): Promise<AuthResponse | null> {
   if (refreshInFlight) return refreshInFlight;
   const revision = sessionRevision;
   const pending = (async () => {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'X-Requested-With': 'Humanizar' },
-    });
+    let response: Response;
+    try {
+      response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'Humanizar' },
+      });
+    } catch (error) {
+      if (revision !== sessionRevision) return null;
+      throw new SessionRefreshError(null, error);
+    }
     if (revision !== sessionRevision) return null;
-    if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
       accessToken = null;
       return null;
     }
+    if (!response.ok) throw new SessionRefreshError(response.status);
     const result = validate(await response.json(), isAuthResponse);
     if (revision !== sessionRevision) return null;
     accessToken = result.access_token;

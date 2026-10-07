@@ -265,3 +265,88 @@ def test_content_survives_failed_delete_and_cascades_after_success(
     assert not store.delete(document.id)
     assert store._db.execute("SELECT COUNT(*) FROM document_contents").fetchone()[0] == 0
     assert store._db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0] == 0
+
+
+def test_remote_corpus_namespace_prevents_cross_store_top_n_starvation(
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from qdrant_client import QdrantClient
+
+    shared = QdrantClient(":memory:")
+    real_close = shared.close
+    monkeypatch.setattr(shared, "close", lambda: None)
+    monkeypatch.setattr("app.storage.QdrantClient", lambda **_kwargs: shared)
+    first_settings = settings.model_copy(
+        update={
+            "qdrant_url": "https://vectors.example.invalid",
+            "data_dir": settings.data_dir / "first",
+        }
+    )
+    second_settings = settings.model_copy(
+        update={
+            "qdrant_url": "https://vectors.example.invalid",
+            "data_dir": settings.data_dir / "second",
+        }
+    )
+    first = KnowledgeStore(first_settings)
+    second = KnowledgeStore(second_settings)
+    try:
+        document = first.add_documents(
+            [ParsedDocument("first.md", "Inventario y control de existencias")]
+        )[0]
+        second.add_documents(
+            [ParsedDocument(f"other-{index}.md", "Inventario") for index in range(40)]
+        )
+        assert first.collection != second.collection
+        assert first.search("inventario", 1)[0].document_id == document.id
+        assert all(
+            source.document_name.startswith("other-") for source in second.search("inventario")
+        )
+        namespace = first.collection
+        first.close()
+        first = KnowledgeStore(first_settings)
+        assert first.collection == namespace
+        assert first.search("inventario")[0].document_id == document.id
+        assert first.delete(document.id)
+        assert second.search("inventario")
+        assert shared.collection_exists(second.collection)
+    finally:
+        first.close()
+        second.close()
+        real_close()
+
+
+def test_legacy_vectors_are_preserved_while_new_collection_reindexes(settings: Settings) -> None:
+    from qdrant_client import QdrantClient, models
+
+    text = "Conocimiento legado público"
+    identifier = legacy_database(settings, text, chunks(text))
+    vectors = QdrantClient(path=str(settings.data_dir / "qdrant"))
+    old_collection = "lumen_" + HashEmbedder.signature.replace("-", "_")
+    vectors.create_collection(
+        old_collection,
+        vectors_config=models.VectorParams(size=384, distance=models.Distance.COSINE),
+    )
+    foreign_id = str(uuid.uuid4())
+    vectors.upsert(
+        old_collection,
+        [
+            models.PointStruct(
+                id=foreign_id,
+                vector=HashEmbedder().embed([text])[0],
+                payload={"document_id": "foreign"},
+            )
+        ],
+    )
+    vectors.close()
+    store = KnowledgeStore(settings)
+    try:
+        assert store.collection != old_collection
+        assert store.search("legado")[0].document_id == identifier
+        assert store._vectors.retrieve(old_collection, [foreign_id])
+        namespace = store._db.execute(
+            "SELECT value FROM flags WHERE key='qdrant_namespace'"
+        ).fetchone()[0]
+        assert namespace in store.collection
+    finally:
+        store.close()
