@@ -86,3 +86,31 @@ Esta base incluye acceso multiusuario con roles administrador y cliente. Cuotas 
 tenant, despliegue público, OCR, navegador autónomo y ejecución arbitraria de código
 requieren trabajo específico según el enunciado; no se presentan como capacidades
 ya implementadas.
+
+## Estructura del código
+
+```text
+backend/app/
+├── main.py            fábrica FastAPI: recursos, middleware y routers
+├── manage.py          CLI de operación (create-admin, mcp-login)
+├── core/              settings, redacción de secretos, límites de petición
+├── api/               schemas, dependencies, errors y routes/ (un router por recurso)
+├── agent/             ciclo Anthropic acotado, modo demo y validación de citas
+├── tools/             contrato (definitions), ejecución (registry) y calculadora
+├── knowledge/         ingesta, PDF, embeddings, store Qdrant y corpus inicial
+├── accounts/          JWT, Argon2, sesiones rotatorias y roles
+├── persistence/       contratos y almacenes SQLite/PostgreSQL
+├── business/          perfil de empresa y solicitudes de demo/soporte
+└── mcp/               servidor MCP de sólo lectura y su cliente autenticado
+backend/tests/         mismas carpetas por dominio + regressions/
+
+frontend/src/
+├── main.tsx           entrada
+├── app/               shell, router y navegación del workspace
+├── features/          auth, chat, customers, docs, documents, requests, tools
+├── shared/            api (cliente, auth, SSE, validación, tipos), config, hooks, ui, utils
+└── styles/            estilos globales
+```
+
+Una capacidad nueva se ubica en su dominio: el contrato HTTP en `api/schemas.py`, la ruta
+en `api/routes/<recurso>.py`, la lógica en su paquete y la vista en `features/<dominio>`.

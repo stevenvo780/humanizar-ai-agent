@@ -15,11 +15,21 @@ allowed build commands constitute an OS sandbox for Claude Code.
 
 ## Quick orientation
 
-- backend/app: FastAPI, settings, document ingestion, persistent Qdrant retrieval,
-  bounded Anthropic Haiku tool loop, demo mode, SSE and MCP server.
-- backend/app/auth.py and database.py: JWT, Argon2, rotating refresh/session families,
-  roles, SQLite or PostgreSQL conversations and business requests. Anthropic credentials come
-  exclusively from the backend environment; no browser configuration endpoint.
+- backend/app (one package per domain; `app.main:app` wires them):
+  - core/: settings, secret redaction, request limits, thread offloading.
+  - api/: schemas (HTTP contracts), dependencies (auth scopes, typed state), errors and
+    routes/ with one router per resource (system, knowledge, tools, requests, customers,
+    conversations, chat + SSE).
+  - agent/: bounded Anthropic Haiku tool loop, demo mode and citation grounding.
+  - tools/: tool contract (definitions), execution (registry) and safe calculator.
+  - knowledge/: ingestion, PDF parser, embeddings, Qdrant store, initial corpus bootstrap.
+  - accounts/: JWT, Argon2, rotating refresh/session families and roles.
+  - persistence/: store contracts and SQLite/PostgreSQL implementations.
+  - business/: company profile and customer demo/support requests.
+  - mcp/: read-only MCP server and its authenticated API client.
+  - manage.py: operator CLI (`python -m app.manage create-admin`, `mcp-login`).
+  Anthropic credentials come exclusively from the backend environment.
+- backend/tests mirrors those domains; regressions/ holds adaptation regressions.
 - backend/knowledge/humanizar: public sourced initial corpus. Clear KNOWLEDGE_DIR
   and use a new DATA_DIR when adapting another company.
 - frontend/src: strict React/TypeScript UI, real login, chats, requests and admin views.

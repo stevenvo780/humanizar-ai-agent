@@ -145,7 +145,7 @@ mode and model. SDK authentication errors are explicit; no silent demo fallback.
 
 The sandbox interface (port 8001) is `GET /health` and `POST /run` with `{command: string}` -> `{stdout: string, stderr: string, exit_code: number}`. No credentials, arbitrary shell, Docker socket or writable host mounts. Commands cannot make network requests; Compose attaches only an internal network. The API accesses it using `SANDBOX_URL`.
 
-The read-only MCP server lives at `backend/app/mcp_server.py`, invoked with `uv run --project backend --extra semantic python -m app.mcp_server`. It exposes company_info and search_knowledge via persistent API HTTP calls to avoid a second writer opening Qdrant local storage. Default URL `http://127.0.0.1:8000`, configurable with `LUMEN_API_URL`. `GET /api/company` exposes configured identity; `GET /api/search?query=...` returns `{sources: Source[]}` for MCP retrieval.
+The read-only MCP server lives at `backend/app/mcp/server.py`, invoked with `uv run --project backend --extra semantic python -m app.mcp.server`. It exposes company_info and search_knowledge via persistent API HTTP calls to avoid a second writer opening Qdrant local storage. Default URL `http://127.0.0.1:8000`, configurable with `LUMEN_API_URL`. `GET /api/company` exposes configured identity; `GET /api/search?query=...` returns `{sources: Source[]}` for MCP retrieval.
 Protected MCP searches use an explicit `LUMEN_API_TOKEN` or a private origin-bound
 session from `LUMEN_API_TOKEN_FILE`, created by the interactive `mcp-login` CLI.
 The API remains authenticated; public identity does not require a session.

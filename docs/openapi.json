@@ -211,6 +211,9 @@
     },
     "/api/health": {
       "get": {
+        "tags": [
+          "system"
+        ],
         "summary": "Health",
         "operationId": "health_api_health_get",
         "responses": {
@@ -229,6 +232,9 @@
     },
     "/api/config": {
       "get": {
+        "tags": [
+          "system"
+        ],
         "summary": "Public Config",
         "operationId": "public_config_api_config_get",
         "responses": {
@@ -249,6 +255,9 @@
     },
     "/api/company": {
       "get": {
+        "tags": [
+          "system"
+        ],
         "summary": "Company",
         "operationId": "company_api_company_get",
         "responses": {
@@ -267,6 +276,9 @@
     },
     "/api/search": {
       "get": {
+        "tags": [
+          "knowledge"
+        ],
         "summary": "Search",
         "operationId": "search_api_search_get",
         "security": [
@@ -315,6 +327,9 @@
     },
     "/api/documents": {
       "get": {
+        "tags": [
+          "knowledge"
+        ],
         "summary": "Documents",
         "operationId": "documents_api_documents_get",
         "responses": {
@@ -336,6 +351,9 @@
         ]
       },
       "post": {
+        "tags": [
+          "knowledge"
+        ],
         "summary": "Upload",
         "operationId": "upload_api_documents_post",
         "requestBody": {
@@ -379,6 +397,9 @@
     },
     "/api/documents/{document_id}": {
       "get": {
+        "tags": [
+          "knowledge"
+        ],
         "summary": "Document Detail",
         "operationId": "document_detail_api_documents__document_id__get",
         "security": [
@@ -421,6 +442,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "knowledge"
+        ],
         "summary": "Delete",
         "operationId": "delete_api_documents__document_id__delete",
         "security": [
@@ -458,6 +482,9 @@
     },
     "/api/tools": {
       "get": {
+        "tags": [
+          "tools"
+        ],
         "summary": "Tools",
         "operationId": "tools_api_tools_get",
         "responses": {
@@ -483,6 +510,9 @@
     },
     "/api/tools/run": {
       "post": {
+        "tags": [
+          "tools"
+        ],
         "summary": "Tool Run",
         "operationId": "tool_run_api_tools_run_post",
         "requestBody": {
@@ -526,6 +556,9 @@
     },
     "/api/actions/confirm": {
       "post": {
+        "tags": [
+          "tools"
+        ],
         "summary": "Confirm Action",
         "operationId": "confirm_action_api_actions_confirm_post",
         "requestBody": {
@@ -569,6 +602,9 @@
     },
     "/api/requests": {
       "get": {
+        "tags": [
+          "requests"
+        ],
         "summary": "My Requests",
         "operationId": "my_requests_api_requests_get",
         "responses": {
@@ -594,6 +630,9 @@
     },
     "/api/admin/requests": {
       "get": {
+        "tags": [
+          "requests"
+        ],
         "summary": "Admin Requests",
         "operationId": "admin_requests_api_admin_requests_get",
         "responses": {
@@ -619,6 +658,9 @@
     },
     "/api/admin/customers": {
       "get": {
+        "tags": [
+          "customers"
+        ],
         "summary": "Admin Customers",
         "operationId": "admin_customers_api_admin_customers_get",
         "security": [
@@ -675,6 +717,9 @@
         }
       },
       "post": {
+        "tags": [
+          "customers"
+        ],
         "summary": "Create Customer",
         "operationId": "create_customer_api_admin_customers_post",
         "security": [
@@ -718,6 +763,9 @@
     },
     "/api/conversations": {
       "get": {
+        "tags": [
+          "conversations"
+        ],
         "summary": "Conversations",
         "operationId": "conversations_api_conversations_get",
         "responses": {
@@ -743,6 +791,9 @@
     },
     "/api/conversations/{identifier}": {
       "delete": {
+        "tags": [
+          "conversations"
+        ],
         "summary": "Remove Conversation",
         "operationId": "remove_conversation_api_conversations__identifier__delete",
         "security": [
@@ -780,6 +831,9 @@
     },
     "/api/chat": {
       "post": {
+        "tags": [
+          "chat"
+        ],
         "summary": "Chat",
         "operationId": "chat_api_chat_post",
         "requestBody": {
@@ -823,6 +877,9 @@
     },
     "/api/chat/stream": {
       "post": {
+        "tags": [
+          "chat"
+        ],
         "summary": "Stream Chat",
         "operationId": "stream_chat_api_chat_stream_post",
         "requestBody": {

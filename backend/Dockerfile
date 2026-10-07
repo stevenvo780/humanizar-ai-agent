@@ -7,7 +7,7 @@ COPY app ./app
 COPY knowledge ./knowledge
 RUN uv sync --frozen --no-dev --extra semantic
 ENV FASTEMBED_CACHE_PATH=/app/models
-RUN uv run --no-sync python -c "from app.embeddings import SemanticEmbedder; from app.settings import Settings; s=Settings(); SemanticEmbedder(s.fastembed_model,s.fastembed_threads)"
+RUN uv run --no-sync python -c "from app.knowledge.embeddings import SemanticEmbedder; from app.core.settings import Settings; s=Settings(); SemanticEmbedder(s.fastembed_model,s.fastembed_threads)"
 RUN useradd --create-home --uid 10001 lumen && mkdir -p /data && chown lumen:lumen /data && chown -R lumen:lumen /app/models
 USER lumen
 # libpq bundled with psycopg uses OpenSSL's default paths, which may differ from

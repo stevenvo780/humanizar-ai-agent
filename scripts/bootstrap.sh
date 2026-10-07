@@ -37,7 +37,7 @@ uv sync --project backend --python "$PYTHON_SPEC" --locked --extra dev --extra s
 uv sync --project sandbox --python "$PYTHON_SPEC" --locked --group dev
 npm --prefix frontend ci
 if [[ "$SKIP_MODEL_DOWNLOAD" == false ]]; then
-  uv run --project backend --locked --extra dev --extra semantic python -c 'from app.embeddings import SemanticEmbedder; from app.settings import Settings; s=Settings(); e=SemanticEmbedder(s.fastembed_model,s.fastembed_threads); print("Embedding model ready:",e.dimension)'
+  uv run --project backend --locked --extra dev --extra semantic python -c 'from app.knowledge.embeddings import SemanticEmbedder; from app.core.settings import Settings; s=Settings(); e=SemanticEmbedder(s.fastembed_model,s.fastembed_threads); print("Embedding model ready:",e.dimension)'
 else
   echo 'Embedding weights were not prepared. Use hash mode locally or prepare the model before starting.'
 fi

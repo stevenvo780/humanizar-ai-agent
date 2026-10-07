@@ -3,7 +3,7 @@
     "lumen": {
       "type": "stdio",
       "command": "uv",
-      "args": ["run", "--project", "backend", "--extra", "dev", "--extra", "semantic", "python", "-m", "app.mcp_server"],
+      "args": ["run", "--project", "backend", "--extra", "dev", "--extra", "semantic", "python", "-m", "app.mcp.server"],
       "env": {"LUMEN_API_URL": "http://127.0.0.1:8000"}
     }
   }

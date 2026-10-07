@@ -48,7 +48,7 @@ def test_rejects_private_paths_without_reading_them(filename: str) -> None:
         ".claude/skills/speckit-plan/SKILL.md",
         ".github/workflows/quality.yml",
         "backend/knowledge/humanizar/humanizar-empresa.md",
-        "frontend/src/DocsPage.tsx",
+        "frontend/src/features/docs/DocsPage.tsx",
     ],
 )
 def test_accepts_public_source(filename: str) -> None:

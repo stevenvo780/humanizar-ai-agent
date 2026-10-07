@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './SiteRouter';
-import './styles.css';
+import App from './app/SiteRouter';
+import './styles/global.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('No se encontró el contenedor de la aplicación.');

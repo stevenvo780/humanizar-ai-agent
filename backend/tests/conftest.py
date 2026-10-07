@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from pydantic import SecretStr
 
-from app.settings import Settings
-from app.storage import KnowledgeStore
+from app.core.settings import Settings
+from app.knowledge.store import KnowledgeStore
 
 
 @pytest.fixture
