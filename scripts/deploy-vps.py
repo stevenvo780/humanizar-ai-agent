@@ -17,6 +17,8 @@ from urllib.parse import parse_qs, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 COMPOSE = ROOT / "compose.production.yaml"
 PROJECT_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,62}\Z")
+# Copied into images whose processes run as non-root users.
+IMAGE_SOURCES = ("backend", "sandbox")
 
 
 def read_private_environment(path: Path) -> dict[str, str]:
@@ -110,6 +112,31 @@ def validate_environment(environment: dict[str, str]) -> None:
         ) from None
 
 
+def unreadable_image_sources(root: Path = ROOT) -> list[str]:
+    """Tracked image sources (and their folders) that a non-root container could not read.
+
+    A restrictive umask during `git merge` (e.g. 077) writes files as 0600 and the API then
+    fails at startup with PermissionError, so the check runs before any build.
+    """
+    listed = subprocess.run(
+        ["git", "ls-files", "-z", "--", *IMAGE_SOURCES],
+        cwd=root,
+        capture_output=True,
+        check=True,
+        timeout=60,
+    )
+    names = [name for name in listed.stdout.decode("utf-8").split("\0") if name]
+    folders = {str(Path(name).parent) for name in names}
+    unreadable = [name for name in names if not (root / name).stat().st_mode & stat.S_IROTH]
+    unreadable += [
+        folder
+        for folder in sorted(folders)
+        if (root / folder).stat().st_mode & (stat.S_IROTH | stat.S_IXOTH)
+        != (stat.S_IROTH | stat.S_IXOTH)
+    ]
+    return unreadable
+
+
 def run_quiet(command: list[str], environment: dict[str, str], *, timeout: int = 60) -> None:
     result = subprocess.run(
         command,
@@ -140,6 +167,14 @@ def main() -> int:
         private_environment = read_private_environment(args.env_file)
         if args.action in {"check", "up"}:
             validate_environment(private_environment)
+            unreadable = unreadable_image_sources()
+            if unreadable:
+                print(
+                    f"{len(unreadable)} checkout paths are not world-readable (restrictive "
+                    "umask?). Fix with: git ls-files -z | xargs -0 chmod a+r",
+                    file=sys.stderr,
+                )
+                return 1
         # Compose interpolation receives paths and public settings only. The raw env_file
         # passes backend secrets directly to the API container, never to the sandbox.
         compose_environment = dict(os.environ)

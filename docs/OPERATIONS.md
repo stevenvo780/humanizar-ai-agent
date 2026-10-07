@@ -96,7 +96,9 @@ python3 scripts/deploy-vps.py status \
 ```
 
 `check` valida la forma del entorno y Compose, sin iniciar contenedores ni hacer
-peticiones externas. No demuestra conectividad PostgreSQL, validez de una clave
+peticiones externas. También rechaza un checkout cuyos archivos de `backend/` o `sandbox/`
+no sean legibles por todos (umask restrictivo durante `git merge`): los contenedores
+corren sin root y la API fallaría al arrancar. No demuestra conectividad PostgreSQL, validez de una clave
 Anthropic o funcionamiento de HTTPS. No usar `source production.env` ni imprimir
 la configuración con `docker compose config` sin `--quiet`.
 

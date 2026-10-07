@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import io
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -54,3 +55,23 @@ class ComposeCommandTests(unittest.TestCase):
             self.assertEqual(run.call_args.args[0][-1], "stop")
             self.assertNotIn("down", run.call_args.args[0])
             self.assertNotIn("--volumes", run.call_args.args[0])
+
+
+class CheckoutPermissionTests(unittest.TestCase):
+    def test_restrictive_umask_checkout_is_detected_before_build(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "backend" / "app" / "main.py"
+            source.parent.mkdir(parents=True)
+            source.write_text("app = None\n")
+            readable = root / "sandbox" / "main.py"
+            readable.parent.mkdir()
+            readable.write_text("app = None\n")
+            subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+            subprocess.run(["git", "add", "."], cwd=root, check=True)
+            self.assertEqual(VPS.unreadable_image_sources(root), [])
+            source.chmod(0o600)
+            source.parent.chmod(0o700)
+            self.assertEqual(
+                VPS.unreadable_image_sources(root), ["backend/app/main.py", "backend/app"]
+            )
