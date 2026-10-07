@@ -61,6 +61,12 @@ proveedor con CA privada hay que montar únicamente su certificado CA de lectura
 y adaptar el helper/URL antes del despliegue; esta receta utiliza confianza del
 sistema. [Referencia PostgreSQL](https://www.postgresql.org/docs/current/libpq-connect.html).
 
+La imagen API instala las CA de Debian y configura `SSL_CERT_FILE` y
+`SSL_CERT_DIR` con sus rutas de sistema. libpq incluido en `psycopg[binary]` puede
+tener rutas OpenSSL diferentes; estas variables permiten usar `sslrootcert=system`
+sin desactivar la verificación del certificado ni del hostname. Una conexión real
+desde el contenedor confirmó TLS 1.3 con esta configuración.
+
 ## VPS
 
 Instalar Docker Engine y Compose en el VPS mediante el procedimiento oficial de
