@@ -49,6 +49,9 @@ login stays private, malformed role inputs fail and concurrent registrations do 
 invalidate pagination. Inspect readable text, contrast and responsive layouts. The
 UI enables customer management only when the backend declares that capability in
 its health response, allowing frontend and API releases to proceed independently.
+Keep one section navigation with typed role/capability metadata. Desktop and mobile
+share the same sidebar; the mobile drawer and help dialog share focus handling.
+Closed drawers are inert, and section content is labelled by the visible header.
 
 ## Assessment adaptation
 

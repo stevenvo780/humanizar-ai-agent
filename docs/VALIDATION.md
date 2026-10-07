@@ -11,13 +11,13 @@ las pruebas PostgreSQL utilizan exclusivamente una instancia temporal aislada.
 | Backend | Ruff, formato, mypy estricto en 39 archivos, 205 pruebas incluidas 15 PostgreSQL |
 | Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 77 pruebas |
 | Helpers de despliegue | 28 pruebas offline de configuración, rutas y ejecución privada |
-| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 65 pruebas y build |
+| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 68 pruebas y build |
 | Dependencias web | npm audit: 0 vulnerabilidades en la comprobación del frontend |
 | Configuración | JSON válido; Compose local y producción; proxy Vercel tipado |
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total comprobado: **375 pruebas aprobadas** entre las puertas anteriores sin cambios
+Total comprobado: **378 pruebas aprobadas** entre las puertas anteriores sin cambios
 y las suites afectadas de esta revisión. Las 15 de PostgreSQL se activan con
 `LUMEN_TEST_DATABASE_URL` apuntando exclusivamente a una base temporal loopback
 `lumen_test`; cada prueba crea y elimina su propio schema aleatorio. Nunca apuntar
@@ -34,12 +34,18 @@ de TestClient/httpx en cada suite Python; no impide los resultados.
 
 ## Servicios reales locales
 
-- Gestión de clientes: 205 pruebas backend con PostgreSQL temporal y 65 frontend.
+- Gestión de clientes: 205 pruebas backend con PostgreSQL temporal y 68 frontend.
   Se verificaron autorización, rol fijo, campos públicos, conservación de la sesión
   admin y snapshots coherentes ante un alta entre el conteo y la lectura de filas.
 - Legibilidad: Chromium con datos sintéticos en 36 vistas entre 320 y 1440 px;
   sin errores ni desbordes de página, ningún texto menor de 12 px en esas vistas y
   contraste mínimo medido de 5,82:1. Clientes se verificó además en escritorio/móvil.
+- Navegación: una única lista de secciones por rol/capacidad, sin barra de pestañas
+  duplicada ni referencias ARIA huérfanas. Chromium verificó escritorio/móvil,
+  controles cerrados inertes, apertura/cierre por botón y Escape, ciclo de foco,
+  restauración tras seleccionar y cambio de breakpoint; sin desbordes ni errores JS.
+  El helper de foco se comparte con Ayuda. Se eliminaron estilos huérfanos y los
+  falsos controles de selector de empresa, conservando una sola indicación de conexión.
 - Producción: la cuenta indicada por el dueño obtuvo el rol admin mediante una
   transferencia transaccional desde la cuenta técnica inicial, conservando cuentas,
   contraseñas, conversaciones y sesiones. Una sesión aislada de comprobación confirmó
@@ -162,7 +168,7 @@ producción. La publicación real se registra por separado del inventario automa
 - CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
   locales, auditoría de paths, Gitleaks, PostgreSQL temporal e integración Docker.
   El runner remoto no inició por bloqueo de facturación de la cuenta GitHub;
-  el workflow no cuenta como validación remota aprobada. Las 375 pruebas locales
+  el workflow no cuenta como validación remota aprobada. Las 378 pruebas locales
   y el smoke Docker/Vercel real se registran de forma independiente.
 - El clon público no contiene una credencial: cada instalación configura su propia
   clave privada. Los controles automatizados del ciclo, errores y presupuestos

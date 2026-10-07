@@ -117,4 +117,4 @@ export interface CustomerRequest {
   details: Record<string, unknown>;
 }
 
-export type Tab = 'assistant' | 'knowledge' | 'tools' | 'requests' | 'customers';
+export type WorkspaceSection = 'assistant' | 'knowledge' | 'tools' | 'requests' | 'customers';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { ChangeEvent, SyntheticEvent, KeyboardEvent, ReactNode } from 'react';
 import {
   ArrowDown,
@@ -20,7 +20,6 @@ import {
   Menu,
   MessageSquare,
   LogOut,
-  ClipboardList,
   Plus,
   Search,
   ShieldCheck,
@@ -29,7 +28,6 @@ import {
   Terminal,
   Trash2,
   UploadCloud,
-  Users,
   WandSparkles,
   WifiOff,
   X,
@@ -41,6 +39,8 @@ import { ActionConfirmation, actionProposal, useConfirmedAction } from './action
 import { RequestsPanel } from './AccountPanels';
 import { CustomersPanel } from './CustomersPanel';
 import { SiteLink } from './navigation';
+import { workspaceNavigation } from './workspaceNavigation';
+import { useDialogFocus } from './useDialogFocus';
 import type {
   ChatMessage,
   Config,
@@ -49,13 +49,24 @@ import type {
   Health,
   KnowledgeDocument,
   Source,
-  Tab,
+  WorkspaceSection,
   ToolDefinition,
   ToolTrace,
   User,
 } from './types';
 
 const EMPTY_MESSAGES: ChatMessage[] = [];
+const MOBILE_NAVIGATION = '(max-width: 760px)';
+
+function subscribeMobileNavigation(listener: () => void): () => void {
+  const query = window.matchMedia(MOBILE_NAVIGATION);
+  query.addEventListener('change', listener);
+  return () => query.removeEventListener('change', listener);
+}
+
+function mobileNavigationSnapshot(): boolean {
+  return window.matchMedia(MOBILE_NAVIGATION).matches;
+}
 const prompts = [
   {
     icon: BookOpen,
@@ -945,7 +956,7 @@ function Composer({
 }
 
 export default function App({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
-  const [tab, setTab] = useState<Tab>('assistant');
+  const [selectedSection, setSelectedSection] = useState<WorkspaceSection>('assistant');
   const [config, setConfig] = useState<Config | null>(null);
   const [health, setHealth] = useState<Health | null>(null);
   const [documents, setDocuments] = useState<DocumentList>({ documents: [], total_chunks: 0 });
@@ -966,6 +977,22 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
   const busyRef = useRef(false);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLElement>(null);
+  const navigationRef = useRef<HTMLElement>(null);
+  const navigationToggleRef = useRef<HTMLButtonElement>(null);
+  const closeNavigation = useCallback(() => setMobileMenu(false), []);
+  const closeHelp = useCallback(() => setShowHelp(false), []);
+  const subscribeNavigation = useCallback(
+    (listener: () => void) =>
+      subscribeMobileNavigation(() => {
+        closeNavigation();
+        listener();
+      }),
+    [closeNavigation],
+  );
+  const isMobile = useSyncExternalStore(subscribeNavigation, mobileNavigationSnapshot);
+  const drawerOpen = isMobile && mobileMenu;
+  useDialogFocus(navigationRef, drawerOpen, closeNavigation, navigationToggleRef);
+  useDialogFocus(helpRef, showHelp, closeHelp, isMobile ? navigationToggleRef : undefined);
   const active = conversations.find((item) => item.id === activeId);
   const messages = active?.messages ?? EMPTY_MESSAGES;
   const company = config?.company_name ?? 'Humanizar';
@@ -1064,40 +1091,15 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: busy ? 'instant' : 'smooth', block: 'end' });
   }, [messages, busy]);
-  useEffect(() => {
-    if (!showHelp) return;
-    const previous = document.activeElement;
-    helpRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    function keydown(event: globalThis.KeyboardEvent): void {
-      if (event.key === 'Escape') setShowHelp(false);
-      if (event.key !== 'Tab') return;
-      const buttons = helpRef.current?.querySelectorAll<HTMLButtonElement>('button');
-      const first = buttons?.[0];
-      const last = buttons?.[buttons.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    }
-    document.addEventListener('keydown', keydown);
-    return () => {
-      document.removeEventListener('keydown', keydown);
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, [showHelp]);
-
-  function selectTab(next: Tab): void {
-    setTab(next);
+  function selectSection(next: WorkspaceSection): void {
+    setSelectedSection(next);
     setMobileMenu(false);
   }
   function newConversation(): void {
     if (busyRef.current) return;
     setActiveId(null);
     setDraft('');
-    selectTab('assistant');
+    selectSection('assistant');
   }
   async function removeConversation(id: string): Promise<void> {
     try {
@@ -1239,48 +1241,42 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
     }
   }
 
-  const tabItems: { id: Tab; label: string; icon: ReactNode }[] = [
-    { id: 'assistant', label: 'Asistente', icon: <Sparkles size={17} /> },
-    {
-      id: 'requests',
-      label: isAdmin ? 'Solicitudes de clientes' : 'Mis solicitudes',
-      icon: <ClipboardList size={17} />,
-    },
-    ...(isAdmin
-      ? ([
-          { id: 'knowledge', label: 'Documentación', icon: <BookOpen size={17} /> },
-          ...(health?.features?.customer_management
-            ? ([{ id: 'customers', label: 'Clientes', icon: <Users size={17} /> }] satisfies {
-                id: Tab;
-                label: string;
-                icon: ReactNode;
-              }[])
-            : []),
-          { id: 'tools', label: 'Herramientas', icon: <WandSparkles size={17} /> },
-        ] satisfies { id: Tab; label: string; icon: ReactNode }[])
-      : []),
-  ];
+  const navigationItems = workspaceNavigation({
+    isAdmin,
+    customerManagement: health?.features?.customer_management === true,
+  });
+  const activeNavigation =
+    navigationItems.find((item) => item.id === selectedSection) ?? navigationItems[0];
+  const section = activeNavigation.id;
 
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">
+      <a className="skip-link" href="#main-content" inert={drawerOpen || showHelp}>
         Saltar al contenido
       </a>
-      {mobileMenu && (
-        <button
-          className="sidebar-overlay"
-          onClick={() => setMobileMenu(false)}
-          aria-label="Cerrar menú"
-        />
+      {drawerOpen && (
+        <button className="sidebar-overlay" onClick={closeNavigation} aria-label="Cerrar menú" />
       )}
       <aside
-        className={`sidebar ${mobileMenu ? 'sidebar-open' : ''}`}
+        id="workspace-navigation"
+        ref={navigationRef}
+        className={`sidebar ${drawerOpen ? 'sidebar-open' : ''}`}
         aria-label="Navegación principal"
+        role={drawerOpen ? 'dialog' : undefined}
+        aria-modal={drawerOpen ? true : undefined}
+        inert={(isMobile && !drawerOpen) || showHelp}
       >
+        <button
+          className="icon-button mobile-menu-close"
+          aria-label="Cerrar navegación"
+          onClick={closeNavigation}
+        >
+          <X size={20} />
+        </button>
         <button
           className="brand"
           onClick={() => {
-            selectTab('assistant');
+            selectSection('assistant');
           }}
         >
           <BrandMark />
@@ -1294,7 +1290,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
             <span className="brand-period">.</span>
           </span>
         </button>
-        <div className="workspace-switch">
+        <div className="workspace-identity">
           <span className="workspace-avatar">
             {company.slice(0, 1).toUpperCase()}
             <span />
@@ -1303,9 +1299,6 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
             <strong>{company}</strong>
             <small>Atención al cliente</small>
           </span>
-          <span className="workspace-chevron">
-            <ChevronDown size={15} />
-          </span>
         </div>
         <button className="new-chat" onClick={newConversation} disabled={busy || historyLoading}>
           <Plus size={17} />
@@ -1313,15 +1306,15 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
           <span className="new-shortcut">↗</span>
         </button>
         <div className="sidebar-section-label">EXPLORA</div>
-        <nav className="sidebar-navigation">
-          {tabItems.map((item) => (
+        <nav className="sidebar-navigation" aria-label="Secciones del espacio">
+          {navigationItems.map((item) => (
             <button
               key={item.id}
-              className={`nav-item ${tab === item.id ? 'active' : ''}`}
-              onClick={() => selectTab(item.id)}
-              aria-current={tab === item.id ? 'page' : undefined}
+              className={`nav-item ${section === item.id ? 'active' : ''}`}
+              onClick={() => selectSection(item.id)}
+              aria-current={section === item.id ? 'page' : undefined}
             >
-              {item.icon}
+              <item.icon size={17} />
               <span>{item.label}</span>
               {item.id === 'knowledge' && documents.documents.length > 0 && (
                 <span className="nav-count">{documents.documents.length}</span>
@@ -1341,7 +1334,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                 disabled={busy}
                 onClick={() => {
                   setActiveId(item.id);
-                  selectTab('assistant');
+                  selectSection('assistant');
                 }}
               >
                 <MessageSquare size={14} />
@@ -1369,12 +1362,6 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
         </div>
         <div className="sidebar-bottom">
           <div className="connection-card">
-            <div>
-              <StatusDot online={online} />
-              <strong>
-                {loading ? 'Conectando…' : online ? 'Asistente conectado' : 'Servidor desconectado'}
-              </strong>
-            </div>
             <p>
               {config
                 ? config.mode === 'demo'
@@ -1390,7 +1377,13 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                   : 'Conexión segura con la API'}
             </span>
           </div>
-          <button className="help-button" onClick={() => setShowHelp(true)}>
+          <button
+            className="help-button"
+            onClick={() => {
+              closeNavigation();
+              setShowHelp(true);
+            }}
+          >
             <CircleHelp size={16} />
             <span>Cómo usar el asistente</span>
             <ArrowUpRight size={13} />
@@ -1416,12 +1409,15 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
           </div>
         </div>
       </aside>
-      <div className="workspace-main">
+      <div className="workspace-main" inert={drawerOpen || showHelp}>
         <header className="topbar">
           <div className="topbar-left">
             <button
               className="icon-button mobile-menu-toggle"
+              ref={navigationToggleRef}
               aria-label="Abrir navegación"
+              aria-controls="workspace-navigation"
+              aria-expanded={drawerOpen}
               onClick={() => setMobileMenu(true)}
             >
               <Menu size={20} />
@@ -1429,7 +1425,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
             <span className="breadcrumb">
               Asistente de {company}
               <ChevronRight size={12} />
-              <strong>{tabItems.find((item) => item.id === tab)?.label}</strong>
+              <strong id="workspace-section-title">{activeNavigation.label}</strong>
             </span>
           </div>
           <div className="topbar-right">
@@ -1450,49 +1446,10 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
         </header>
         <div className="main-columns">
           <main
-            className={`main-content ${tab === 'assistant' ? 'assistant-main' : ''}`}
+            className={`main-content ${section === 'assistant' ? 'assistant-main' : ''}`}
             id="main-content"
+            tabIndex={-1}
           >
-            <div className="tabbar" role="tablist" aria-label={`Secciones de ${assistant}`}>
-              {tabItems.map((item) => (
-                <button
-                  id={`tab-${item.id}`}
-                  role="tab"
-                  type="button"
-                  aria-selected={tab === item.id}
-                  aria-controls={`panel-${item.id}`}
-                  tabIndex={tab === item.id ? 0 : -1}
-                  key={item.id}
-                  className={tab === item.id ? 'selected' : ''}
-                  onClick={() => selectTab(item.id)}
-                  onKeyDown={(event) => {
-                    if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) {
-                      event.preventDefault();
-                      const index = tabItems.findIndex((next) => next.id === item.id);
-                      const next =
-                        tabItems[
-                          event.key === 'Home'
-                            ? 0
-                            : event.key === 'End'
-                              ? tabItems.length - 1
-                              : (index + (event.key === 'ArrowRight' ? 1 : tabItems.length - 1)) %
-                                tabItems.length
-                        ];
-                      if (next) {
-                        selectTab(next.id);
-                        document.getElementById(`tab-${next.id}`)?.focus();
-                      }
-                    }
-                  }}
-                >
-                  {item.icon}
-                  {item.label}
-                </button>
-              ))}
-              <span className="tabbar-end">
-                <span className="tiny-star">✦</span> El poder de saber
-              </span>
-            </div>
             {((!online && !loading) || connectionError) && (
               <div className="offline-banner" role="status">
                 <WifiOff size={16} />
@@ -1511,13 +1468,11 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                 {storageError}
               </div>
             )}
-            <div
-              id={`panel-${tab}`}
-              role="tabpanel"
-              aria-labelledby={`tab-${tab}`}
-              className={`tab-panel ${tab === 'assistant' ? 'chat-panel' : ''}`}
+            <section
+              aria-labelledby="workspace-section-title"
+              className={`workspace-content ${section === 'assistant' ? 'chat-panel' : ''}`}
             >
-              {tab === 'assistant' && (
+              {section === 'assistant' && (
                 <>
                   {messages.length === 0 ? (
                     <section className="welcome">
@@ -1659,7 +1614,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                   />
                 </>
               )}
-              {tab === 'knowledge' && isAdmin && (
+              {section === 'knowledge' && isAdmin && (
                 <Knowledge
                   documents={documents}
                   refresh={refreshDocuments}
@@ -1667,22 +1622,22 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                   online={online}
                 />
               )}
-              {tab === 'tools' && isAdmin && (
+              {section === 'tools' && isAdmin && (
                 <Tools tools={tools} online={online} health={health} />
               )}
-              {tab === 'customers' && isAdmin && <CustomersPanel />}
-              {tab === 'requests' && (
-                <RequestsPanel isAdmin={isAdmin} onChat={() => selectTab('assistant')} />
+              {section === 'customers' && isAdmin && <CustomersPanel />}
+              {section === 'requests' && (
+                <RequestsPanel isAdmin={isAdmin} onChat={() => selectSection('assistant')} />
               )}
-            </div>
+            </section>
           </main>
-          {tab === 'assistant' && (
+          {section === 'assistant' && (
             <EvidencePanel
               documents={documents}
               company={company}
               selected={selected}
               busy={busy}
-              onKnowledge={() => selectTab('knowledge')}
+              onKnowledge={() => selectSection('knowledge')}
               isAdmin={isAdmin}
             />
           )}

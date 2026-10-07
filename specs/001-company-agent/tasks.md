@@ -13,7 +13,7 @@
 - [x] T011 FR-011: optional PostgreSQL repositories, dedicated schema, verified TLS and concurrency coverage (`backend/app/postgres.py`, `backend/tests/test_postgres.py`, `docs/DEPLOYMENT.md`).
 - [x] T012 FR-012: Vercel/Docker deployment, protected proxy, private environment and runtime validation (`frontend`, `compose.production.yaml`, `scripts`, `docs/DEPLOYMENT.md`, `docs/VALIDATION.md`).
 - [x] T013 FR-013: admin customer creation/listing, fixed role, session preservation and coherent pagination (`backend/app`, `backend/tests`, `frontend/src/CustomersPanel.tsx`, `frontend/src/customers.test.ts`).
-- [x] T014 FR-014: readable typography/contrast, responsive admin UI and visible Markdown upload (`frontend/src/styles.css`, `frontend/src/docs.css`, `frontend/src/App.tsx`).
+- [x] T014 FR-014: readable typography/contrast, single section navigation, shared dialog focus and visible Markdown upload (`frontend/src/styles.css`, `frontend/src/docs.css`, `frontend/src/App.tsx`, `frontend/src/workspaceNavigation.ts`, `frontend/src/useDialogFocus.ts`).
 - [ ] T015 FR-013: publish the updated API to the VPS and verify customer management through the public Vercel UI; requires an authenticated SSH connection.
 
 Production Docker sandbox execution, real Haiku responses and PostgreSQL persistence

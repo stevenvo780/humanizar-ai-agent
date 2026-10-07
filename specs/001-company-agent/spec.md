@@ -33,7 +33,7 @@
 - Optional PostgreSQL persistence with a dedicated schema, verified TLS and transactional session handling.
 - Vercel same-origin API proxy to the HTTPS Docker backend, with authenticated sessions and streamed tool activity.
 - Admin-only customer creation and paginated public account fields, with fixed customer roles and unchanged administrator cookies.
-- Readable text, visible upload controls, sufficient contrast and responsive layouts without horizontal page overflow.
+- Readable text, single section navigation, visible upload controls, sufficient contrast and responsive layouts without horizontal page overflow.
 
 ## Scope limits
 
@@ -59,7 +59,7 @@ and arbitrary autonomous code execution are outside this implementation.
 | FR-011 | Optional PostgreSQL preserves auth and business contracts in a dedicated schema | Twelve isolated PostgreSQL tests, concurrent bootstrap, production TLS 1.3 and persistence after API restart |
 | FR-012 | Vercel proxies authenticated requests and SSE to the persistent Docker backend | Ready production deployment, secure session cookies, real tools, Swagger, protected origin and absence of backend keys from browser assets |
 | FR-013 | Administrators create and list customer accounts without changing their session | Auth/role/public-field tests, coherent pagination snapshots in SQLite and PostgreSQL; production API rollout tracked separately |
-| FR-014 | UI text and Markdown administration are readable and discoverable | Browser checks across 320–1440 px, no text below 12 px in inspected views, measured contrast and actual admin Markdown ingestion |
+| FR-014 | UI text, single navigation and Markdown administration are readable and discoverable | Browser checks across 320–1440 px, measured contrast, actual admin Markdown ingestion, role-aware navigation and keyboard-accessible mobile drawer |
 
 Build, types, lint and responsive browser checks apply across these requirements.
 Detailed execution evidence and external-service limits are recorded in docs/VALIDATION.md.
