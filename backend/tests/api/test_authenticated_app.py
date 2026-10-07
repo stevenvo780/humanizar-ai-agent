@@ -8,7 +8,7 @@ from anthropic.types import Message
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from app.agent.company_agent import Emit, no_emit
+from app.agent.events import Emit, no_emit
 from app.api.schemas import ChatRequest, ChatResponse
 from app.core.settings import Settings
 from app.knowledge.ingestion import ParsedDocument

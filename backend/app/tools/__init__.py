@@ -1,1 +1,1 @@
-"""Tool contract, registry/execution and the safe calculator."""
+"""Tool contract, per-tool handlers (dispatch table), registry/execution and calculator."""

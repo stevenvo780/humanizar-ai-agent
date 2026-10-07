@@ -4,7 +4,8 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from app.agent.company_agent import CompanyAgent, Emit
+from app.agent.company_agent import CompanyAgent
+from app.agent.events import Emit
 from app.api.routes.chat import chat_events
 from app.api.schemas import ChatRequest, ChatResponse
 from app.core.settings import Settings

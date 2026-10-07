@@ -1,0 +1,85 @@
+.ready-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #90c5a6;
+  border: 1px solid #344f40;
+  padding: 5px 7px;
+  background: #22342a;
+  border-radius: 4px;
+}
+.icon-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: transparent;
+  color: #abb7c6;
+}
+.icon-button:hover {
+  background: #293442;
+  color: #c1dacd;
+}
+.delete-button:hover {
+  color: #e8aab5;
+  background: #3d2630;
+}
+.delete-confirm {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #d0adbb;
+}
+.danger-link {
+  background: #3e2a35;
+  border: 1px solid #6a4055;
+  border-radius: 5px;
+  padding: 6px 8px;
+  color: #edb4c6;
+  font-size: 14px;
+}
+.page-footnote {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: #abbab3;
+  margin-top: 21px;
+}
+.empty-state {
+  border: 1px solid #283441;
+  border-radius: 10px;
+  padding: 32px 20px;
+  text-align: center;
+  background: #141c27;
+}
+.empty-icon {
+  display: inline-flex;
+  height: 43px;
+  width: 43px;
+  justify-content: center;
+  align-items: center;
+  color: #9fbdae;
+  background: #233a30;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #bdcdd5;
+  margin-bottom: 8px;
+}
+.empty-state p {
+  font-size: 14px;
+  color: #acb8c4;
+  line-height: 1.8;
+  margin-bottom: 0;
+}

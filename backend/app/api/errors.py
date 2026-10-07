@@ -5,7 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
-from app.agent.company_agent import AgentFailure
+from app.agent.provider import AgentFailure
 from app.persistence.contracts import PersistenceUnavailable
 
 

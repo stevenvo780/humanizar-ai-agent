@@ -7,6 +7,8 @@ from app.core.security import redact, safe_input
 from app.core.settings import Settings
 from app.knowledge.store import KnowledgeStore
 from app.tools.calculator import calculate
+from app.tools.definitions import BY_NAME, ToolDefinition, text
+from app.tools.handlers import HANDLERS, ToolContext, ToolOutput
 from app.tools.registry import ToolRegistry
 
 
@@ -124,6 +126,31 @@ async def test_ui_and_provider_share_tool_contract(
         blocked = await registry.run("unexpected_tool", {})
         assert blocked.trace.status == "error"
         invalid = await registry.run("calculate", {"expression": 123})
+        assert invalid.trace.status == "error"
+    finally:
+        await registry.close()
+
+
+def test_every_tool_definition_has_exactly_one_handler() -> None:
+    assert set(HANDLERS) == set(BY_NAME)
+
+
+async def test_registered_handler_uses_shared_validation_and_redaction(
+    settings: Settings, store: KnowledgeStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    async def order_status(context: ToolContext) -> ToolOutput:
+        order = context.arguments["order"]
+        return ToolOutput(json.dumps({"order": order, "note": "PASSWORD=abcdefghi"}))
+
+    definition = ToolDefinition("order_status", "Estado de pedido", {"order": text(20)})
+    monkeypatch.setitem(BY_NAME, "order_status", definition)
+    monkeypatch.setitem(HANDLERS, "order_status", order_status)
+    registry = ToolRegistry(settings, store)
+    try:
+        result = await registry.run("order_status", {"order": "A-1"})
+        assert result.trace.status == "completed" and "A-1" in result.trace.output
+        assert "abcdefghi" not in result.trace.output
+        invalid = await registry.run("order_status", {"order": "A-1", "extra": "x"})
         assert invalid.trace.status == "error"
     finally:
         await registry.close()

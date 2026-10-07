@@ -8,8 +8,11 @@ import pytest
 from anthropic.types import Message, MessageParam, ToolParam
 from pydantic import SecretStr
 
-from app.accounts.auth import CURRENT_USER_ID
-from app.agent.company_agent import AgentFailure, CompanyAgent, TextCallback, grounded_sources
+from app.accounts.dependencies import CURRENT_USER_ID
+from app.agent.company_agent import CompanyAgent
+from app.agent.fallback import without_sources
+from app.agent.grounding import grounded_sources
+from app.agent.provider import AgentFailure, TextCallback
 from app.api.schemas import ChatRequest, Source, ToolTrace
 from app.business.requests import BusinessStore
 from app.core.settings import Settings
@@ -366,10 +369,10 @@ async def test_mcp_identity_no_source_answer_uses_actual_configured_result(
 ) -> None:
     registry = ToolRegistry(settings.model_copy(update={"mcp_enabled": True}), store)
 
-    async def identity() -> str:
+    async def identity(_api_url: str) -> str:
         return '{"company_name":"Empresa Sintética","company_description":"Descripción aprobada"}'
 
-    monkeypatch.setattr(registry, "_mcp_company_info", identity)
+    monkeypatch.setattr("app.tools.handlers.mcp_stdio.query_company_info", identity)
     provider = ScriptedProvider(
         [
             message(
@@ -462,7 +465,7 @@ async def test_new_tool_output_is_rendered_without_agent_changes(
     settings: Settings, store: KnowledgeStore
 ) -> None:
     registry = ToolRegistry(settings, store)
-    agent = CompanyAgent(anthropic_settings(settings), registry, ScriptedProvider([]))
+    configured = anthropic_settings(settings)
     trace = ToolTrace(
         id="t",
         tool="order_status",
@@ -472,7 +475,7 @@ async def test_new_tool_output_is_rendered_without_agent_changes(
         duration_ms=1,
     )
     try:
-        rendered = agent._without_sources(ChatRequest(message="estado A-1"), [trace])
+        rendered = without_sources(ChatRequest(message="estado A-1"), [trace], configured, registry)
         assert "Resultado de order_status" in rendered and '"status": "enviado"' in rendered
     finally:
         await registry.close()

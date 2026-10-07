@@ -1,0 +1,70 @@
+.mobile-menu-toggle,
+.mobile-menu-close,
+.sidebar-overlay {
+  display: none;
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #030812b8;
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.help-modal {
+  background: #18242a;
+  border: 1px solid #496257;
+  border-radius: 15px;
+  padding: 38px;
+  width: 520px;
+  max-width: 100%;
+  box-shadow: 0 24px 100px #0007;
+  position: relative;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+}
+.modal-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+}
+.help-modal > .brand-mark {
+  margin-bottom: 20px;
+}
+.help-modal h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 23px;
+  line-height: 1.5;
+  color: #c1e7d3;
+  font-weight: 500;
+}
+.help-modal p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #a7bab7;
+}
+.help-modal p.help-detail {
+  padding: 15px;
+  background: #253630;
+  border: 1px solid #3b4f44;
+  border-radius: 7px;
+  font-size: 14px;
+  color: #9dbdac;
+  margin: 23px 0;
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.25;
+  }
+}

@@ -1,0 +1,158 @@
+@media (min-width: 1600px) {
+  .welcome {
+    padding-top: 38px;
+  }
+  .welcome h1 {
+    font-size: 59px;
+  }
+  .orb-wrap {
+    margin-top: 30px;
+    margin-bottom: 20px;
+  }
+  .prompt-section-heading {
+    margin-top: 42px;
+  }
+  .prompt-card {
+    min-height: 93px;
+    padding-top: 21px;
+  }
+  .prompt-icon {
+    top: 20px;
+  }
+}
+@media (max-height: 800px) and (min-width: 1025px) {
+  .welcome {
+    padding-top: 23px;
+    padding-bottom: 20px;
+  }
+  .welcome-eyebrow {
+    display: none;
+  }
+  .orb-wrap {
+    height: 83px;
+    margin: 0 auto 8px;
+  }
+  .orb {
+    height: 86px;
+  }
+  .welcome h1 {
+    font-size: 44px;
+    margin-bottom: 14px;
+  }
+  .prompt-section-heading {
+    margin-top: 24px;
+  }
+  .prompt-card {
+    min-height: 75px;
+    padding-top: 14px;
+    padding-bottom: 12px;
+  }
+  .sidebar {
+    padding-top: 21px;
+  }
+  .brand {
+    margin-bottom: 24px;
+  }
+  .new-chat {
+    margin-bottom: 25px;
+  }
+  .sidebar-navigation {
+    margin-bottom: 24px;
+  }
+  .panel-heading {
+    margin-bottom: 24px;
+  }
+  .trust-card {
+    margin-top: 25px;
+  }
+}
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 214px;
+    flex-basis: 214px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .profile {
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 19px;
+    padding-right: 19px;
+  }
+  .evidence-panel {
+    width: 255px;
+    flex-basis: 255px;
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+  .welcome {
+    padding-left: 29px;
+    padding-right: 29px;
+  }
+  .composer-area {
+    padding-left: 29px;
+    padding-right: 29px;
+  }
+  .welcome h1 {
+    font-size: 44px;
+    letter-spacing: -1.9px;
+  }
+  .prompt-card {
+    padding-left: 40px;
+    padding-right: 12px;
+  }
+  .prompt-icon {
+    left: 12px;
+  }
+  .prompt-card strong {
+    font-size: 14px;
+  }
+  .prompt-card p {
+    font-size: 14px;
+  }
+  .composer-powered {
+    display: none;
+  }
+  .conversation {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  .workspace-page {
+    padding-left: 42px;
+    padding-right: 42px;
+  }
+}
+@media (max-width: 1024px) {
+  .evidence-panel {
+    display: none;
+  }
+  .welcome {
+    max-width: 740px;
+  }
+  .composer-area {
+    max-width: 740px;
+  }
+  .welcome h1 {
+    font-size: 50px;
+  }
+  .prompt-card {
+    min-height: 87px;
+    padding-left: 47px;
+  }
+  .prompt-icon {
+    left: 15px;
+  }
+  .prompt-card strong {
+    font-size: 14px;
+  }
+  .prompt-card p {
+    font-size: 14px;
+  }
+  .workspace-page {
+    padding-left: 35px;
+    padding-right: 35px;
+  }
+  .workspace-page h1 {
+    font-size: 35px;
+  }
+}

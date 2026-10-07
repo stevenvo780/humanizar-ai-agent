@@ -8,12 +8,13 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.requests import Request
 
-from app.accounts.auth import CURRENT_USER_ID, User, require_admin, require_user
+from app.accounts.dependencies import CURRENT_USER_ID, require_admin, require_user
 from app.agent.company_agent import CompanyAgent
 from app.core.concurrency import run_sync
 from app.core.settings import Settings
 from app.knowledge.store import KnowledgeStore
 from app.persistence.contracts import BusinessRepository, IdentityStore
+from app.persistence.models import User
 from app.tools.registry import ToolRegistry
 
 bearer = HTTPBearer(auto_error=False, scheme_name="JWT")

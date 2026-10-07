@@ -12,16 +12,13 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-from app.accounts.auth import (
-    AUDIENCE,
-    ISSUER,
-    REFRESH_COOKIE,
-    PublicUser,
-    hash_password,
-    require_admin,
-    router,
-)
-from app.persistence.sqlite import ApplicationDatabase, SetupAlreadyComplete, User
+from app.accounts.dependencies import require_admin
+from app.accounts.passwords import hash_password
+from app.accounts.router import router
+from app.accounts.schemas import PublicUser
+from app.accounts.tokens import AUDIENCE, ISSUER, REFRESH_COOKIE
+from app.persistence.models import SetupAlreadyComplete, User
+from app.persistence.sqlite import ApplicationDatabase
 
 CSRF = {"X-Requested-With": "Humanizar"}
 

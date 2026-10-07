@@ -12,12 +12,12 @@ from starlette.types import Message, Scope
 
 import app.api.dependencies as dependencies_module
 import app.api.routes.knowledge as knowledge_routes
-from app.agent.company_agent import Emit, no_emit
+from app.agent.events import Emit, no_emit
 from app.api.schemas import ChatRequest, ChatResponse, Usage
 from app.core.settings import Settings
 from app.knowledge.ingestion import ParsedDocument
 from app.main import create_app
-from app.persistence.sqlite import User
+from app.persistence.models import User
 
 
 def response_for(request: ChatRequest) -> ChatResponse:

@@ -1,5 +1,6 @@
 import importlib.util
 import subprocess
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,13 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC is not None and SPEC.loader is not None
 auditor = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(auditor)
+
+PACKAGER_SPEC = importlib.util.spec_from_file_location(
+    "source_packager", Path(__file__).resolve().parents[1] / "package.py"
+)
+assert PACKAGER_SPEC is not None and PACKAGER_SPEC.loader is not None
+packager = importlib.util.module_from_spec(PACKAGER_SPEC)
+PACKAGER_SPEC.loader.exec_module(packager)
 
 
 @pytest.mark.parametrize(
@@ -74,3 +82,52 @@ def test_audit_rejects_private_files_forced_into_git_index(tmp_path: Path) -> No
         capture_output=True,
     )
     assert auditor.audit_index(tmp_path) == [".CLAUDE/Sessions/session.json"]
+
+
+def test_packager_allowlist_and_no_overwrite(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    allowed = [
+        "README.md",
+        "CLAUDE.md",
+        ".mcp.json",
+        "compose.local.yaml",
+        "compose.production.yaml",
+        ".vercelignore",
+        ".claude/settings.json",
+        ".claude/skills/speckit-specify/SKILL.md",
+        ".agents/skills/speckit-specify/SKILL.md",
+        ".github/workflows/quality.yml",
+        "config/env.example",
+        "config/production.env.example",
+        "frontend/nginx.conf",
+        "frontend/.vercelignore",
+        ".env.example",
+        "backend/app/main.py",
+        "backend/uv.lock",
+        ".specify/templates/spec-template.md",
+    ]
+    blocked = [
+        ".env",
+        "backend/.env.production",
+        "config/production.env",
+        "backend/data/database.json",
+        "frontend/node_modules/pkg/index.js",
+        ".vercel/project.json",
+        "frontend/.vercel/project.json",
+        ".claude/settings.local.json",
+        ".specify/feature.json",
+        ".git/config",
+        "backend/secrets/token.txt",
+    ]
+    for filename in allowed + blocked:
+        path = source / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("example", encoding="utf-8")
+    (source / "backend/app/link.py").symlink_to(source / ".env")
+    output = tmp_path / "portable source.zip"
+    assert packager.build_package(source, output) == len(allowed)
+    with zipfile.ZipFile(output) as archive:
+        assert set(archive.namelist()) == {f"Lumen/{name}" for name in allowed}
+    with pytest.raises(FileExistsError):
+        packager.build_package(source, output)

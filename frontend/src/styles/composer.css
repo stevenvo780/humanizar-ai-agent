@@ -1,0 +1,114 @@
+.composer-area {
+  padding: 0 44px 19px;
+  width: min(100%, 840px);
+  margin: 0 auto;
+  flex: 0 0 auto;
+}
+.composer {
+  padding: 15px 16px 11px;
+  border: 1px solid #394349;
+  background: #1a222b;
+  border-radius: 12px;
+  box-shadow: 0 6px 28px #060a1030;
+  transition: border-color 0.2s;
+}
+.composer:focus-within {
+  border-color: #7ba88f;
+}
+.composer textarea {
+  border: 0;
+  outline: none;
+  width: 100%;
+  resize: none;
+  background: transparent;
+  color: #dcebe3;
+  min-height: 29px;
+  max-height: 130px;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 0;
+}
+.composer textarea:focus-visible {
+  outline: none;
+}
+.composer textarea::placeholder {
+  color: #b0b6c2;
+}
+.composer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 13px;
+  gap: 12px;
+}
+.composer-context {
+  display: flex;
+  gap: 11px;
+  color: #a5bcae;
+  font-size: 12px;
+  align-items: center;
+  border: 1px solid #354039;
+  background: #202b2a;
+  padding: 6px 8px;
+  border-radius: 5px;
+}
+.composer-context > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.composer-context > svg {
+  color: #b0b9b1;
+}
+.composer-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.keyboard-hint {
+  font-size: 12px;
+  color: #b1b7c0;
+}
+.send-button {
+  color: #214538;
+  background: #a4e2c8;
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.send-button:disabled {
+  background: #293830;
+  color: #bdcec4;
+  opacity: 1;
+}
+.send-button:not(:disabled):hover {
+  background: #c3f4df;
+}
+.stop-button {
+  background: #d9c9a2;
+}
+.composer-footnote {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: #aeb7c0;
+  font-size: 12px;
+  margin-top: 12px;
+  line-height: 1.6;
+  align-items: flex-start;
+}
+.composer-footnote > svg {
+  flex-shrink: 0;
+}
+.composer-powered {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #afb7be;
+}

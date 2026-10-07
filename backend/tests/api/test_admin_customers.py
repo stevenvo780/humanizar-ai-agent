@@ -10,7 +10,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.accounts.auth import REFRESH_COOKIE
+from app.accounts.tokens import REFRESH_COOKIE
 from app.core.settings import Settings
 from app.main import create_app
 from app.persistence.sqlite import ApplicationDatabase

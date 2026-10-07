@@ -2,7 +2,7 @@
 
 from mcp.server.fastmcp import FastMCP
 
-from app.mcp.auth import MCPAPIClient
+from app.mcp.client import MCPAPIClient
 
 mcp = FastMCP("Lumen company knowledge")
 

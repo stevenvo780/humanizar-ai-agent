@@ -1,0 +1,135 @@
+.docs-resource-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 27px 0 19px;
+}
+.docs-resource-grid > a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #3a5542;
+  border-radius: 8px;
+  background: #1b3022;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.docs-resource-grid > a:hover {
+  border-color: #91bf99;
+  background: #26432d;
+}
+.docs-resource-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #a7cdae;
+  background: #2e4c34;
+  border: 1px solid #4c6b4e;
+  height: 44px;
+  width: 44px;
+  flex: 0 0 44px;
+  border-radius: 8px;
+}
+.docs-resource-icon.lavender {
+  color: #b6b2d5;
+  background: #393849;
+  border-color: #55536d;
+}
+.docs-resource-grid h3 {
+  font-size: 16px;
+  font-weight: 500;
+  color: #c6e3cd;
+  margin: 0 0 7px;
+}
+.docs-resource-grid p {
+  font-size: 14px;
+  color: #a3bca9;
+  margin: 0;
+}
+.docs-resource-grid > a > svg:last-child {
+  margin-left: auto;
+  color: #95c09e;
+}
+.docs-repository-state {
+  color: #a8baaf !important;
+  font-size: 12px !important;
+  line-height: 1.9;
+  margin-bottom: 25px !important;
+  overflow-wrap: anywhere;
+}
+.docs-start-code {
+  border: 1px solid #334d3a;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #122519;
+  margin-top: 22px;
+}
+.docs-start-code > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 13px 17px;
+  background: #243d2b;
+  color: #a3c9ac;
+  font-size: 12px;
+}
+.docs-start-code > div > span:last-child {
+  margin-left: auto;
+  color: #a0bda8;
+  font-size: 12px;
+}
+.docs-start-code pre {
+  padding: 18px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 2.1;
+  color: #b7dbbe;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.docs-start-code pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 14px;
+}
+.docs-start-code p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #a0bea7;
+  margin: 0;
+  padding: 0 18px 18px;
+}
+.docs-footer {
+  padding: 35px 0 40px;
+  border-top: 1px solid #304438;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.docs-footer > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #97c0a4;
+  font-size: 12px;
+}
+.docs-footer strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  margin-top: 6px;
+  color: #a6bbae;
+}
+.docs-footer > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #a8cdb3;
+  text-decoration: none;
+}

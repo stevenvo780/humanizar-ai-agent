@@ -20,13 +20,13 @@ allowed build commands constitute an OS sandbox for Claude Code.
   - api/: schemas (HTTP contracts), dependencies (auth scopes, typed state), errors and
     routes/ with one router per resource (system, knowledge, tools, requests, customers,
     conversations, chat + SSE).
-  - agent/: bounded Anthropic Haiku tool loop, demo mode and citation grounding.
-  - tools/: tool contract (definitions), execution (registry) and safe calculator.
+  - agent/: loop (company_agent), provider, prompt, grounding, deterministic fallback, demo.
+  - tools/: contract (definitions), registry (validation/redaction) and handlers/ (HANDLERS).
   - knowledge/: ingestion, PDF parser, embeddings, Qdrant store, initial corpus bootstrap.
-  - accounts/: JWT, Argon2, rotating refresh/session families and roles.
-  - persistence/: store contracts and SQLite/PostgreSQL implementations.
+  - accounts/: passwords, tokens, rate limit, schemas, dependencies and router.
+  - persistence/: contracts and models plus sqlite/ and postgres/ packages.
   - business/: company profile and customer demo/support requests.
-  - mcp/: read-only MCP server and its authenticated API client.
+  - mcp/: read-only MCP server, authenticated client and private sessions.
   - manage.py: operator CLI (`python -m app.manage create-admin`, `mcp-login`).
   Anthropic credentials come exclusively from the backend environment.
 - backend/tests mirrors those domains; regressions/ holds adaptation regressions.

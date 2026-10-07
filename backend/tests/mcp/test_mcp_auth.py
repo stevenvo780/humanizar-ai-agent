@@ -12,17 +12,9 @@ from app import manage
 from app.core.settings import ROOT, Settings
 from app.knowledge.ingestion import ParsedDocument
 from app.main import create_app
-from app.mcp.auth import (
-    MCPAPIClient,
-    MCPAuthenticationRequired,
-    MCPForbidden,
-    MCPUnavailable,
-    PrivateSession,
-    api_origin,
-    default_session_path,
-    read_session,
-    write_session,
-)
+from app.mcp.client import MCPAPIClient, api_origin
+from app.mcp.errors import MCPAuthenticationRequired, MCPForbidden, MCPUnavailable
+from app.mcp.sessions import PrivateSession, default_session_path, read_session, write_session
 
 
 def session(

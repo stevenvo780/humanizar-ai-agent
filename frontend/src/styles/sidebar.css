@@ -1,0 +1,245 @@
+.app-shell {
+  display: flex;
+  min-height: 100dvh;
+}
+.sidebar {
+  width: 256px;
+  flex: 0 0 256px;
+  background: #0c1119;
+  border-right: 1px solid #222936;
+  padding: 28px 18px 0;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.brand {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  padding: 0 10px;
+  margin-bottom: 34px;
+}
+.brand > span:nth-child(2) {
+  font-family: 'Manrope', sans-serif;
+  font-size: 29px;
+  font-weight: 750;
+  letter-spacing: -1.6px;
+}
+.brand-period {
+  color: var(--mint);
+}
+.brand-mark {
+  width: 31px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mint);
+}
+.brand-mark svg {
+  width: 29px;
+  height: 29px;
+}
+.brand-beta {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #b0b7c2;
+  border: 1px solid #313947;
+  border-radius: 4px;
+  padding: 3px 4px;
+  margin-left: 1px;
+  margin-top: 6px;
+}
+.workspace-identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 10px;
+  border: 1px solid #2a3240;
+  background: #131a24;
+  border-radius: 9px;
+  margin-bottom: 21px;
+}
+.workspace-avatar,
+.context-company-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  width: 35px;
+  height: 35px;
+  background: #e4dfd4;
+  color: #263d3a;
+  border-radius: 8px;
+  position: relative;
+  flex-shrink: 0;
+}
+.workspace-avatar span,
+.context-company-icon > span {
+  width: 5px;
+  height: 5px;
+  background: #658178;
+  position: absolute;
+  right: 7px;
+  bottom: 9px;
+}
+.workspace-identity strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+}
+.workspace-identity small {
+  display: block;
+  color: #b0b7c3;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.new-chat {
+  background: #a3e3cd;
+  color: #153f32;
+  border: 1px solid #b2eed9;
+  padding: 12px 10px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  margin-bottom: 31px;
+  line-height: 1.5;
+}
+.new-chat:hover {
+  background: #b8efdc;
+}
+.new-chat > span:not(.new-shortcut),
+.help-button > span {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.new-shortcut {
+  margin-left: auto;
+  opacity: 1;
+  font-size: 15px;
+}
+.sidebar-section-label {
+  font-size: 12px;
+  color: #b0b7c2;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  padding: 0 12px;
+}
+.sidebar-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 13px 0 32px;
+}
+.nav-item {
+  padding: 12px 13px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: transparent;
+  border-radius: 7px;
+  color: #afb7c5;
+  font-size: 14px;
+  text-align: left;
+  line-height: 1.5;
+}
+.nav-item.active {
+  color: #b1e7d5;
+  background: #1b2d2d;
+  box-shadow: inset 3px 0 #a0e5cd;
+}
+.nav-item:hover {
+  background: #19212c;
+}
+.nav-item.active:hover {
+  background: #203331;
+}
+.nav-active-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--mint);
+  margin-left: auto;
+}
+.nav-item:not(.active) .nav-active-dot {
+  display: none;
+}
+.nav-count {
+  margin-left: auto;
+  color: #acb7c7;
+  background: #242c38;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 12px;
+}
+.recent-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 12px;
+  color: #b0b7c0;
+}
+.recent-list {
+  margin-top: 14px;
+  min-height: 80px;
+  flex: 1;
+  overflow-y: auto;
+}
+.recent-empty {
+  color: #b1b8c1;
+  font-size: 14px;
+  line-height: 1.9;
+  padding-left: 12px;
+  margin-top: 6px;
+}
+.recent-item {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+.recent-item.selected {
+  background: #161e29;
+}
+.recent-item > button:first-child {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  text-align: left;
+  padding: 11px 10px;
+  color: #aeb7c5;
+  font-size: 14px;
+  flex: 1;
+}
+.recent-item > button:first-child > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.recent-item svg {
+  flex-shrink: 0;
+}
+.remove-chat {
+  background: transparent;
+  padding: 7px;
+  color: #aeb7c5;
+  opacity: 0;
+}
+.recent-item:hover .remove-chat,
+.remove-chat:focus-visible {
+  opacity: 1;
+}

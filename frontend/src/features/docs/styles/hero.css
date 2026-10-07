@@ -1,0 +1,141 @@
+.docs-hero {
+  padding: 0 0 45px;
+  scroll-margin-top: 100px;
+  outline: none;
+}
+.docs-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #a1c9b3;
+  letter-spacing: 1.5px;
+  font-weight: 500;
+}
+.docs-eyebrow > span {
+  color: #a9bab3;
+  font-size: 12px;
+  margin-left: auto;
+  letter-spacing: 1px;
+}
+.docs-hero h1 {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 550;
+  font-size: clamp(38px, 4.3vw, 59px);
+  line-height: 1.22;
+  letter-spacing: -2.8px;
+  color: #e2eae5;
+  margin: 28px 0 21px;
+}
+.docs-hero h1 > span {
+  color: #a2dac0;
+}
+.docs-hero-intro {
+  color: #aabab3;
+  font-size: 16px;
+  line-height: 1.95;
+  max-width: 540px;
+  margin-bottom: 25px;
+}
+.docs-hero-tags {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.docs-snapshot-note + .docs-hero-tags {
+  margin-top: 20px;
+}
+.docs-hero-tags > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #32473e;
+  background: #1c2b25;
+  border-radius: 5px;
+  padding: 6px 9px;
+  font-size: 12px;
+  color: #a4bcab;
+}
+.docs-evidence-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 40px 0 14px;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.docs-evidence-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a5bcaf;
+  font-size: 12px;
+  letter-spacing: 1.2px;
+}
+.docs-evidence-heading > time {
+  font-size: 12px;
+  color: #a8bab0;
+}
+.docs-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border: 1px solid #304339;
+  border-radius: 9px;
+  background: #17241f;
+  overflow: hidden;
+}
+.docs-metrics > div {
+  padding: 20px 17px;
+  border-right: 1px solid #304339;
+}
+.docs-metrics > div:last-child {
+  border-right: 0;
+}
+.docs-metric-number {
+  font-family: 'Manrope', sans-serif;
+  font-size: 31px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  color: #bde7ca;
+  display: block;
+  line-height: 1.4;
+}
+.docs-metric-number > span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: #a5bcae;
+  font-weight: 400;
+  margin-left: 3px;
+}
+.docs-metric-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #b3d6c0;
+  min-height: 43px;
+}
+.docs-metric-title > svg {
+  flex-shrink: 0;
+  color: #92c0a8;
+}
+.docs-metrics p {
+  color: #a3bdaa;
+  font-size: 14px;
+  margin: 7px 0;
+  line-height: 1.6;
+}
+.docs-metrics small {
+  display: block;
+  font-size: 12px;
+  color: #a8bbae;
+  line-height: 1.7;
+}
+.docs-snapshot-note {
+  color: #aabab3;
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 13px 0 0;
+}

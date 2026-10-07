@@ -11,12 +11,13 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from starlette.requests import Request
 
-from app.accounts.auth import User
-from app.agent.company_agent import AgentFailure, CompanyAgent
+from app.agent.company_agent import CompanyAgent
+from app.agent.provider import AgentFailure
 from app.api.dependencies import AgentDep, ChatAdmission, DatabaseDep, ScopedUser
 from app.api.schemas import ChatRequest, ChatResponse, HistoryMessage
 from app.core.concurrency import run_sync
 from app.persistence.contracts import IdentityStore
+from app.persistence.models import User
 
 router = APIRouter(prefix="/api", tags=["chat"])
 HISTORY_MESSAGES = 40

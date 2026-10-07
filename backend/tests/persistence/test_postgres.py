@@ -21,12 +21,12 @@ from app.core.settings import Settings
 from app.main import create_app
 from app.persistence.contracts import PersistenceUnavailable
 from app.persistence.factory import create_business_store, create_identity_store
+from app.persistence.models import SetupAlreadyComplete
 from app.persistence.postgres import (
     PostgresApplicationDatabase,
     PostgresBusinessStore,
     connection_options,
 )
-from app.persistence.sqlite import SetupAlreadyComplete
 
 
 @pytest.fixture

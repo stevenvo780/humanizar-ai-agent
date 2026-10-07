@@ -4,12 +4,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from app.accounts.auth import (
+from app.accounts.passwords import hash_password
+from app.accounts.schemas import (
     CustomerCreatedResponse,
     CustomerListResponse,
     PublicCustomer,
     SignupRequest,
-    hash_password,
 )
 from app.api.dependencies import DatabaseDep, RequiredAdmin, bearer
 from app.core.concurrency import run_sync

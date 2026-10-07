@@ -46,8 +46,11 @@ brief is clear; `/speckit-plan` only if architecture changes.
   When it finishes, read `material/codex/<name>.md`, run `bash scripts/codex-worker.sh apply`,
   review the staged diff and re-run the checks. Use Claude subagents for other slices; never let
   two workers own the same file.
-- New tool: `ToolDefinition` (string/number/integer/boolean, `optional`) + branch in
-  `ToolRegistry.run` + test. Writes with confirmation follow docs/EXAM_20_MIN.md.
+- New tool: `ToolDefinition` in `tools/definitions.py` (string/number/integer/boolean,
+  `optional`) + `async def handler(context: ToolContext) -> ToolOutput` in
+  `tools/handlers/<domain>.py` registered in `HANDLERS` + test. Facts with sources go in
+  `FACT_TOOLS` (`agent/fallback.py`); prompt in `agent/prompt.py`. Writes with confirmation
+  follow docs/EXAM_20_MIN.md.
 - Keep sources/citations, confirmation for writes, auth and ownership checks unless the brief
   explicitly changes them. Never ship AUTH_ENABLED=false.
 

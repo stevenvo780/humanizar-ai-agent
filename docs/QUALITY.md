@@ -11,7 +11,7 @@ veinte minutos.
 | Hallazgo | Corrección | Evidencia de regresión |
 | --- | --- | --- |
 | Una herramienta exitosa admitía afirmaciones empresariales sin fuentes | Sin citas válidas, resultados deterministas pertinentes o falta de evidencia | `backend/tests/agent/test_agent.py`: identidad inventada después de calcular y cálculo mezclado con afirmaciones |
-| ZIP podía incorporar sesiones o cabeceras de autenticación | Exclusión previa a lectura y redacción de Basic/Bearer/Proxy-Authorization | `scripts/tests/test_material.py`: sesiones, contenido no leído, cabeceras y JSON |
+| ZIP podía incorporar sesiones o cabeceras de autenticación | Exclusión previa a lectura y redacción de Basic/Bearer/Proxy-Authorization | `scripts/tests/test_material_*.py`: sesiones, contenido no leído, cabeceras y JSON |
 | El importador intentaba subir sin sesión | Importación local por defecto; `--upload` explícito con JWT y destino HTTP loopback numérico | Cero HTTP por defecto, rechazo previo al ZIP y errores 401/403 sin credenciales |
 | MCP no tenía sesión con la API protegida | Login interactivo, sesión privada ligada al origen y renovación coordinada | `backend/tests/mcp/test_mcp_auth.py`: login, permisos, origen, renovación, fallos y archivos privados |
 | Colecciones remotas competían entre corpus | Namespace persistente del corpus y modelo; reconstrucción sin borrar colecciones ajenas | `backend/tests/knowledge/test_storage.py`: dos corpus y embeddings; servidor remoto real pendiente |
@@ -35,8 +35,8 @@ veinte minutos.
    entorno del backend. Los dos últimos son arrays JSON; `null` selecciona el
    ejemplo de Humanizar sólo para Humanizar y `[]` desactiva esas sugerencias
    o productos. Los documentos siguen siendo la evidencia de las respuestas.
-4. Añadir cada herramienta en `backend/app/tools/definitions.py` y su ejecución
-   validada en `backend/app/tools/registry.py`. El esquema admite string, number/integer,
+4. Añadir cada herramienta en `backend/app/tools/definitions.py` y su handler en
+   `backend/app/tools/handlers/`, registrado en `HANDLERS`; el registro valida, redacta y mide. El esquema admite string, number/integer,
    boolean y parámetros opcionales; por sí solo no concede ejecución ni permisos.
    Sin citas, el agente muestra el resultado determinista de cualquier herramienta
    que no esté en `FACT_TOOLS`. La consola admite campos simples; esquemas

@@ -1,23 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
-import {
-  BookOpen,
-  Check,
-  CheckCheck,
-  FileText,
-  FolderOpen,
-  Layers3,
-  LoaderCircle,
-  ShieldCheck,
-  Trash2,
-  UploadCloud,
-  X,
-} from 'lucide-react';
+import { BookOpen, CheckCheck, FolderOpen, Layers3, ShieldCheck } from 'lucide-react';
 import { api, errorMessage } from '../../shared/api/api';
 import type { DocumentList, KnowledgeDocument } from '../../shared/api/types';
 import { EmptyState } from '../../shared/ui/EmptyState';
-import { plural } from '../../shared/utils/plural';
 import { DocumentReader } from './DocumentReader';
+import { DocumentRow } from './DocumentRow';
+import { UploadZone } from './UploadZone';
 
 export function Knowledge({
   documents,
@@ -33,7 +21,6 @@ export function Knowledge({
   readerAvailable: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
-  const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -147,59 +134,13 @@ export function Knowledge({
           </span>
         </div>
       </div>
-      <div
-        className={`upload-zone ${dragging ? 'dragging' : ''}`}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setDragging(false);
-          void upload(event.dataTransfer.files);
-        }}
-      >
-        <span className="upload-icon">
-          {uploading ? <LoaderCircle className="spin" size={26} /> : <UploadCloud size={26} />}
-        </span>
-        <h2>
-          {uploading ? 'Procesando la documentación…' : 'Un nuevo archivo. Mejores respuestas.'}
-        </h2>
-        <p>
-          Arrastra documentos de la empresa aquí o{' '}
-          <button
-            className="text-link"
-            disabled={uploading || !online}
-            onClick={() => inputRef.current?.click()}
-          >
-            selecciona archivos
-          </button>
-        </p>
-        <button
-          className="primary-button"
-          disabled={uploading || !online}
-          onClick={() => inputRef.current?.click()}
-        >
-          <UploadCloud size={18} /> {uploading ? 'Procesando archivos…' : 'Añadir documentos'}
-        </button>
-        <span className="upload-formats">
-          TXT, MD, PDF, DOCX, CSV, JSON y ZIP · Hasta {maxUpload} MB por archivo
-        </span>
-        <input
-          className="sr-only"
-          id="document-upload"
-          ref={inputRef}
-          type="file"
-          multiple
-          accept=".txt,.md,.pdf,.docx,.csv,.json,.zip"
-          aria-label="Seleccionar documentos para subir"
-          disabled={uploading || !online}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            if (event.target.files) void upload(event.target.files);
-          }}
-        />
-      </div>
+      <UploadZone
+        uploading={uploading}
+        online={online}
+        maxUpload={maxUpload}
+        inputRef={inputRef}
+        onUpload={upload}
+      />
       {notice && (
         <div className="notice success" role="status">
           <CheckCheck size={17} />
@@ -226,67 +167,19 @@ export function Knowledge({
       {documents.documents.length ? (
         <div className="document-list">
           {documents.documents.map((doc: KnowledgeDocument) => (
-            <div
-              className={`document-row ${readerAvailable && readingDocument?.id === doc.id ? 'document-row-reading' : ''}`}
+            <DocumentRow
               key={doc.id}
-            >
-              <span className="document-icon">
-                <FileText size={22} />
-              </span>
-              <div className="document-info">
-                <button
-                  className="document-read-button"
-                  type="button"
-                  aria-label={`Leer ${doc.name}`}
-                  aria-expanded={readerAvailable && readingDocument?.id === doc.id}
-                  aria-controls={readerAvailable && readingDocument ? 'document-reader' : undefined}
-                  aria-describedby={!readerAvailable ? 'document-reader-unavailable' : undefined}
-                  disabled={!readerAvailable || deleting === doc.id}
-                  onClick={(event) => readDocument(doc, event.currentTarget)}
-                >
-                  <span>{doc.name}</span>
-                  <BookOpen size={16} />
-                </button>
-                <span>
-                  {plural(doc.chunks, 'fragmento', 'fragmentos')} ·{' '}
-                  {doc.characters.toLocaleString('es')} caracteres
-                </span>
-              </div>
-              {deleteId === doc.id ? (
-                <div className="delete-confirm">
-                  <span>¿Eliminar?</span>
-                  <button
-                    className="danger-link"
-                    disabled={!!deleting}
-                    onClick={() => void remove(doc.id)}
-                  >
-                    {deleting === doc.id ? 'Eliminando…' : 'Confirmar'}
-                  </button>
-                  <button
-                    className="icon-button"
-                    aria-label="Cancelar eliminación"
-                    onClick={() => setDeleteId(null)}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className="ready-badge">
-                    <Check size={12} />
-                    Indexado
-                  </span>
-                  <button
-                    className="icon-button delete-button"
-                    aria-label={`Eliminar ${doc.name}`}
-                    disabled={!online}
-                    onClick={() => setDeleteId(doc.id)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </>
-              )}
-            </div>
+              doc={doc}
+              readerAvailable={readerAvailable}
+              reading={readerAvailable && readingDocument?.id === doc.id}
+              readerOpen={readerAvailable && !!readingDocument}
+              confirmingDelete={deleteId === doc.id}
+              deleting={deleting}
+              online={online}
+              onRead={readDocument}
+              onDelete={remove}
+              onDeleteIntent={setDeleteId}
+            />
           ))}
         </div>
       ) : (

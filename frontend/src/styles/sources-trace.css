@@ -1,0 +1,120 @@
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.source-card {
+  background: #17202a;
+  border: 1px solid #2d3c40;
+  border-radius: 7px;
+}
+.source-card summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 9px;
+  cursor: pointer;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+.source-number {
+  background: #263f35;
+  color: #a1d7ba;
+  border: 1px solid #3b5548;
+  height: 20px;
+  width: 20px;
+  border-radius: 4px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  flex: 0 0 20px;
+}
+.source-name {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #c1cddc;
+  min-width: 0;
+  word-break: break-word;
+}
+.source-name small {
+  font-size: 12px;
+  display: block;
+  color: #adb7c4;
+  margin-top: 3px;
+}
+.source-card summary > svg {
+  color: #acb9b0;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.source-card[open] summary > svg {
+  transform: rotate(180deg);
+}
+.source-excerpt {
+  border-top: 1px solid #2a373d;
+  padding: 12px;
+}
+.source-excerpt p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #a8b8c9;
+  white-space: pre-wrap;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+.source-excerpt > span {
+  font-size: 12px;
+  color: #adb8c4;
+  overflow-wrap: anywhere;
+}
+.trace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.trace-detail {
+  border: 1px solid #293645;
+  border-radius: 6px;
+  background: #151d28;
+}
+.trace-detail summary {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  gap: 7px;
+  font-size: 14px;
+  color: #a9b7cb;
+  list-style: none;
+  cursor: pointer;
+}
+.trace-status {
+  color: #9ecbb4;
+  display: flex;
+}
+.trace-status.error {
+  color: #e0a8aa;
+}
+.trace-time {
+  font-size: 12px;
+  color: #afb8c4;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.trace-body {
+  padding: 10px;
+  border-top: 1px solid #293645;
+}
+.trace-body pre {
+  white-space: pre-wrap;
+  font-size: 14px;
+  color: #a6bcc9;
+  overflow-wrap: anywhere;
+}
+.mini-label {
+  color: #acb7c4;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+}

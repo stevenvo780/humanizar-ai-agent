@@ -3,7 +3,7 @@
 from typing import Any, Protocol
 
 from app.business.requests import RequestKind
-from app.persistence.sqlite import Customer, User
+from app.persistence.models import Customer, User
 
 
 class PersistenceUnavailable(RuntimeError):

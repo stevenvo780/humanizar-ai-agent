@@ -38,8 +38,9 @@ class ToolDefinition:
     """Tool contract. Every property is required unless listed in ``optional``.
 
     Supported property types: string (minLength/maxLength/enum), number and integer
-    (minimum/maximum) and boolean. Register execution in ToolRegistry.run; any tool not
-    listed in agent.FACT_TOOLS shows its deterministic output when the answer has no citation.
+    (minimum/maximum) and boolean. Register its handler in ``app.tools.handlers.HANDLERS``;
+    any tool not listed in ``app.agent.fallback.FACT_TOOLS`` shows its deterministic output
+    when the answer has no citation.
     """
 
     name: str

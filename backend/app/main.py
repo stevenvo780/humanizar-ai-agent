@@ -8,8 +8,9 @@ from weakref import WeakValueDictionary
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.accounts.auth import router as auth_router
-from app.agent.company_agent import CompanyAgent, MessageProvider
+from app.accounts.router import router as auth_router
+from app.agent.company_agent import CompanyAgent
+from app.agent.provider import MessageProvider
 from app.api.errors import register_exception_handlers
 from app.api.routes import ROUTERS
 from app.core.request_guard import RequestGuard

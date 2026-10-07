@@ -1,0 +1,226 @@
+.profile > div {
+  min-width: 0;
+}
+.profile > .icon-button {
+  margin-left: auto;
+  flex: 0 0 36px;
+}
+.account-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.account-page-header > .icon-button {
+  border: 1px solid #344c41;
+  margin-top: 9px;
+}
+.account-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #9ebeac;
+  padding: 55px 15px;
+}
+.requests-empty {
+  text-align: center;
+  border: 1px solid #2c3c41;
+  background: #172129;
+  border-radius: 12px;
+  padding: 48px 25px;
+  margin: 15px 0 25px;
+}
+.requests-empty h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #c1e0cd;
+}
+.requests-empty p {
+  color: #a8bab2;
+  font-size: 14px;
+  line-height: 1.9;
+  margin-bottom: 25px;
+}
+.request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 8px;
+}
+.request-card {
+  border: 1px solid #2e413f;
+  border-radius: 10px;
+  background: #17242a;
+  overflow: hidden;
+}
+.request-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px 15px;
+}
+.request-kind-icon {
+  width: 43px;
+  height: 43px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #283e33;
+  border: 1px solid #3d5948;
+  color: #afd9bf;
+  flex: 0 0 43px;
+}
+.request-kind-icon.support {
+  color: #bdb2d9;
+  background: #302e45;
+  border-color: #4a445f;
+}
+.request-card h2 {
+  font-size: 16px;
+  font-weight: 550;
+  margin: 0 0 5px;
+  color: #d0e3d9;
+}
+.request-id {
+  font-size: 12px;
+  color: #acb8c2;
+  overflow-wrap: anywhere;
+}
+.request-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 5px 8px;
+  color: #a2cab1;
+  background: #263a2d;
+  border: 1px solid #3b5040;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.request-details {
+  margin: 5px 24px 19px;
+}
+.request-details > div {
+  display: grid;
+  grid-template-columns: 125px 1fr;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 14px;
+}
+.request-details dt {
+  text-transform: capitalize;
+  color: #a8bab4;
+}
+.request-details dd {
+  color: #adbfbb;
+  margin: 0;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.request-card-footer {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid #2c3c40;
+  color: #a8bab4;
+  font-size: 12px;
+  background: #142027;
+}
+.request-card-footer > span:last-child {
+  margin-left: auto;
+}
+.trace-proposal {
+  border-color: #597560;
+  background: #1a2d25;
+}
+.trace-proposal summary {
+  color: #b2d5bc;
+}
+.action-confirmation-label {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  color: #b4d5bc;
+  font-size: 14px;
+}
+.action-confirmation > p {
+  color: #a1bcad;
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 12px 0;
+}
+.action-confirmation dl {
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+.action-confirmation dl > div {
+  margin: 9px 0;
+}
+.action-confirmation dt {
+  color: #a8baaf;
+  text-transform: capitalize;
+}
+.action-confirmation dd {
+  margin: 4px 0;
+  color: #b2caba;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.action-confirmation .primary-button {
+  font-size: 14px;
+  padding: 9px 11px;
+}
+.action-success {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #b4d9ba;
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 10px;
+  border: 1px solid #4c6c51;
+  border-radius: 6px;
+  background: #29442f;
+}
+.action-success > svg {
+  flex-shrink: 0;
+}
+.action-success > pre {
+  width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.action-error {
+  color: #e6b3c1 !important;
+}
+.tool-json {
+  font-family: ui-monospace, monospace;
+  min-height: 145px;
+  resize: vertical;
+  line-height: 1.8;
+  margin-bottom: 5px;
+}
+.tool-write-confirm {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px !important;
+  line-height: 1.8;
+  margin: 16px 0 !important;
+}
+.tool-write-confirm > input {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  accent-color: #92cdb0;
+}

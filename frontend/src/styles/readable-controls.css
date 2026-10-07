@@ -1,0 +1,85 @@
+/* Readable controls and shared customer administration. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #adbbc5;
+  opacity: 1;
+}
+select option,
+select optgroup {
+  background: #17232a;
+  color: #e3eee7;
+}
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background: #1c2631;
+  color: #b2becb;
+  opacity: 1;
+  -webkit-text-fill-color: #b2becb;
+}
+.primary-button:disabled,
+.secondary-button:disabled,
+.new-chat:disabled,
+.auth-tabs > button:disabled {
+  background: #25323a;
+  color: #b9c6cc;
+  border-color: #485761;
+  box-shadow: none;
+}
+.workspace-identity > span:nth-child(2),
+.context-company > div {
+  min-width: 0;
+}
+.workspace-identity strong,
+.context-company strong {
+  overflow-wrap: anywhere;
+}
+.technical-docs-link > svg,
+.nav-item > svg,
+.new-chat > svg,
+.help-button > svg {
+  flex-shrink: 0;
+}
+.prompt-card strong,
+.tool-card > strong {
+  line-height: 1.5;
+}
+.prompt-grid,
+.tool-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.message-byline,
+.document-heading,
+.offline-banner,
+.account-page-header {
+  flex-wrap: wrap;
+}
+/* The tool name wraps inside its own column; time and chevron stay on the first line. */
+.trace-detail summary > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.trace-time {
+  font-size: 12px;
+}
+.trace-detail summary > svg,
+.notice > svg,
+.page-footnote > svg {
+  flex-shrink: 0;
+}
+.source-name,
+.trace-detail summary,
+.request-card-header > div {
+  overflow-wrap: anywhere;
+}
+.page-footnote,
+.auth-password-hint,
+.auth-form-footer,
+.auth-story-footer {
+  line-height: 1.7;
+}

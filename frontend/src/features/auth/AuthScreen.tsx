@@ -1,19 +1,14 @@
 import { useRef, useState } from 'react';
 import type { SyntheticEvent } from 'react';
-import {
-  ArrowRight,
-  Check,
-  ChevronRight,
-  LoaderCircle,
-  LockKeyhole,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowRight, ChevronRight, LoaderCircle, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { api, errorMessage } from '../../shared/api/api';
 import { setAccessToken } from '../../shared/api/auth';
 import type { CompanyIdentity, Config, User } from '../../shared/api/types';
 import { companyPresentation } from '../../shared/config/company';
 import { SiteLink } from '../../shared/routing/navigation';
+import { AuthStory } from './AuthStory';
+import { AuthTabs } from './AuthTabs';
+import type { AuthMode } from './AuthTabs';
 
 export function AuthScreen({
   setup,
@@ -28,7 +23,7 @@ export function AuthScreen({
   onAuthenticated: (user: User) => void;
   initialError: string;
 }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,15 +32,6 @@ export function AuthScreen({
   const submitting = useRef(false);
   const creating = setup || mode === 'register';
   const { company, assistant, humanizar, website } = companyPresentation(config, identity);
-  const brand = (
-    <>
-      <Sparkles size={29} strokeWidth={1.4} />
-      <span>
-        {assistant}
-        <i>.</i>
-      </span>
-    </>
-  );
 
   async function submit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -72,65 +58,7 @@ export function AuthScreen({
 
   return (
     <div className="auth-layout">
-      <section className="auth-story">
-        {website ? (
-          <a href={website} target="_blank" rel="noopener noreferrer" className="auth-brand">
-            {brand}
-          </a>
-        ) : (
-          <div className="auth-brand">{brand}</div>
-        )}
-        <div className="auth-editorial">
-          <span className="page-eyebrow">
-            <span className="status-dot" />{' '}
-            {humanizar ? 'SOFTWARE. AGENTES. POSIBILIDADES.' : 'INFORMACIÓN. AYUDA. CONVERSACIÓN.'}
-          </span>
-          <h1>
-            Las buenas preguntas
-            <br />
-            abren <span>nuevos caminos.</span>
-          </h1>
-          <p>
-            Conoce los productos de {company}, encuentra la solución para tu empresa y da el
-            siguiente paso con un asistente que conecta la información.
-          </p>
-          <div className="auth-orbit" aria-hidden="true">
-            <svg viewBox="0 0 300 240" fill="none">
-              <g stroke="#86c4af" strokeWidth=".65">
-                <ellipse cx="150" cy="120" rx="105" ry="82" />
-                <ellipse cx="150" cy="120" rx="70" ry="82" />
-                <ellipse cx="150" cy="120" rx="32" ry="82" />
-                <ellipse cx="150" cy="120" rx="105" ry="29" />
-                <ellipse cx="150" cy="120" rx="105" ry="57" />
-                <ellipse cx="150" cy="120" rx="44" ry="105" transform="rotate(50 150 120)" />
-                <ellipse cx="150" cy="120" rx="44" ry="105" transform="rotate(-50 150 120)" />
-              </g>
-              <path
-                d="m150 89 8.5 22.5L181 120l-22.5 8.5L150 151l-8.5-22.5L119 120l22.5-8.5Z"
-                fill="#c3ecd9"
-              />
-              <circle cx="66" cy="74" r="4" fill="#a8e5cd" />
-              <circle cx="239" cy="162" r="3" fill="#aaa2d2" />
-            </svg>
-            <span className="orbit-chip chip-one">
-              <Sparkles size={13} /> {humanizar ? 'Agentes a medida' : 'Información de la empresa'}
-            </span>
-            <span className="orbit-chip chip-two">
-              <Check size={13} /> Respuestas con fuentes
-            </span>
-          </div>
-        </div>
-        <div className="auth-story-footer">
-          <span>
-            {company} · {humanizar ? 'Tecnología que resuelve.' : 'Información que conecta.'}
-          </span>
-          {website && (
-            <a href={website} target="_blank" rel="noopener noreferrer">
-              Conoce {company} <ChevronRight size={12} />
-            </a>
-          )}
-        </div>
-      </section>
+      <AuthStory assistant={assistant} company={company} humanizar={humanizar} website={website} />
       <main className="auth-form-panel">
         <div className="auth-form-wrap">
           <span className="auth-welcome-icon">
@@ -154,54 +82,14 @@ export function AuthScreen({
                 : 'Entra para continuar tus conversaciones y consultar tus solicitudes.'}
           </p>
           {!setup && (
-            <div className="auth-tabs" role="tablist" aria-label="Acceso a la cuenta">
-              <button
-                id="auth-tab-login"
-                role="tab"
-                aria-controls="auth-panel"
-                aria-selected={mode === 'login'}
-                tabIndex={mode === 'login' ? 0 : -1}
-                disabled={busy}
-                onKeyDown={(event) => {
-                  if (['ArrowLeft', 'ArrowRight', 'End'].includes(event.key)) {
-                    event.preventDefault();
-                    setMode('register');
-                    setError('');
-                    document.getElementById('auth-tab-register')?.focus();
-                  }
-                }}
-                onClick={() => {
-                  setMode('login');
-                  setError('');
-                }}
-                className={mode === 'login' ? 'selected' : ''}
-              >
-                Entrar
-              </button>
-              <button
-                id="auth-tab-register"
-                role="tab"
-                aria-controls="auth-panel"
-                aria-selected={mode === 'register'}
-                tabIndex={mode === 'register' ? 0 : -1}
-                disabled={busy}
-                onKeyDown={(event) => {
-                  if (['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) {
-                    event.preventDefault();
-                    setMode('login');
-                    setError('');
-                    document.getElementById('auth-tab-login')?.focus();
-                  }
-                }}
-                onClick={() => {
-                  setMode('register');
-                  setError('');
-                }}
-                className={mode === 'register' ? 'selected' : ''}
-              >
-                Crear cuenta
-              </button>
-            </div>
+            <AuthTabs
+              mode={mode}
+              busy={busy}
+              onSelect={(next) => {
+                setMode(next);
+                setError('');
+              }}
+            />
           )}
           <form
             id="auth-panel"

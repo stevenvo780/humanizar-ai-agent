@@ -11,12 +11,14 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from app.accounts.auth import SignupRequest, hash_password
+from app.accounts.passwords import hash_password
+from app.accounts.schemas import SignupRequest
 from app.core.settings import Settings
-from app.mcp.auth import MCPAPIClient, default_session_path
+from app.mcp.client import MCPAPIClient
+from app.mcp.sessions import default_session_path
 from app.persistence.contracts import PersistenceUnavailable
 from app.persistence.factory import create_identity_store
-from app.persistence.sqlite import SetupAlreadyComplete
+from app.persistence.models import SetupAlreadyComplete
 
 
 async def _mcp_login(origin: str, filename: Path) -> None:

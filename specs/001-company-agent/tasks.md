@@ -1,16 +1,16 @@
 # Baseline work
 
 - [x] T001 FR-001/FR-002: typed API, ingest, persistent Qdrant and bounded tools (`backend/app`, `backend/tests`).
-- [x] T002 FR-003/FR-004/FR-006: Haiku cycle, labelled demo, SSE and MCP (`backend/app/agent/company_agent.py`, `backend/app/mcp/server.py`).
+- [x] T002 FR-003/FR-004/FR-006: Haiku cycle, labelled demo, SSE and MCP (`backend/app/agent/`, `backend/app/mcp/server.py`).
 - [x] T003 FR-001/FR-002/FR-010: typed responsive customer UI, sources and tool views (`frontend/src`).
 - [x] T004 FR-005/FR-007: preset sandbox, safe ZIP importer and setup (`sandbox`, `scripts`).
 - [x] T005 FR-007: Claude Code, Spec Kit, documentation and source packaging (`.claude`, `.specify`, `docs`).
 - [x] T006 FR-001–FR-010: proportional gates and browser integration (`scripts/check.sh`, `docs/VALIDATION.md`).
 - [x] T007 FR-010: sourced public Humanizar corpus and branding (`backend/knowledge/humanizar`).
-- [x] T008 FR-008: JWT, sessions, roles and private histories (`backend/app/accounts/auth.py`, `backend/app/persistence/sqlite.py`).
+- [x] T008 FR-008: JWT, sessions, roles and private histories (`backend/app/accounts/`, `backend/app/persistence/sqlite/`).
 - [x] T009 FR-009: backend-only environment configuration; remove browser key routes and ignore legacy provider records (`backend/app/main.py`, `backend/tests`).
-- [x] T010 FR-010: sourced recommendations and confirmed requests/admin inbox (`backend/app/business/requests.py`, `backend/app/tools/registry.py`).
-- [x] T011 FR-011: optional PostgreSQL repositories, dedicated schema, verified TLS and concurrency coverage (`backend/app/persistence/postgres.py`, `backend/tests/persistence/test_postgres.py`, `docs/DEPLOYMENT.md`).
+- [x] T010 FR-010: sourced recommendations and confirmed requests/admin inbox (`backend/app/business/requests.py`, `backend/app/tools/handlers/`).
+- [x] T011 FR-011: optional PostgreSQL repositories, dedicated schema, verified TLS and concurrency coverage (`backend/app/persistence/postgres/`, `backend/tests/persistence/test_postgres.py`, `docs/DEPLOYMENT.md`).
 - [x] T012 FR-012: Vercel/Docker deployment, protected proxy, private environment and runtime validation (`frontend`, `compose.production.yaml`, `scripts`, `docs/DEPLOYMENT.md`, `docs/VALIDATION.md`).
 - [x] T013 FR-013: admin customer creation/listing, fixed role, session preservation and coherent pagination (`backend/app`, `backend/tests`, `frontend/src/features/customers/CustomersPanel.tsx`, `frontend/src/features/customers/customers.test.ts`).
 - [x] T014 FR-014: readable typography/contrast, single section navigation, shared dialog focus and visible Markdown upload (`frontend/src/styles/global.css`, `frontend/src/features/docs/docs.css`, `frontend/src/app/App.tsx`, `frontend/src/app/workspaceNavigation.ts`, `frontend/src/shared/hooks/useDialogFocus.ts`).

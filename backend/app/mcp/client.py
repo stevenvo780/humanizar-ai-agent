@@ -1,64 +1,26 @@
-"""Authenticated API access for read-only MCP, with private origin-bound sessions."""
+"""Authenticated, read-only Lumen API client used by the MCP server and ``mcp-login``."""
 
 import asyncio
-import fcntl
 import ipaddress
-import json
 import os
-import stat
-import tempfile
-import time
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager, suppress
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
-from pydantic import BaseModel, ConfigDict, SecretStr
+from pydantic import SecretStr
 
-from app.accounts.auth import REFRESH_COOKIE
+from app.accounts.tokens import REFRESH_COOKIE
 from app.core.concurrency import run_sync
-
-
-class MCPAuthenticationRequired(ValueError):
-    def __init__(self) -> None:
-        super().__init__(
-            "API authentication required (401). Run the private mcp-login CLI "
-            "or renew LUMEN_API_TOKEN."
-        )
-
-
-class MCPForbidden(ValueError):
-    def __init__(self) -> None:
-        super().__init__("API access forbidden (403) for this account.")
-
-
-class MCPUnavailable(ValueError):
-    def __init__(self) -> None:
-        super().__init__(
-            "Lumen API unavailable. Verify the API connection privately; "
-            "the saved session is preserved."
-        )
-
-
-def default_session_path() -> Path:
-    directory = Path(os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share"))
-    if not directory.is_absolute():
-        directory = Path.home() / ".local" / "share"
-    return directory / "lumen" / "mcp-session.json"
-
-
-def _session_path(path: Path) -> None:
-    source = Path(__file__).resolve().parents[2]
-    if source.name == "backend":
-        source = source.parent
-    try:
-        resolved = path.resolve()
-    except (OSError, RuntimeError):
-        raise MCPAuthenticationRequired from None
-    if resolved == source or source in resolved.parents or source in path.absolute().parents:
-        raise MCPAuthenticationRequired
+from app.mcp.errors import MCPAuthenticationRequired, MCPForbidden, MCPUnavailable
+from app.mcp.sessions import (
+    PrivateSession,
+    default_session_path,
+    read_session,
+    session_lock,
+    write_session,
+)
 
 
 def api_origin(value: str) -> str:
@@ -88,99 +50,6 @@ def api_origin(value: str) -> str:
         raise ValueError(
             "Use an HTTPS API origin or HTTP loopback, without credentials or paths."
         ) from None
-
-
-class PrivateSession(BaseModel):
-    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
-    origin: str
-    access_token: SecretStr
-    refresh_token: SecretStr
-
-
-def _private_descriptor(path: Path, *, create: bool = False) -> int:
-    _session_path(path)
-    flags = os.O_RDWR | os.O_CREAT if create else os.O_RDONLY
-    descriptor = os.open(path, flags | os.O_NOFOLLOW, 0o600)
-    metadata = os.fstat(descriptor)
-    if (
-        not stat.S_ISREG(metadata.st_mode)
-        or metadata.st_uid != os.geteuid()
-        or stat.S_IMODE(metadata.st_mode) != 0o600
-    ):
-        os.close(descriptor)
-        raise MCPAuthenticationRequired
-    return descriptor
-
-
-def read_session(path: Path, origin: str) -> PrivateSession:
-    try:
-        with os.fdopen(_private_descriptor(path), "r", encoding="utf-8") as stream:
-            value = stream.read(16385)
-        if len(value) > 16384:
-            raise ValueError
-        session = PrivateSession.model_validate_json(value)
-        if (
-            session.origin != origin
-            or not session.access_token.get_secret_value()
-            or not session.refresh_token.get_secret_value()
-        ):
-            raise ValueError
-        return session
-    except (OSError, UnicodeError, ValueError):
-        raise MCPAuthenticationRequired from None
-
-
-def write_session(path: Path, session: PrivateSession) -> None:
-    """Atomic 0600 replacement; do not follow links or overwrite another user's file."""
-    _session_path(path)
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    parent = path.parent.stat()
-    if parent.st_uid != os.geteuid() or stat.S_IMODE(parent.st_mode) & 0o022:
-        raise MCPAuthenticationRequired
-    if path.exists() or path.is_symlink():
-        read_session(path, session.origin)
-    descriptor, temporary = tempfile.mkstemp(prefix=".lumen-session-", dir=path.parent)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            json.dump(
-                {
-                    "origin": session.origin,
-                    "access_token": session.access_token.get_secret_value(),
-                    "refresh_token": session.refresh_token.get_secret_value(),
-                },
-                stream,
-            )
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
-
-
-@asynccontextmanager
-async def _refresh_lock(path: Path) -> AsyncIterator[None]:
-    _session_path(path)
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    parent = path.parent.stat()
-    if parent.st_uid != os.geteuid() or stat.S_IMODE(parent.st_mode) & 0o022:
-        raise MCPAuthenticationRequired
-    if path.exists() or path.is_symlink():
-        os.close(_private_descriptor(path))
-    descriptor = _private_descriptor(path.with_name(path.name + ".lock"), create=True)
-    try:
-        deadline = time.monotonic() + 8
-        while True:
-            try:
-                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except BlockingIOError:
-                if time.monotonic() > deadline:
-                    raise MCPUnavailable from None
-                await asyncio.sleep(0.02)
-        yield
-    finally:
-        os.close(descriptor)
 
 
 class MCPAPIClient:
@@ -222,7 +91,7 @@ class MCPAPIClient:
 
     async def login(self, email: str, password: str, token_file: Path) -> None:
         try:
-            async with _refresh_lock(token_file):
+            async with session_lock(token_file):
                 if token_file.exists():
                     await run_sync(read_session, token_file, self.origin)
                 response = await self.http.post(
@@ -249,7 +118,7 @@ class MCPAPIClient:
 
     async def _refresh(self, previous: PrivateSession) -> PrivateSession:
         assert self._file is not None
-        async with _refresh_lock(self._file):
+        async with session_lock(self._file):
             current = await run_sync(read_session, self._file, self.origin)
             if current.access_token != previous.access_token:
                 return current

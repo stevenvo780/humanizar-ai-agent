@@ -108,14 +108,18 @@ Cambios habituales:
   nombre: si editas un archivo ya cargado, bórralo en la UI o usa otro `DATA_DIR`.
   En Docker `DATA_DIR` es siempre `/data`; para empezar de cero en local usa
   `docker compose down -v` (borra también cuentas y conversaciones de ese stack).
-- Tono y reglas: prompt de sistema del agente; mantener la regla de fuentes.
+- Tono y reglas: `backend/app/agent/prompt.py`; mantener la regla de fuentes y, si cambia el
+  idioma, los textos fijos de `agent/fallback.py` y `agent/demo.py`.
 - Una nueva herramienta: `ToolDefinition` en `backend/app/tools/definitions.py`
-  (string, number/integer, boolean y `optional`) + rama en `ToolRegistry.run` de
-  `backend/app/tools/registry.py` + prueba del camino exitoso y del límite. Si la respuesta no
-  cita fuentes, su resultado determinista se muestra sin tocar `agent/company_agent.py`;
-  las herramientas de hechos con fuentes van en `FACT_TOOLS`. Una escritura con
-  confirmación además necesita `BUSINESS_WRITES`, `business/requests.py`, los CHECK de
-  `persistence/postgres.py` (con `DATA_DIR`/`DATABASE_SCHEMA` nuevos o migración), `ActionConfirmation`
+  (string, number/integer, boolean y `optional`) + `async def handler(context: ToolContext)
+  -> ToolOutput` en `backend/app/tools/handlers/<dominio>.py` registrado en `HANDLERS`
+  (`handlers/__init__.py`) + prueba del camino exitoso y del límite. Un test exige que toda
+  definición tenga handler. Si la respuesta no cita fuentes, su resultado determinista se
+  muestra solo; las herramientas de hechos con fuentes van en `FACT_TOOLS`
+  (`backend/app/agent/fallback.py`). Una escritura con confirmación además necesita
+  `BUSINESS_WRITES` (`tools/handlers/business.py`), `business/requests.py`, los CHECK de
+  `persistence/postgres/schema.py` (con `DATA_DIR`/`DATABASE_SCHEMA` nuevos o migración),
+  `ActionConfirmation` (`api/schemas.py`)
   y `frontend/src/features/requests/actions.tsx`. Si usa terminal, crear un preset en las tres listas
   (`sandbox/app/main.py`, `tools/definitions.py`, `frontend/src/features/tools/toolSchema.ts`).
 - Formato exigido: modelos Pydantic, contrato y cliente frontend juntos.

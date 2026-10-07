@@ -95,22 +95,30 @@ backend/app/
 ├── manage.py          CLI de operación (create-admin, mcp-login)
 ├── core/              settings, redacción de secretos, límites de petición
 ├── api/               schemas, dependencies, errors y routes/ (un router por recurso)
-├── agent/             ciclo Anthropic acotado, modo demo y validación de citas
-├── tools/             contrato (definitions), ejecución (registry) y calculadora
+├── agent/             company_agent (bucle), provider, prompt, grounding, fallback, demo
+├── tools/             definitions (contrato), registry (validación/redacción/tiempos),
+│   └── handlers/      un handler por herramienta, agrupados por dominio, en HANDLERS
 ├── knowledge/         ingesta, PDF, embeddings, store Qdrant y corpus inicial
-├── accounts/          JWT, Argon2, sesiones rotatorias y roles
-├── persistence/       contratos y almacenes SQLite/PostgreSQL
+├── accounts/          passwords, tokens, rate_limit, schemas, dependencies, router
+├── persistence/       contracts, models, factory, signing
+│   ├── sqlite/        cuentas, sesiones y conversaciones
+│   └── postgres/      conexión, schema, cuentas, sesiones, conversaciones y solicitudes
 ├── business/          perfil de empresa y solicitudes de demo/soporte
-└── mcp/               servidor MCP de sólo lectura y su cliente autenticado
+└── mcp/               server, client, sessions y errores
 backend/tests/         mismas carpetas por dominio + regressions/
 
 frontend/src/
 ├── main.tsx           entrada
-├── app/               shell, router y navegación del workspace
-├── features/          auth, chat, customers, docs, documents, requests, tools
-├── shared/            api (cliente, auth, SSE, validación, tipos), config, hooks, ui, utils
-└── styles/            estilos globales
+├── app/               App (composición), layout/ (sidebar, topbar, ayuda), hooks/
+├── features/          auth, chat (hook useChat y componentes), customers, docs (secciones),
+│                      documents, requests, tools
+├── shared/            api (cliente, auth, SSE, validation/ por dominio, tipos), config, hooks, ui
+└── styles/            global.css importa en orden los parciales por área
+
+scripts/               CLIs finos; material_import/ (importador del ZIP) y deploy_tests/
 ```
+
+Los módulos se mantienen por debajo de ~250 líneas con una responsabilidad cada uno.
 
 Una capacidad nueva se ubica en su dominio: el contrato HTTP en `api/schemas.py`, la ruta
 en `api/routes/<recurso>.py`, la lógica en su paquete y la vista en `features/<dominio>`.
