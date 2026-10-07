@@ -77,6 +77,8 @@ como deshabilitada hasta conectar el sandbox.
 - Recomendar productos según el proceso y preparar solicitudes de demo o soporte.
 - Confirmar cada solicitud antes de guardarla; consultar su ID en Mis solicitudes.
 - Revisar las solicitudes de clientes en la bandeja del administrador.
+- Crear y listar clientes desde administración cuando la API declara esa capacidad;
+  el alta conserva la sesión del administrador. Consulta [la guía](docs/ADMIN.md).
 - Ver cada ejecución real de herramientas y los fragmentos recuperados.
 - Iniciar una conversación nueva y revisar respuestas anteriores.
 
@@ -157,7 +159,8 @@ El workflow de GitHub repite esos controles, revisa el historial con Gitleaks y
 prepara un job de integración Docker. Su ejecución requiere un runner disponible;
 la evidencia local y los límites pendientes se documentan por separado.
 Consulta [la arquitectura](docs/ARCHITECTURE.md), [el contrato](docs/API_CONTRACT.md)
-y [el estado de validación](docs/VALIDATION.md).
+y [el estado de validación](docs/VALIDATION.md). La gestión de documentos y cuentas
+se explica en [Administración](docs/ADMIN.md).
 
 La implementación sigue las referencias oficiales de
 [Spec Kit](https://github.com/github/spec-kit),

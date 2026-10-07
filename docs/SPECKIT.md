@@ -73,9 +73,11 @@ Mantén `001` como referencia y escribe los requisitos de la prueba en `002`.
 
 ## Auditoría de la base
 
-La revisión de coherencia encontró cobertura cualitativa de los doce requisitos
-de aceptación en sus doce tareas, sin conflictos críticos de constitución. Los diez
-requisitos originales se complementan con PostgreSQL y el despliegue Vercel/Docker.
+La revisión de coherencia encontró cobertura cualitativa de los catorce requisitos
+en catorce tareas de implementación, sin conflictos críticos de constitución. Los diez
+requisitos originales se complementan con PostgreSQL, despliegue Vercel/Docker,
+gestión de clientes y legibilidad. La publicación de la nueva API de clientes tiene
+su propia tarea pendiente: T015, hasta recuperar acceso SSH y comprobar producción.
 Se corrigieron permisos de ingesta, descripción del embedding por defecto y las
 referencias a la persistencia del historial. La matriz FR/T de `001` hace explícita
 esa cobertura; la evidencia de ejecución vive en [VALIDATION.md](VALIDATION.md).

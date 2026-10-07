@@ -14,6 +14,7 @@ export interface Health {
   model: string;
   embedding: string;
   tools: { sandbox: boolean; mcp: boolean };
+  features?: { customer_management: boolean };
 }
 
 export interface KnowledgeDocument {
@@ -96,6 +97,18 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface CustomerAccount extends Omit<User, 'role'> {
+  role: 'customer';
+  created_at: string;
+}
+
+export interface CustomerAccountList {
+  customers: CustomerAccount[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface CustomerRequest {
   id: string;
   kind: 'demo' | 'support';
@@ -104,4 +117,4 @@ export interface CustomerRequest {
   details: Record<string, unknown>;
 }
 
-export type Tab = 'assistant' | 'knowledge' | 'tools' | 'requests';
+export type Tab = 'assistant' | 'knowledge' | 'tools' | 'requests' | 'customers';

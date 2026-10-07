@@ -3,20 +3,22 @@
 Validación actualizada el 2026-10-07. No representa validación de los requisitos de
 la prueba, todavía desconocidos.
 
-`bash scripts/check.sh`: aprobado.
+Las puertas de calidad de la base y las comprobaciones de esta revisión pasan;
+las pruebas PostgreSQL utilizan exclusivamente una instancia temporal aislada.
 
 | Componente | Evidencia |
 | --- | --- |
-| Backend | Ruff, formato, mypy estricto en app y pruebas, 186 pruebas incluidas 12 PostgreSQL |
+| Backend | Ruff, formato, mypy estricto en 39 archivos, 205 pruebas incluidas 15 PostgreSQL |
 | Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 77 pruebas |
 | Helpers de despliegue | 28 pruebas offline de configuración, rutas y ejecución privada |
-| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 60 pruebas y build |
+| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 65 pruebas y build |
 | Dependencias web | npm audit: 0 vulnerabilidades en la comprobación del frontend |
 | Configuración | JSON válido; Compose local y producción; proxy Vercel tipado |
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total actual: **351 pruebas aprobadas**. Las 12 de PostgreSQL se activan con
+Total comprobado: **375 pruebas aprobadas** entre las puertas anteriores sin cambios
+y las suites afectadas de esta revisión. Las 15 de PostgreSQL se activan con
 `LUMEN_TEST_DATABASE_URL` apuntando exclusivamente a una base temporal loopback
 `lumen_test`; cada prueba crea y elimina su propio schema aleatorio. Nunca apuntar
 esa variable a la base de la empresa. La base anterior de 214 pruebas también
@@ -25,10 +27,26 @@ en backend y sandbox. La comprobación actual utiliza Python 3.11.15 en backend
 y 3.12 en sandbox; las 140 pruebas del backend anterior también pasaron en un entorno
 aislado con Python 3.12.3. Docker apunta a Python 3.12. Mypy utiliza
 objetivo 3.12 para interpretar los stubs PEP 695 de NumPy, manteniendo el código
-compatible con Python 3.11 mediante Ruff. Existe una advertencia externa de deprecación
+compatible con Python 3.11 mediante Ruff. Los 15 casos actuales también pasaron en
+PostgreSQL 16 local efímero, cerrado y eliminado al terminar; la conexión productiva
+previamente validada sigue siendo PostgreSQL 18.6. Existe una advertencia externa de deprecación
 de TestClient/httpx en cada suite Python; no impide los resultados.
 
 ## Servicios reales locales
+
+- Gestión de clientes: 205 pruebas backend con PostgreSQL temporal y 65 frontend.
+  Se verificaron autorización, rol fijo, campos públicos, conservación de la sesión
+  admin y snapshots coherentes ante un alta entre el conteo y la lectura de filas.
+- Legibilidad: Chromium con datos sintéticos en 36 vistas entre 320 y 1440 px;
+  sin errores ni desbordes de página, ningún texto menor de 12 px en esas vistas y
+  contraste mínimo medido de 5,82:1. Clientes se verificó además en escritorio/móvil.
+- Producción: la cuenta indicada por el dueño obtuvo el rol admin mediante una
+  transferencia transaccional desde la cuenta técnica inicial, conservando cuentas,
+  contraseñas, conversaciones y sesiones. Una sesión aislada de comprobación confirmó
+  permisos, ingesta de Markdown y recuperación del contenido; sesión y documento
+  temporales se eliminaron al finalizar, sin cambiar el corpus existente.
+- La nueva API de clientes aún requiere publicación en el VPS tras renovar su SSH.
+  El frontend consulta la capacidad declarada por la API antes de mostrar Clientes.
 
 - Anthropic autenticado con Haiku 4.5, respuesta de modelo
   `claude-haiku-4-5-20251001` en una llamada real. El backend local y su proxy web
@@ -144,7 +162,7 @@ producción. La publicación real se registra por separado del inventario automa
 - CI definido en `.github/workflows/quality.yml`: dependencias fijadas, controles
   locales, auditoría de paths, Gitleaks, PostgreSQL temporal e integración Docker.
   El runner remoto no inició por bloqueo de facturación de la cuenta GitHub;
-  el workflow no cuenta como validación remota aprobada. Las 351 pruebas locales
+  el workflow no cuenta como validación remota aprobada. Las 375 pruebas locales
   y el smoke Docker/Vercel real se registran de forma independiente.
 - El clon público no contiene una credencial: cada instalación configura su propia
   clave privada. Los controles automatizados del ciclo, errores y presupuestos

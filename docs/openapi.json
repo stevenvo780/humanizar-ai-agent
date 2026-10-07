@@ -219,9 +219,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Health Api Health Get"
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -581,6 +579,105 @@
         ]
       }
     },
+    "/api/admin/customers": {
+      "get": {
+        "summary": "Admin Customers",
+        "operationId": "admin_customers_api_admin_customers_get",
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Customer",
+        "operationId": "create_customer_api_admin_customers_post",
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerCreatedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/conversations": {
       "get": {
         "summary": "Conversations",
@@ -862,6 +959,49 @@
         ],
         "title": "ChatResponse"
       },
+      "CustomerCreatedResponse": {
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/PublicCustomer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customer"
+        ],
+        "title": "CustomerCreatedResponse"
+      },
+      "CustomerListResponse": {
+        "properties": {
+          "customers": {
+            "items": {
+              "$ref": "#/components/schemas/PublicCustomer"
+            },
+            "type": "array",
+            "title": "Customers"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "customers",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "CustomerListResponse"
+      },
       "Document": {
         "properties": {
           "id": {
@@ -929,6 +1069,76 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HealthFeatures": {
+        "properties": {
+          "customer_management": {
+            "type": "boolean",
+            "const": true,
+            "title": "Customer Management",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "HealthFeatures"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "demo",
+              "anthropic"
+            ],
+            "title": "Mode"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "embedding": {
+            "type": "string",
+            "title": "Embedding"
+          },
+          "tools": {
+            "$ref": "#/components/schemas/HealthTools"
+          },
+          "features": {
+            "$ref": "#/components/schemas/HealthFeatures"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "model",
+          "embedding",
+          "tools"
+        ],
+        "title": "HealthResponse"
+      },
+      "HealthTools": {
+        "properties": {
+          "sandbox": {
+            "type": "boolean",
+            "title": "Sandbox"
+          },
+          "mcp": {
+            "type": "boolean",
+            "title": "Mcp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sandbox",
+          "mcp"
+        ],
+        "title": "HealthTools"
+      },
       "HistoryMessage": {
         "properties": {
           "role": {
@@ -977,6 +1187,41 @@
           "password"
         ],
         "title": "LoginRequest"
+      },
+      "PublicCustomer": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "const": "customer",
+            "title": "Role"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role",
+          "created_at"
+        ],
+        "title": "PublicCustomer"
       },
       "PublicUser": {
         "properties": {

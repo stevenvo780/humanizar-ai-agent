@@ -8,7 +8,9 @@ Both are available through the same-origin frontend proxy, including LAN access.
 Authentication is enabled by default. `/health`, `/config`, `/company` and auth
 setup/login/register/status are public. Other routes require an access JWT in
 `Authorization: Bearer TOKEN`. Document management, manual tools
-and `/admin/requests` require the admin role. Tests explicitly disable auth only
+and `/admin/requests` require the admin role. `/admin/customers` requires an admin
+JWT even when other component routes disable authentication for isolated tests.
+Tests explicitly disable auth only
 for legacy isolated component checks.
 
 `GET /auth/status` -> `{setup_required: boolean}`.
@@ -21,6 +23,27 @@ refresh cookie. Access JWT lasts 30 minutes; refresh lasts seven days.
 require `X-Requested-With: Humanizar`. `GET /auth/me` returns the authenticated user.
 The browser keeps access tokens only in memory.
 
+`GET /api/admin/customers?limit=25&offset=0` requires an administrator and returns
+`{customers: Customer[], total: number, limit: number, offset: number}`. `limit` is
+1–100 (default 25); `offset` is nonnegative (default 0). Only customer accounts are
+included, ordered by creation time descending, then id. An offset past the last
+account returns an empty page with the same total. Each page and its total use
+the same database snapshot, including during concurrent registrations.
+
+`Customer`: `{id: string, name: string, email: string, role: "customer", created_at: string}`.
+`created_at` is an ISO 8601 UTC timestamp. Passwords, hashes and session data are
+never included.
+
+`POST /api/admin/customers` requires an administrator and accepts exactly
+`{name,email,password}` using the same signup validation: trimmed name (1–120),
+normalized email (3–254), password (6–128). It returns **201**
+`{customer: Customer}`. Additional fields, including `role`, are rejected; the
+created account always has the customer role. Creation does not issue tokens,
+create a session, set cookies or change the administrator's session. Duplicate
+accounts return a generic 409; invalid fields/pagination return 422. Missing or
+invalid JWT returns 401; a customer JWT returns 403. Successful customer-management
+responses set `Cache-Control: no-store`. SQLite and PostgreSQL share this contract.
+
 Production configures `AUTH_BOOTSTRAP_TOKEN`: `/auth/setup` then requires a matching
 `X-Bootstrap-Token` header. The token is never exposed by `/auth/status` or other
 responses. Provision the administrator privately before publishing the frontend:
@@ -29,7 +52,11 @@ with `{name,email,password}` over private stdin. The CLI emits no session or JWT
 Password limits remain 6–128 characters. Once an administrator exists, bootstrap
 returns 409 and all public registrations create customers.
 
-`GET /api/health`: `{status: "ok", mode: "demo" | "anthropic", model: string, embedding: string, tools: {sandbox: boolean, mcp: boolean}}`.
+`GET /api/health`: `{status: "ok", mode: "demo" | "anthropic", model: string, embedding: string, tools: {sandbox: boolean, mcp: boolean}, features: {customer_management: true}}`.
+`features.customer_management` is always true in this backend version, independently
+of `AUTH_ENABLED`; it signals that the customer-management routes exist. Older
+versions may omit `features`, so clients should only expose this feature when the
+flag is explicitly true. Health is public and returns no customer or account data.
 
 `GET /api/config`: `{company_name: string, company_description: string, assistant_name: string, model: string, mode: "demo" | "anthropic", embedding: string, max_upload_mb: number}`.
 

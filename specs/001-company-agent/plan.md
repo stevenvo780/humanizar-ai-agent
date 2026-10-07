@@ -14,6 +14,8 @@ verified TLS and transaction locks for bootstrap, refresh and idempotent request
 A private persistent local secret or stable production JWT secret signs sessions.
 Initial production administration uses the private CLI. Anthropic uses only backend
 environment configuration; legacy provider records are preserved but never activated.
+Admin-only customer endpoints create fixed customer accounts without issuing sessions
+or cookies. Paginated lists use coherent read snapshots and expose only public fields.
 
 The Vercel UI proxies requests to the HTTPS Docker API on the VPS through a protected
 origin. Production uses external PostgreSQL, a persistent local Qdrant volume and one
@@ -42,6 +44,11 @@ Run PostgreSQL integration tests against an isolated test schema, then verify
 production TLS, API restart persistence, secure cookies and real SSE tool activity.
 Record results in docs/VALIDATION.md; local passing gates do not imply that remote
 GitHub Actions ran when the account blocks execution.
+Verify customer creation keeps the administrator cookie and permissions, customer
+login stays private, malformed role inputs fail and concurrent registrations do not
+invalidate pagination. Inspect readable text, contrast and responsive layouts. The
+UI enables customer management only when the backend declares that capability in
+its health response, allowing frontend and API releases to proceed independently.
 
 ## Assessment adaptation
 

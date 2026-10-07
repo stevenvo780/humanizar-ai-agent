@@ -346,10 +346,10 @@ export default function DocsPage() {
             <div className="docs-metrics">
               <div>
                 <span className="docs-metric-number">
-                  351<span> / pruebas</span>
+                  375<span> / pruebas</span>
                 </span>
                 <p>En la base de comprobación</p>
-                <small>186 API · 77 sandbox/scripts · 28 despliegue · 60 web</small>
+                <small>205 API · 77 sandbox/scripts · 28 despliegue · 65 web</small>
               </div>
               <div>
                 <span className="docs-metric-title">
@@ -569,7 +569,9 @@ export default function DocsPage() {
                     Los clientes acceden a su chat y solicitudes. Administradores gestionan
                     documentación, herramientas y bandeja de clientes. La API exige permisos y
                     propiedad de cada conversación; ocultar un botón no sustituye esas
-                    comprobaciones.
+                    comprobaciones. La gestión de cuentas de clientes se activa cuando la API
+                    declara esa capacidad; permite crear clientes sin cambiar la sesión del
+                    administrador.
                   </p>
                 </div>
               </article>
@@ -658,7 +660,7 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La base cuenta con <strong>351 pruebas aprobadas</strong>, incluidas pruebas reales de
+              La base cuenta con <strong>375 pruebas aprobadas</strong>, incluidas pruebas reales de
               persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
               describe la base registrada; cada cambio posterior debe volver a pasar sus
               comprobaciones.
@@ -680,7 +682,7 @@ export default function DocsPage() {
                       Ruff, formato, mypy estricto, agente, autenticación y persistencia PostgreSQL
                     </td>
                     <td>
-                      <strong>186</strong>
+                      <strong>205</strong>
                     </td>
                   </tr>
                   <tr>
@@ -703,7 +705,7 @@ export default function DocsPage() {
                       ESLint con tipos, hooks y accesibilidad; Prettier; TypeScript; Vitest; build
                     </td>
                     <td>
-                      <strong>60</strong>
+                      <strong>65</strong>
                     </td>
                   </tr>
                 </tbody>

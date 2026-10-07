@@ -44,11 +44,13 @@ from app.business import (
 )
 from app.database import (
     REFRESH_SECONDS,
+    Customer,
     RegistrationUnavailable,
     Role,
     SetupAlreadyComplete,
     User,
     signing_secret,
+    validate_customer_page,
 )
 from app.persistence import PersistenceUnavailable
 from app.security import redact, safe_input
@@ -339,6 +341,62 @@ class PostgresApplicationDatabase:
 
     def register_customer(self, name: str, email: str, password_hash: str) -> User:
         return self._create_user(name, email, password_hash, "customer")
+
+    @staticmethod
+    def _customer(row: RowMapping) -> Customer:
+        return Customer(
+            id=str(row["id"]),
+            name=str(row["name"]),
+            email=str(row["email"]),
+            created_at=datetime.fromtimestamp(float(row["created_at"]), UTC),
+        )
+
+    def get_customer(self, user_id: str) -> Customer | None:
+        with self.transaction() as connection:
+            row = (
+                connection.execute(
+                    select(
+                        self.users.c.id,
+                        self.users.c.name,
+                        self.users.c.email,
+                        self.users.c.created_at,
+                    ).where(self.users.c.id == user_id, self.users.c.role == "customer")
+                )
+                .mappings()
+                .first()
+            )
+            return self._customer(row) if row is not None else None
+
+    def list_customers(self, limit: int = 25, offset: int = 0) -> tuple[list[Customer], int]:
+        validate_customer_page(limit, offset)
+        with self.transaction() as connection:
+            connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
+            total = int(
+                connection.execute(
+                    select(func.count())
+                    .select_from(self.users)
+                    .where(self.users.c.role == "customer")
+                ).scalar_one()
+            )
+            if offset >= total:
+                return [], total
+            rows = (
+                connection.execute(
+                    select(
+                        self.users.c.id,
+                        self.users.c.name,
+                        self.users.c.email,
+                        self.users.c.created_at,
+                    )
+                    .where(self.users.c.role == "customer")
+                    .order_by(self.users.c.created_at.desc(), self.users.c.id)
+                    .limit(limit)
+                    .offset(offset)
+                )
+                .mappings()
+                .all()
+            )
+            return [self._customer(row) for row in rows], total
 
     @staticmethod
     def _refresh_hash(value: str) -> str:

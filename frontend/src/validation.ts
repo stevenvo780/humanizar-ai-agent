@@ -4,6 +4,8 @@ import type {
   ChatResponse,
   Config,
   Conversation,
+  CustomerAccount,
+  CustomerAccountList,
   CustomerRequest,
   DocumentList,
   Health,
@@ -63,6 +65,34 @@ export function isAuthStatus(value: unknown): value is { setup_required: boolean
   return isRecord(value) && typeof value.setup_required === 'boolean';
 }
 
+export function isCustomerAccount(value: unknown): value is CustomerAccount {
+  return (
+    isUser(value) &&
+    value.role === 'customer' &&
+    'created_at' in value &&
+    typeof value.created_at === 'string' &&
+    Number.isFinite(Date.parse(value.created_at))
+  );
+}
+
+export function isCustomerAccountList(value: unknown): value is CustomerAccountList {
+  return (
+    isRecord(value) &&
+    isList(value.customers, isCustomerAccount) &&
+    isCount(value.total) &&
+    isCount(value.limit) &&
+    value.limit >= 1 &&
+    value.limit <= 100 &&
+    isCount(value.offset) &&
+    value.customers.length <= value.limit &&
+    value.customers.length <= value.total
+  );
+}
+
+export function isCreatedCustomer(value: unknown): value is { customer: CustomerAccount } {
+  return isRecord(value) && isCustomerAccount(value.customer);
+}
+
 export function isConfig(value: unknown): value is Config {
   return (
     isRecord(value) &&
@@ -87,7 +117,9 @@ export function isHealth(value: unknown): value is Health {
     typeof value.embedding === 'string' &&
     isRecord(value.tools) &&
     typeof value.tools.sandbox === 'boolean' &&
-    typeof value.tools.mcp === 'boolean'
+    typeof value.tools.mcp === 'boolean' &&
+    (value.features === undefined ||
+      (isRecord(value.features) && typeof value.features.customer_management === 'boolean'))
   );
 }
 

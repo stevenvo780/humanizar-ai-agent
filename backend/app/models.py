@@ -5,6 +5,24 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 Mode = Literal["demo", "anthropic"]
 
 
+class HealthTools(BaseModel):
+    sandbox: bool
+    mcp: bool
+
+
+class HealthFeatures(BaseModel):
+    customer_management: Literal[True] = True
+
+
+class HealthResponse(BaseModel):
+    status: Literal["ok"] = "ok"
+    mode: Mode
+    model: str
+    embedding: str
+    tools: HealthTools
+    features: HealthFeatures = Field(default_factory=HealthFeatures)
+
+
 class Document(BaseModel):
     id: str
     name: str

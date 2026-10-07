@@ -61,6 +61,20 @@ def test_validation_upload_size_and_cors(settings: Settings) -> None:
         assert invalid.status_code == 422
 
 
+@pytest.mark.parametrize("auth_enabled", [True, False])
+def test_health_declares_customer_capability_without_account_data(
+    settings: Settings, auth_enabled: bool
+) -> None:
+    with TestClient(
+        create_app(settings.model_copy(update={"auth_enabled": auth_enabled}))
+    ) as client:
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["features"] == {"customer_management": True}
+        assert set(body) == {"status", "mode", "model", "embedding", "tools", "features"}
+
+
 def test_swagger_works_under_api_proxy_and_declares_jwt(settings: Settings) -> None:
     with TestClient(create_app(settings)) as client:
         docs = client.get("/api/docs")

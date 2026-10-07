@@ -1,0 +1,99 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { api } from './api';
+import { setAccessToken } from './auth';
+import { isCustomerAccount, isCustomerAccountList, isHealth } from './validation';
+
+const customer = {
+  id: 'customer-test',
+  name: 'Cliente de prueba',
+  email: 'customer@example.test',
+  role: 'customer',
+  created_at: '2026-10-07T00:00:00Z',
+};
+
+afterEach(() => {
+  setAccessToken(null);
+  vi.unstubAllGlobals();
+});
+
+describe('admin customer contract', () => {
+  it('accepts older health responses while validating the new capability explicitly', () => {
+    const health = {
+      status: 'ok',
+      mode: 'demo',
+      model: 'demo',
+      embedding: 'hash',
+      tools: { sandbox: false, mcp: false },
+    };
+    expect(isHealth(health)).toBe(true);
+    expect(isHealth({ ...health, features: { customer_management: true } })).toBe(true);
+    expect(isHealth({ ...health, features: { customer_management: false } })).toBe(true);
+    expect(isHealth({ ...health, features: { customer_management: 'yes' } })).toBe(false);
+  });
+  it('loads bounded customer pages using the administrator token', async () => {
+    setAccessToken('synthetic-admin-token');
+    const result = { customers: [customer], total: 26, limit: 25, offset: 25 };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result)));
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await api.customers(25)).toEqual(result);
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(path).toBe('/api/admin/customers?limit=25&offset=25');
+    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer synthetic-admin-token');
+  });
+
+  it('creates a customer without replacing the administrator access token', async () => {
+    setAccessToken('synthetic-admin-token');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ customer }), { status: 201 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ customers: [customer], total: 1, limit: 25, offset: 0 })),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    expect(
+      await api.createCustomer({
+        name: customer.name,
+        email: customer.email,
+        password: 'test-only-password',
+      }),
+    ).toEqual({ customer });
+    await api.customers();
+    const [path, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(path).toBe('/api/admin/customers');
+    expect(init.method).toBe('POST');
+    if (typeof init.body !== 'string') throw new Error('Expected a JSON request body');
+    const body: unknown = JSON.parse(init.body);
+    expect(body).not.toHaveProperty('role');
+    const [, nextInit] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(new Headers(nextInit.headers).get('Authorization')).toBe('Bearer synthetic-admin-token');
+  });
+
+  it('rejects administrator entries, invalid dates and broken pagination in customer responses', () => {
+    expect(isCustomerAccount(customer)).toBe(true);
+    expect(isCustomerAccount({ ...customer, role: 'admin' })).toBe(false);
+    expect(isCustomerAccount({ ...customer, created_at: 'invalid' })).toBe(false);
+    const page = { customers: [customer], total: 1, limit: 25, offset: 0 };
+    expect(isCustomerAccountList(page)).toBe(true);
+    expect(isCustomerAccountList({ ...page, limit: 101 })).toBe(false);
+    expect(isCustomerAccountList({ ...page, offset: -1 })).toBe(false);
+    expect(isCustomerAccountList({ ...page, total: 0 })).toBe(false);
+  });
+
+  it('surfaces duplicate-account errors instead of reporting a successful creation', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ detail: 'No se pudo crear la cuenta.' }), { status: 409 }),
+        ),
+    );
+    await expect(
+      api.createCustomer({
+        name: customer.name,
+        email: customer.email,
+        password: 'test-only-password',
+      }),
+    ).rejects.toThrow('No se pudo crear la cuenta.');
+  });
+});

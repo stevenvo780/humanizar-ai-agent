@@ -46,6 +46,26 @@ class PublicUser(BaseModel):
     role: Literal["admin", "customer"]
 
 
+class PublicCustomer(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    name: str
+    email: str
+    role: Literal["customer"]
+    created_at: datetime
+
+
+class CustomerListResponse(BaseModel):
+    customers: list[PublicCustomer]
+    total: int
+    limit: int
+    offset: int
+
+
+class CustomerCreatedResponse(BaseModel):
+    customer: PublicCustomer
+
+
 class SessionResponse(BaseModel):
     access_token: str
     token_type: Literal["bearer"] = "bearer"

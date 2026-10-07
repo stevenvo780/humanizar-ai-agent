@@ -13,7 +13,7 @@ import pytest
 import test_authenticated_app as contract_tests
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
-from sqlalchemy import Column, Integer, MetaData, Table, create_engine, func, inspect, select
+from sqlalchemy import Column, Integer, MetaData, Table, create_engine, event, func, inspect, select
 from sqlalchemy.schema import CreateSchema, DropSchema
 
 from app.business import BusinessValidationError
@@ -354,3 +354,103 @@ def test_postgres_authenticated_business_contract(postgres_settings: Settings) -
     contract_tests.test_customer_confirmations_persist_once_and_do_not_expose_other_requests(
         postgres_settings
     )
+
+
+def test_postgres_customer_pages_are_public_and_preserve_roles(
+    postgres: PostgresApplicationDatabase,
+) -> None:
+    administrator, first_id = users(postgres)
+    second = postgres.register_customer("  Second  ", " SECOND@EXAMPLE.TEST ", "synthetic-hash")
+    assert postgres.get_customer(administrator) is None
+    assert postgres.get_customer("missing") is None
+    public = postgres.get_customer(second.id)
+    assert public is not None and public.role == "customer"
+    assert public.name == "Second" and public.email == "second@example.test"
+    assert public.created_at.tzinfo is not None
+    assert not hasattr(public, "password_hash")
+    first, total = postgres.list_customers(limit=1, offset=0)
+    last, same_total = postgres.list_customers(limit=1, offset=1)
+    assert total == same_total == 2
+    assert {customer.id for customer in first + last} == {first_id, second.id}
+    assert postgres.list_customers(offset=10**30) == ([], 2)
+    with pytest.raises(ValueError):
+        postgres.list_customers(limit=101)
+    with pytest.raises(ValueError):
+        postgres.register_customer("Duplicate", " second@example.test ", "synthetic-hash")
+    assert postgres.list_customers()[1] == 2
+
+
+def test_postgres_customer_creation_api_preserves_admin_session(
+    postgres_settings: Settings,
+) -> None:
+    with TestClient(
+        create_app(postgres_settings.model_copy(update={"auth_enabled": True}))
+    ) as client:
+        password = secrets.token_urlsafe(24)
+        admin = client.post(
+            "/api/auth/setup",
+            json={"name": "Owner", "email": "owner@example.test", "password": password},
+        ).json()
+        headers = {"Authorization": "Bearer " + str(admin["access_token"])}
+        payload = {
+            "name": "Customer",
+            "email": " CUSTOMER@EXAMPLE.TEST ",
+            "password": secrets.token_urlsafe(24),
+        }
+        response = client.post("/api/admin/customers", json=payload, headers=headers)
+        assert response.status_code == 201 and "set-cookie" not in response.headers
+        assert response.json()["customer"]["role"] == "customer"
+        assert response.json()["customer"]["email"] == "customer@example.test"
+        assert client.get("/api/auth/me", headers=headers).json()["id"] == admin["user"]["id"]
+        listed = client.get("/api/admin/customers", params={"limit": 1}, headers=headers).json()
+        assert listed == {
+            "customers": [response.json()["customer"]],
+            "total": 1,
+            "limit": 1,
+            "offset": 0,
+        }
+        assert client.post("/api/admin/customers", json=payload, headers=headers).status_code == 409
+        assert (
+            client.post(
+                "/api/admin/customers", json=payload | {"role": "admin"}, headers=headers
+            ).status_code
+            == 422
+        )
+
+
+def test_postgres_customer_page_snapshot_survives_concurrent_registration(
+    postgres: PostgresApplicationDatabase, postgres_settings: Settings
+) -> None:
+    _, previous = users(postgres)
+    other = PostgresApplicationDatabase(postgres_settings)
+    inserted = False
+
+    def insert_after_count(
+        _connection: Any,
+        _cursor: Any,
+        statement: str,
+        _parameters: Any,
+        _context: Any,
+        _executemany: bool,
+    ) -> None:
+        nonlocal inserted
+        if "count(*)" in statement and ".users" in statement and not inserted:
+            inserted = True
+            other.register_customer("During", "during@example.test", "synthetic-hash")
+
+    event.listen(postgres.engine, "after_cursor_execute", insert_after_count)
+    try:
+        customers, total = postgres.list_customers()
+        assert inserted
+        assert total == 1 and [customer.id for customer in customers] == [previous]
+        assert postgres.list_customers()[1] == 2
+        # The snapshot policy applies to this method, never later writes or sessions.
+        with postgres.transaction() as connection:
+            assert (
+                connection.exec_driver_sql("SHOW transaction_isolation").scalar_one()
+                == "read committed"
+            )
+            assert connection.exec_driver_sql("SHOW transaction_read_only").scalar_one() == "off"
+    finally:
+        event.remove(postgres.engine, "after_cursor_execute", insert_after_count)
+        other.close()

@@ -7,6 +7,8 @@ import {
   isChatResponse,
   isConfig,
   isConversationList,
+  isCreatedCustomer,
+  isCustomerAccountList,
   isDocumentList,
   isHealth,
   isRequestList,
@@ -67,6 +69,14 @@ export const api = {
   },
   requests: () => request('/requests', isRequestList),
   adminRequests: () => request('/admin/requests', isRequestList),
+  customers: (offset = 0, limit = 25) =>
+    request(`/admin/customers?limit=${limit}&offset=${offset}`, isCustomerAccountList),
+  createCustomer: (input: { name: string; email: string; password: string }) =>
+    request('/admin/customers', isCreatedCustomer, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    }),
   confirmAction: (tool: string, input: Record<string, unknown>, actionKey: string) =>
     request('/actions/confirm', isToolTrace, {
       method: 'POST',

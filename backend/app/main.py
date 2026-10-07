@@ -13,7 +13,17 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.requests import Request
 
 from app.agent import AgentFailure, CompanyAgent, MessageProvider
-from app.auth import CURRENT_USER_ID, User, require_admin, require_user
+from app.auth import (
+    CURRENT_USER_ID,
+    CustomerCreatedResponse,
+    CustomerListResponse,
+    PublicCustomer,
+    SignupRequest,
+    User,
+    hash_password,
+    require_admin,
+    require_user,
+)
 from app.auth import router as auth_router
 from app.concurrency import run_sync
 from app.ingestion import IngestionError, parse_upload
@@ -23,6 +33,8 @@ from app.models import (
     ChatRequest,
     ChatResponse,
     DocumentList,
+    HealthResponse,
+    HealthTools,
     HistoryMessage,
     ToolRequest,
     ToolTrace,
@@ -253,17 +265,16 @@ def create_app(
             status_code=500, content={"detail": "No se pudo completar la operación."}
         )
 
-    @api.get("/api/health")
-    async def health() -> dict[str, Any]:
+    @api.get("/api/health", response_model=HealthResponse)
+    async def health() -> HealthResponse:
         active: Settings = api.state.settings
         registry: ToolRegistry = api.state.registry
-        return {
-            "status": "ok",
-            "mode": active.mode,
-            "model": active.anthropic_model,
-            "embedding": config.embedding_label,
-            "tools": {"sandbox": await registry.sandbox_available(), "mcp": config.mcp_enabled},
-        }
+        return HealthResponse(
+            mode=active.mode,
+            model=active.anthropic_model,
+            embedding=config.embedding_label,
+            tools=HealthTools(sandbox=await registry.sandbox_available(), mcp=config.mcp_enabled),
+        )
 
     @api.get("/api/config")
     def public_config() -> dict[str, Any]:
@@ -381,6 +392,52 @@ def create_app(
     async def admin_requests(_user: Annotated[User, Depends(require_admin)]) -> dict[str, Any]:
         business: BusinessRepository = api.state.business
         return {"requests": await run_sync(business.list_all_requests)}
+
+    @api.get(
+        "/api/admin/customers",
+        response_model=CustomerListResponse,
+        dependencies=[Depends(bearer)],
+    )
+    async def admin_customers(
+        response: Response,
+        _user: Annotated[User, Depends(require_admin)],
+        limit: Annotated[int, Query(ge=1, le=100)] = 25,
+        offset: Annotated[int, Query(ge=0)] = 0,
+    ) -> CustomerListResponse:
+        database: IdentityStore = api.state.database
+        customers, total = await run_sync(database.list_customers, limit, offset)
+        response.headers["Cache-Control"] = "no-store"
+        return CustomerListResponse(
+            customers=[PublicCustomer.model_validate(customer) for customer in customers],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+
+    @api.post(
+        "/api/admin/customers",
+        response_model=CustomerCreatedResponse,
+        status_code=201,
+        dependencies=[Depends(bearer)],
+    )
+    async def create_customer(
+        payload: SignupRequest,
+        response: Response,
+        _user: Annotated[User, Depends(require_admin)],
+    ) -> CustomerCreatedResponse:
+        database: IdentityStore = api.state.database
+        password_hash = await run_sync(hash_password, payload.password.get_secret_value())
+        try:
+            user = await run_sync(
+                database.register_customer, payload.name, payload.email, password_hash
+            )
+        except ValueError:
+            raise HTTPException(409, "No se pudo crear la cuenta.") from None
+        customer = await run_sync(database.get_customer, user.id)
+        if customer is None:
+            raise PersistenceUnavailable()
+        response.headers["Cache-Control"] = "no-store"
+        return CustomerCreatedResponse(customer=PublicCustomer.model_validate(customer))
 
     @api.get("/api/conversations", dependencies=[Depends(bearer)])
     async def conversations(user: Annotated[User, Depends(require_user)]) -> dict[str, Any]:

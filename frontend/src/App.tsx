@@ -29,6 +29,7 @@ import {
   Terminal,
   Trash2,
   UploadCloud,
+  Users,
   WandSparkles,
   WifiOff,
   X,
@@ -38,6 +39,7 @@ import { api, errorMessage, streamChat } from './api';
 import { createId } from './id';
 import { ActionConfirmation, actionProposal, useConfirmedAction } from './actions';
 import { RequestsPanel } from './AccountPanels';
+import { CustomersPanel } from './CustomersPanel';
 import { SiteLink } from './navigation';
 import type {
   ChatMessage,
@@ -439,8 +441,10 @@ function Knowledge({
         <span>En un solo lugar.</span>
       </h1>
       <p className="page-intro">
-        Prepara las fuentes que el asistente consultará para responder a los clientes.
-        <br className="desktop-break" /> Administra las fuentes de información de la empresa.
+        Añade archivos Markdown (.md) con información de tu empresa. El asistente los consultará al
+        responder a los clientes.
+        <br className="desktop-break" /> También puedes subir otros formatos o varios documentos
+        juntos.
       </p>
       <div className="knowledge-summary">
         <div>
@@ -485,6 +489,13 @@ function Knowledge({
             selecciona archivos
           </button>
         </p>
+        <button
+          className="primary-button"
+          disabled={uploading || !online}
+          onClick={() => inputRef.current?.click()}
+        >
+          <UploadCloud size={18} /> {uploading ? 'Procesando archivos…' : 'Añadir documentos'}
+        </button>
         <span className="upload-formats">
           TXT, MD, PDF, DOCX, CSV, JSON y ZIP · Hasta {maxUpload} MB por archivo
         </span>
@@ -1238,6 +1249,13 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
     ...(isAdmin
       ? ([
           { id: 'knowledge', label: 'Documentación', icon: <BookOpen size={17} /> },
+          ...(health?.features?.customer_management
+            ? ([{ id: 'customers', label: 'Clientes', icon: <Users size={17} /> }] satisfies {
+                id: Tab;
+                label: string;
+                icon: ReactNode;
+              }[])
+            : []),
           { id: 'tools', label: 'Herramientas', icon: <WandSparkles size={17} /> },
         ] satisfies { id: Tab; label: string; icon: ReactNode }[])
       : []),
@@ -1652,6 +1670,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               {tab === 'tools' && isAdmin && (
                 <Tools tools={tools} online={online} health={health} />
               )}
+              {tab === 'customers' && isAdmin && <CustomersPanel />}
               {tab === 'requests' && (
                 <RequestsPanel isAdmin={isAdmin} onChat={() => selectTab('assistant')} />
               )}

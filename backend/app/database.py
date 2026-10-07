@@ -14,6 +14,7 @@ import uuid
 from collections.abc import Iterator
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -30,6 +31,20 @@ class User:
     email: str
     role: Role
     password_hash: str = field(repr=False)
+
+
+@dataclass(frozen=True)
+class Customer:
+    id: str
+    name: str
+    email: str
+    created_at: datetime
+    role: Literal["customer"] = "customer"
+
+
+def validate_customer_page(limit: int, offset: int) -> None:
+    if type(limit) is not int or not 1 <= limit <= 100 or type(offset) is not int or offset < 0:
+        raise ValueError("La paginación de clientes es inválida.")
 
 
 class SetupAlreadyComplete(ValueError):
@@ -146,9 +161,9 @@ class ApplicationDatabase:
         return self._jwt_secret
 
     @contextmanager
-    def _transaction(self) -> Iterator[None]:
+    def _transaction(self, *, immediate: bool = True) -> Iterator[None]:
         with self._lock:
-            self._db.execute("BEGIN IMMEDIATE")
+            self._db.execute("BEGIN IMMEDIATE" if immediate else "BEGIN")
             try:
                 yield
             except BaseException:
@@ -210,6 +225,38 @@ class ApplicationDatabase:
             if self.setup_required():
                 raise RegistrationUnavailable("La configuración inicial está pendiente.")
             return self._insert_user(name, email, password_hash, "customer")
+
+    @staticmethod
+    def _customer(row: sqlite3.Row) -> Customer:
+        return Customer(
+            id=str(row["id"]),
+            name=str(row["name"]),
+            email=str(row["email"]),
+            created_at=datetime.fromtimestamp(float(row["created_at"]), UTC),
+        )
+
+    def get_customer(self, user_id: str) -> Customer | None:
+        with self._lock:
+            row = self._db.execute(
+                "SELECT id,name,email,created_at FROM users WHERE id=? AND role='customer'",
+                (user_id,),
+            ).fetchone()
+            return self._customer(row) if row is not None else None
+
+    def list_customers(self, limit: int = 25, offset: int = 0) -> tuple[list[Customer], int]:
+        validate_customer_page(limit, offset)
+        with self._transaction(immediate=False):
+            total = int(
+                self._db.execute("SELECT COUNT(*) FROM users WHERE role='customer'").fetchone()[0]
+            )
+            if offset >= total:
+                return [], total
+            rows = self._db.execute(
+                "SELECT id,name,email,created_at FROM users WHERE role='customer' "
+                "ORDER BY created_at DESC,id LIMIT ? OFFSET ?",
+                (limit, offset),
+            ).fetchall()
+            return [self._customer(row) for row in rows], total
 
     @staticmethod
     def _refresh_hash(value: str) -> str:
