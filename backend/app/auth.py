@@ -123,7 +123,8 @@ class LoginRateLimiter:
         self._attempts: dict[str, deque[float]] = {}
         self._lock = threading.Lock()
 
-    def check(self, key: str) -> None:
+    def check(self, key: str, *, record: bool = True) -> None:
+        """Reject a key with 10 recorded attempts in 5 minutes; optionally record this one."""
         with self._lock:
             now = time.monotonic()
             if len(self._attempts) > 10000:
@@ -137,9 +138,22 @@ class LoginRateLimiter:
                 attempts.popleft()
             if len(attempts) >= 10:
                 raise HTTPException(
-                    429, "Demasiados intentos. Probá más tarde.", headers={"Retry-After": "300"}
+                    429, "Demasiados intentos. Prueba más tarde.", headers={"Retry-After": "300"}
                 )
-            attempts.append(now)
+            if record:
+                attempts.append(now)
+
+    def record(self, key: str) -> None:
+        with self._lock:
+            self._attempts.setdefault(key, deque()).append(time.monotonic())
+
+
+def _limiter(request: Request) -> LoginRateLimiter:
+    with _limiter_setup_lock:
+        if not hasattr(request.app.state, "auth_limiter"):
+            request.app.state.auth_limiter = LoginRateLimiter()
+        limiter: LoginRateLimiter = request.app.state.auth_limiter
+    return limiter
 
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"], route_class=SafeAuthRoute)
@@ -255,6 +269,7 @@ def setup(payload: SignupRequest, request: Request, response: Response) -> Sessi
     settings: Settings | None = getattr(request.app.state, "settings", None)
     expected = settings.auth_bootstrap_token.get_secret_value() if settings is not None else ""
     supplied = request.headers.get("X-Bootstrap-Token", "")
+    _limiter(request).check("setup:" + (request.client.host if request.client else "unknown"))
     if expected and not secrets.compare_digest(supplied.encode(), expected.encode()):
         raise HTTPException(403, "La configuración inicial requiere autorización privada.")
     try:
@@ -270,6 +285,8 @@ def setup(payload: SignupRequest, request: Request, response: Response) -> Sessi
 
 @router.post("/register", response_model=SessionResponse)
 def register(payload: SignupRequest, request: Request, response: Response) -> SessionResponse:
+    # Public signup hashes with Argon2: bound it per client like failed logins.
+    _limiter(request).check("register:" + (request.client.host if request.client else "unknown"))
     try:
         user = _database(request).register_customer(
             payload.name, payload.email, hash_password(payload.password.get_secret_value())
@@ -283,12 +300,10 @@ def register(payload: SignupRequest, request: Request, response: Response) -> Se
 
 @router.post("/login", response_model=SessionResponse)
 def login(payload: LoginRequest, request: Request, response: Response) -> SessionResponse:
-    with _limiter_setup_lock:
-        if not hasattr(request.app.state, "auth_limiter"):
-            request.app.state.auth_limiter = LoginRateLimiter()
-        limiter: LoginRateLimiter = request.app.state.auth_limiter
+    limiter = _limiter(request)
     address = request.client.host if request.client else "unknown"
-    limiter.check(address)
+    # Only failed logins count, so a presenter can sign in and out without a lockout.
+    limiter.check(address, record=False)
     user = _database(request).get_user_by_email(payload.email)
     with _hash_slots:
         try:
@@ -299,6 +314,7 @@ def login(payload: LoginRequest, request: Request, response: Response) -> Sessio
         except Exception:
             correct = False
     if user is None or not correct:
+        limiter.record(address)
         raise HTTPException(
             401, "Correo o contraseña inválidos.", headers={"WWW-Authenticate": "Bearer"}
         )

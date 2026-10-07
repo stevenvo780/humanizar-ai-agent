@@ -63,7 +63,7 @@ omit it, allowing frontend and backend updates to occur independently.
 
 `GET /api/config`: `{company_name: string, company_description: string, assistant_name: string, model: string, mode: "demo" | "anthropic", embedding: string, max_upload_mb: number}`.
 
-`GET /api/company`: `{company_name: string, company_description: string, assistant_name: string, website?: string, suggested_questions: string[]}`.
+`GET /api/company`: `{company_name: string, company_description: string, assistant_name: string, website?: string, suggested_questions?: string[]}`. An absent list lets the UI show generic prompts; `[]` hides them.
 The optional website uses HTTP(S); suggestions have at most eight items. The
 frontend remains compatible with older responses containing only the three
 identity strings. Humanizar defaults only apply to the Humanizar profile.
@@ -103,11 +103,15 @@ Streaming uses SSE (`text/event-stream`) with standard `event: NAME\ndata: JSON\
 - `tool`: `ToolTrace`.
 - `token`: `{text: string}`.
 - `done`: complete `ChatResponse`.
-- `error`: `{message: string, code: string}`.
+- `error`: `{message: string, code: string}`. Provider codes: `authentication`,
+  `rate_limit`, `provider_configuration` (model or permissions rejected),
+  `provider_unavailable`, `provider_error`, `refusal`, `output_limit`, `tool_limit`,
+  `iteration_limit`. Provider failures are logged with type, status and request id only.
 
 `GET /api/tools`: `{tools: {name: string, description: string, enabled: boolean, input_schema: object}[]}`.
 The bounded JSON Schema has `type: "object"`, `properties`, `required` and
-`additionalProperties: false`. The same central definition is sent to Anthropic.
+`additionalProperties: false`. Properties are string (`minLength`/`maxLength`/`enum`),
+number or integer (`minimum`/`maximum`) or boolean; `required` omits optional ones. The same central definition is sent to Anthropic.
 The browser derives simple string/enum/number/boolean fields from that schema;
 older APIs without schemas retain compatible forms for their existing tools.
 Registering a schema does not register an executable handler or grant permissions.

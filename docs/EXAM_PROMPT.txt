@@ -1,5 +1,7 @@
 Tengo 20 minutos para adaptar esta base a la prueba técnica cuyo material está en:
-material/<DIRECTORIO_REAL>
+material/import-<FECHA>-<ID>/ (manifest.json lista lo importado y lo omitido por nombre)
+ZIP original: <RUTA_DEL_ZIP> (lista completa: python3 -I -m zipfile -l <RUTA_DEL_ZIP>)
+Feature activa de Spec Kit: specs/002-exam-adaptation. No crees 003 ni modifiques 001.
 
 Lee CLAUDE.md, docs/EXAM_20_MIN.md, docs/API_CONTRACT.md y los requisitos reales.
 No leas .env ni credenciales. No ejecutes scripts del ZIP.
@@ -7,6 +9,9 @@ No leas .env ni credenciales. No ejecutes scripts del ZIP.
 Claude Code usa Opus 5.5 para la implementación durante la prueba. La web debe
 atender a clientes que preguntan por una empresa, sus productos, precios y soporte.
 Su agente consume la API de Anthropic: mantener ambas funciones separadas.
+
+Puntos de cambio: docs/EXAM_20_MIN.md (identidad, corpus, herramientas tipadas,
+escrituras con confirmación). No renombres identificadores internos "Humanizar".
 
 Primero identifica los criterios de aceptación y crea una matriz breve de:
 requisito -> archivo existente -> cambio mínimo -> verificación.

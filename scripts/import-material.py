@@ -35,7 +35,7 @@ from xml.etree import ElementTree
 MAX_ARCHIVE_BYTES = 20 * 1024 * 1024
 MAX_TOTAL_BYTES = 32 * 1024 * 1024
 MAX_ENTRY_BYTES = 8 * 1024 * 1024
-MAX_ENTRIES = 256
+MAX_ENTRIES = 2000
 MAX_RATIO = 100
 MAX_TEXT_CHARS = 1_000_000
 SUPPORTED = {".txt", ".md", ".csv", ".json", ".pdf", ".docx"}
@@ -77,10 +77,21 @@ SECRET_PATTERNS = (
         r"\b(?:sk-ant-[\w-]{8,}|sk-[\w-]{16,}|gh[pousr]_[\w]{16,}|github_pat_[\w]{16,}|AKIA[A-Z0-9]{16})\b"
     ),
     re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+"),
-    re.compile(r"""(?im)\b(?:proxy[-_ ]?)?authorization\b[ \t*`"']*[:=][ \t]*[^\r\n]+"""),
+    # Placeholders such as "Authorization: Bearer <token>" are requirements, not credentials.
     re.compile(
-        r"""(?im)(["']?\b(?:[A-Z_]*(?:API_KEY|ACCESS_TOKEN|AUTH_TOKEN|SECRET|PASSWORD)|token|cookie)["']?\s*[:=,]\s*)(["']?)[^\r\n,;]+"""
+        r"""(?im)\b(?:proxy[-_ ]?)?authorization\b[ \t*`"']*[:=][ \t]*"""
+        r"""(?![ \t]*(?:basic|bearer|token)?[ \t]*[<{$])[^\r\n]+"""
     ),
+)
+_CREDENTIAL_KEY = (
+    r"""(["']?\b(?:[A-Z_]*(?:API_KEY|ACCESS_TOKEN|AUTH_TOKEN|SECRET|PASSWORD)|token|cookie)["']?"""
+)
+# Key/value credentials keep their key and get a quoted marker. Prose such as
+# "Password: mínimo 8 caracteres" or "Token: se envía por correo" is preserved.
+KEY_VALUE_PATTERNS = (
+    re.compile(rf"""(?im){_CREDENTIAL_KEY}\s*=\s*)(?!["']?\[REDACTED)[^\r\n,;]+"""),
+    re.compile(rf"""(?im){_CREDENTIAL_KEY}\s*:\s*)(["'])(?!\[REDACTED)[^"'\r\n]+\2"""),
+    re.compile(rf"""(?im){_CREDENTIAL_KEY}\s*:\s*)(?=[^\s,;]*\d)[^\s"',;]{{8,}}"""),
 )
 SENSITIVE_FIELD = re.compile(r"(?i)(?:api[_-]?key|password|secret|token|cookie|authorization)")
 
@@ -140,7 +151,8 @@ def inspect_archive(archive: zipfile.ZipFile) -> list[tuple[zipfile.ZipInfo, str
             raise UnsafeArchive("Encrypted archives are not supported.")
         if info.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}:
             raise UnsafeArchive("Archive uses unsupported compression.")
-        total += info.file_size
+        if not forbidden(name):
+            total += info.file_size
         if (
             info.file_size > MAX_ENTRY_BYTES
             or total > MAX_TOTAL_BYTES
@@ -181,10 +193,9 @@ def sanitize(text: str) -> str:
     if len(text) > MAX_TEXT_CHARS or "\x00" in text:
         raise ValueError("Document exceeds text limits or contains null bytes.")
     for pattern in SECRET_PATTERNS:
-        if pattern is SECRET_PATTERNS[-1]:
-            text = pattern.sub(lambda match: f'{match.group(1)}"[REDACTED]"', text)
-        else:
-            text = pattern.sub("[REDACTED]", text)
+        text = pattern.sub("[REDACTED]", text)
+    for pattern in KEY_VALUE_PATTERNS:
+        text = pattern.sub(lambda match: f'{match.group(1)}"[REDACTED]"', text)
     return text
 
 
@@ -318,9 +329,14 @@ def collect_documents(source: Path) -> tuple[list[AcceptedDocument], dict[str, A
         report["entries"] = len(entries)
         for index, (info, name) in enumerate(entries, start=1):
             suffix = PurePosixPath(name).suffix.casefold()
-            if forbidden(name) or suffix not in SUPPORTED:
+            if forbidden(name):
+                report["skipped"].append({"entry": index, "reason": "sensitive or runtime file"})
+                continue
+            if suffix not in SUPPORTED:
+                # Report the sanitized name so input/output examples (YAML, SQL, images,
+                # code) are visible to the reader instead of silently disappearing.
                 report["skipped"].append(
-                    {"entry": index, "reason": "unsupported or sensitive file"}
+                    {"entry": index, "name": sanitize(name)[:160], "reason": "unsupported format"}
                 )
                 continue
             data = bounded_read(archive, info)
@@ -330,7 +346,11 @@ def collect_documents(source: Path) -> tuple[list[AcceptedDocument], dict[str, A
                 raise
             except Exception:
                 report["skipped"].append(
-                    {"entry": index, "reason": "invalid or unsupported document"}
+                    {
+                        "entry": index,
+                        "name": sanitize(name)[:160],
+                        "reason": "invalid document or missing parser (use uv --project backend)",
+                    }
                 )
                 continue
             if not text.strip():
@@ -488,11 +508,20 @@ def main(argv: list[str] | None = None) -> int:
                 except (OSError, ValueError, error.URLError):
                     failures += 1
         print(f"Saved {len(documents)} sanitized documents to {target}.")
+        for item in report["skipped"]:
+            if "name" in item:
+                print(f"Not imported ({item['reason']}): {item['name']}")
         print(
             f"Skipped {len(report['skipped'])} entries; uploaded {uploaded}; "
             f"upload failures {failures}."
         )
         return 1 if failures else 0
+    except UnsafeArchive as exc:
+        # Fixed validation messages never contain archive content.
+        print(
+            f"Import rejected: {exc} Inspect it with: python3 -I -m zipfile -l ZIP", file=sys.stderr
+        )
+        return 2
     except (OSError, ValueError, zipfile.BadZipFile, RuntimeError):
         print(
             "Import rejected: invalid archive, unsafe member, size limit or unavailable path.",

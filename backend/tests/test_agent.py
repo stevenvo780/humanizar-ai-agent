@@ -12,7 +12,7 @@ from app.agent import AgentFailure, CompanyAgent, TextCallback, grounded_sources
 from app.auth import CURRENT_USER_ID
 from app.business import BusinessStore
 from app.ingestion import ParsedDocument
-from app.models import ChatRequest, Source
+from app.models import ChatRequest, Source, ToolTrace
 from app.settings import Settings
 from app.storage import KnowledgeStore
 from app.tools import ToolRegistry
@@ -421,5 +421,76 @@ async def test_retrieved_authorization_is_redacted_before_model_and_public_sourc
         assert secret not in str(provider.messages)
         private = store.get_document(document.id)
         assert private is not None and secret in private.content
+    finally:
+        await registry.close()
+
+
+# Regressions for adaptation: clarifications, grouped citations and new tools.
+def source(chunk: str) -> Source:
+    return Source(document_id="d", document_name="doc.md", chunk_id=chunk, text="texto", score=1.0)
+
+
+def test_grouped_citations_are_normalized() -> None:
+    answer, cited = grounded_sources("Dato [S1, S2] y [S2;S1].", [source("a"), source("b")])
+    assert answer == "Dato [S1][S2] y [S2][S1]."
+    assert [item.chunk_id for item in cited] == ["a", "b"]
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("Quiero solicitar una demo", "nombre, correo, empresa, interés y necesidades"),
+        ("Necesito soporte, no puedo entrar", "asunto y descripción del problema"),
+    ],
+)
+async def test_request_clarification_is_not_replaced_by_missing_evidence(
+    settings: Settings, store: KnowledgeStore, question: str, expected: str
+) -> None:
+    registry = ToolRegistry(settings, store, BusinessStore(settings.data_dir))
+    provider = ScriptedProvider([message([{"type": "text", "text": "¿Me das tus datos?"}])])
+    try:
+        response = await CompanyAgent(anthropic_settings(settings), registry, provider).answer(
+            ChatRequest(message=question)
+        )
+        assert expected in response.answer
+        assert "evidencia suficiente" not in response.answer
+    finally:
+        await registry.close()
+
+
+async def test_new_tool_output_is_rendered_without_agent_changes(
+    settings: Settings, store: KnowledgeStore
+) -> None:
+    registry = ToolRegistry(settings, store)
+    agent = CompanyAgent(anthropic_settings(settings), registry, ScriptedProvider([]))
+    trace = ToolTrace(
+        id="t",
+        tool="order_status",
+        input={"order": "A-1"},
+        output='{"status": "enviado"}',
+        status="completed",
+        duration_ms=1,
+    )
+    try:
+        rendered = agent._without_sources(ChatRequest(message="estado A-1"), [trace])
+        assert "Resultado de order_status" in rendered and '"status": "enviado"' in rendered
+    finally:
+        await registry.close()
+
+
+async def test_model_configuration_errors_are_reported_as_configuration(
+    settings: Settings, store: KnowledgeStore
+) -> None:
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    error = anthropic.NotFoundError(
+        "model not found", response=httpx.Response(404, request=request), body=None
+    )
+    registry = ToolRegistry(settings, store)
+    try:
+        with pytest.raises(AgentFailure) as failure:
+            await CompanyAgent(
+                anthropic_settings(settings), registry, ScriptedProvider([error])
+            ).answer(ChatRequest(message="hola"))
+        assert failure.value.code == "provider_configuration"
     finally:
         await registry.close()

@@ -1,5 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createDeploymentConfig, validateApiOrigin } from '../deployment/config';
+import {
+  CONTENT_SECURITY_POLICY,
+  createDeploymentConfig,
+  validateApiOrigin,
+} from '../deployment/config';
 
 const environment = {
   API_ORIGIN: 'https://api.example.com',
@@ -103,5 +108,71 @@ describe('Vercel reverse proxy configuration', () => {
     expect(pattern.test('/api')).toBe(false);
     expect('dest' in fallback && fallback.dest).toBe('/index.html');
     expect(config.routes.at(-2)).toEqual({ handle: 'filesystem' });
+  });
+
+  /** Headers that Vercel applies to a path, in route order. */
+  function headersFor(path: string): Record<string, string>[] {
+    return createDeploymentConfig(environment).routes.flatMap((route) =>
+      'headers' in route && route.src && new RegExp(route.src).test(path) ? [route.headers] : [],
+    );
+  }
+
+  it.each(['/', '/docs', '/docs/', '/conversation/deep-link', '/assets/index.js', '/favicon.svg'])(
+    'applies the CSP and security headers to every SPA-served path: %s',
+    (path) => {
+      const merged = Object.assign({}, ...headersFor(path)) as Record<string, string>;
+      expect(merged['Content-Security-Policy']).toBe(CONTENT_SECURITY_POLICY);
+      expect(merged['X-Content-Type-Options']).toBe('nosniff');
+      expect(merged['X-Frame-Options']).toBe('DENY');
+    },
+  );
+
+  it.each(['/api', '/api/', '/api/docs', '/api/health'])(
+    'leaves the API responses (including Swagger) outside the SPA CSP: %s',
+    (path) => {
+      expect(headersFor(path).filter((headers) => 'Content-Security-Policy' in headers)).toEqual(
+        [],
+      );
+      expect(headersFor(path).some((headers) => headers['X-Frame-Options'] === 'DENY')).toBe(true);
+    },
+  );
+
+  it('allows exactly the Google Fonts origins and no remote images', () => {
+    const directives = Object.fromEntries(
+      CONTENT_SECURITY_POLICY.split('; ').map((directive) => {
+        const [name = '', ...values] = directive.split(' ');
+        return [name, values];
+      }),
+    );
+    expect(directives['style-src']).toEqual([
+      "'self'",
+      "'unsafe-inline'",
+      'https://fonts.googleapis.com',
+    ]);
+    expect(directives['font-src']).toEqual(["'self'", 'https://fonts.gstatic.com']);
+    expect(directives['img-src']).toEqual(["'self'", 'data:']);
+    expect(directives['script-src']).toEqual(["'self'"]);
+    expect(directives['connect-src']).toEqual(["'self'"]);
+  });
+
+  it('mirrors the same CSP and security headers in the Docker nginx configuration', () => {
+    const nginx = readFileSync(new URL('../nginx.conf', import.meta.url), 'utf8');
+    const spaLocation = nginx.slice(nginx.indexOf('location / {'));
+    expect(spaLocation).toContain(
+      `add_header Content-Security-Policy "${CONTENT_SECURITY_POLICY}" always;`,
+    );
+    for (const header of [
+      'X-Content-Type-Options "nosniff"',
+      'X-Frame-Options "DENY"',
+      'Referrer-Policy "strict-origin-when-cross-origin"',
+      'Permissions-Policy "camera=(), microphone=(), geolocation=()"',
+      'Strict-Transport-Security "max-age=31536000"',
+    ])
+      expect(spaLocation).toContain(`add_header ${header} always;`);
+    const apiLocation = nginx.slice(
+      nginx.indexOf('location /api/ {'),
+      nginx.indexOf('location / {'),
+    );
+    expect(apiLocation).not.toContain('Content-Security-Policy');
   });
 });

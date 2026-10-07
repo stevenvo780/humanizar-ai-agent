@@ -17,7 +17,7 @@
 - [ ] T015 FR-013: publish the updated API to the VPS and verify customer management through the public Vercel UI; requires an authenticated SSH connection.
 - [x] T016 FR-002/FR-008/FR-014: persist complete document text, migrate legacy metadata, add authenticated content API and safe Markdown/text reader, and verify storage, roles and browser behavior.
 - [ ] T017 FR-014: publish the document reader API/UI and verify reading from Vercel; requires an authenticated SSH connection to update the VPS API.
-- [ ] T018 FR-007: clone/update the public repository on the Fedora laptop in ~/Documentos/repos/SoftopPrueba and verify its local environment; requires a reachable SSH host/user and local tool authentication.
+- [x] T018 FR-007: Fedora 44 laptop holds the checkout in ~/Documentos/repos/SoftopPrueba (symlinked data disk); uv 0.11.21, make setup and make check passed on 2026-10-07. Private steps (Anthropic key, admin, mcp-login) remain with the operator.
 - [x] T019 FR-001/FR-003: prevent unrelated successful tools from admitting unsupported company claims; preserve legitimate arithmetic and explicit action results with regression tests.
 - [x] T020 FR-002/FR-007: exclude session/runtime material before ZIP reads, redact authentication headers and make authenticated uploads explicit (`scripts/import-material.py`, `scripts/tests`).
 - [x] T021 FR-006/FR-008: add a private, authenticated MCP session flow with bounded refresh and distinct authentication/availability errors (`backend/app/mcp_server.py`, `backend/app/manage.py`).

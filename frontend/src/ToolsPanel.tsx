@@ -58,7 +58,7 @@ export function ToolsPanel({
               </span>
             </span>
             <strong>{toolLabel(tool.name)}</strong>
-            <p>{tool.description}</p>
+            <span className="tool-card-description">{tool.description}</span>
             <span className="tool-card-link">
               Explorar herramienta <ArrowUpRight size={14} />
             </span>

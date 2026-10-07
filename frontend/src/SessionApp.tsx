@@ -300,6 +300,8 @@ export default function SessionApp() {
   const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState(false);
   const bootstrapRevision = useRef(0);
+  const { assistant, company } = companyPresentation(config, identity);
+  const branded = config !== null || identity !== null;
 
   const bootstrap = useCallback(async () => {
     const revision = ++bootstrapRevision.current;
@@ -360,6 +362,10 @@ export default function SessionApp() {
     return () => window.removeEventListener('humanizar-session-expired', expired);
   }, []);
 
+  useEffect(() => {
+    document.title = branded ? `${assistant} — ${company}` : 'Asistente de atención al cliente';
+  }, [assistant, company, branded]);
+
   async function logout(): Promise<void> {
     try {
       await logoutSession();
@@ -375,7 +381,7 @@ export default function SessionApp() {
     return (
       <main className="session-loading">
         <Sparkles size={35} strokeWidth={1.3} />
-        <strong>{companyPresentation(config, identity).assistant}</strong>
+        <strong>{assistant}</strong>
         <span>
           <LoaderCircle size={14} className="spin" />
           Preparando tu espacio…

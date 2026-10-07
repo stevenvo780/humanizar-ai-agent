@@ -340,13 +340,15 @@ def test_successful_login_does_not_reset_rate_budget(client: TestClient) -> None
         ).status_code
         == 200
     )
-    assert (
-        client.post(
-            "/api/auth/login",
-            json={"email": "unknown@example.test", "password": secrets.token_urlsafe(24)},
-        ).status_code
-        == 401
-    )
+    # Only failures consume the budget: two more failures fit, the eleventh is rejected.
+    for _ in range(2):
+        assert (
+            client.post(
+                "/api/auth/login",
+                json={"email": "unknown@example.test", "password": secrets.token_urlsafe(24)},
+            ).status_code
+            == 401
+        )
     assert (
         client.post(
             "/api/auth/login",

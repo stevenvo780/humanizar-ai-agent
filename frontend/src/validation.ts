@@ -30,8 +30,9 @@ function isCount(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
 }
 
+/** Unknown non-empty modes stay valid so a newer backend cannot brick health or config. */
 function isMode(value: unknown): value is Config['mode'] {
-  return value === 'demo' || value === 'anthropic';
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= 64;
 }
 
 function isList<T>(value: unknown, validate: Validator<T>): value is T[] {
@@ -272,7 +273,10 @@ function isCustomerRequest(value: unknown): value is CustomerRequest {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
-    (value.kind === 'demo' || value.kind === 'support') &&
+    // A new request kind is displayed generically instead of invalidating the whole list.
+    typeof value.kind === 'string' &&
+    value.kind.trim().length > 0 &&
+    value.kind.length <= 64 &&
     typeof value.status === 'string' &&
     typeof value.created_at === 'string' &&
     Number.isFinite(Date.parse(value.created_at)) &&

@@ -28,7 +28,7 @@ NODE_MAJOR="$(node -p 'Number(process.versions.node.split(".")[0])')"
 if (( NODE_MAJOR < 22 )); then echo 'Node.js 22 or newer is required.' >&2; exit 1; fi
 PYTHON_SPEC="${LUMEN_PYTHON:-3.12}"
 if [[ ! -e .env && ! -L .env ]]; then
-  (umask 077; set -o noclobber; cat .env.example > .env)
+  (umask 077; set -o noclobber; cat config/env.example > .env)
 fi
 if [[ ! -e .specify/feature.json && ! -L .specify/feature.json ]]; then
   (set -o noclobber; echo '{"feature_directory":"specs/001-company-agent"}' > .specify/feature.json)

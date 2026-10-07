@@ -106,12 +106,11 @@ es independiente de `ANTHROPIC_API_KEY` del backend. Spec Kit usa los artefactos
 versionados y el selector de feature local creado por setup; para el examen real,
 trabajar desde el brief recibido siguiendo [EXAM_20_MIN.md](EXAM_20_MIN.md).
 
-## Verificación pendiente en Fedora
+## Estado en Fedora
 
-Estado de esta entrega (2026-10-07): la preparación completa en Fedora aún no se
-ha ejecutado ni verificado. El alias SSH `fedora` no resuelve en el entorno actual;
-falta una dirección o un alias SSH válido antes de gestionar esa instalación.
-La comprobación local de sintaxis y ayuda del helper no acredita que las herramientas,
-el setup, el login interactivo de Claude o la aplicación funcionen en aquel equipo.
+Estado al 2026-10-07: el portátil Fedora 44 ya contiene el checkout en `~/Documentos/repos/SoftopPrueba` (enlace simbólico a un disco de datos); con uv 0.11.21, `make setup` y `make check` pasaron allí el 2026-10-07. `~/Documentos/repos` es un enlace
+simbólico, por lo que `prepare-fedora.sh` rechaza ese destino: en ese equipo se
+usa directamente `uv self update` y `make setup`. Faltan las acciones privadas del
+operador: clave Anthropic en `.env`, administrador local y `mcp-login`.
 La autenticación se realiza allí con una cuenta autorizada, sin transferir contraseñas,
 sesiones ni configuración privada desde este workspace.

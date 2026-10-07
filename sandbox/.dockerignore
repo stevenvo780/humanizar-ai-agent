@@ -3,6 +3,6 @@
 !pyproject.toml
 !uv.lock
 !app/
-!app/*.py
+!app/**/*.py
 !fixtures/
-!fixtures/example.txt
+!fixtures/**

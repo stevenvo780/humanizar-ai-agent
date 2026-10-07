@@ -214,6 +214,9 @@
   gap: 9px;
   flex-wrap: wrap;
 }
+.docs-snapshot-note + .docs-hero-tags {
+  margin-top: 20px;
+}
 .docs-hero-tags > span {
   display: inline-flex;
   align-items: center;

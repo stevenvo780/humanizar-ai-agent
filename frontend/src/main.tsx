@@ -4,7 +4,7 @@ import App from './SiteRouter';
 import './styles.css';
 
 const root = document.getElementById('root');
-if (!root) throw new Error('No se encontró el contenedor de Humanizar IA.');
+if (!root) throw new Error('No se encontró el contenedor de la aplicación.');
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <App />

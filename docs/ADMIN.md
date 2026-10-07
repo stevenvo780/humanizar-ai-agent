@@ -87,8 +87,8 @@ seguimiento comercial por los canales de la empresa.
 
 ## Estado de publicación al 2026-10-07
 
-El frontend `f562cc9` está READY en Vercel. El código y las pruebas de clientes y
-lector están preparados; desplegar la nueva API en el VPS sigue pendiente de
-recuperar la autenticación SSH. Hasta entonces los botones dependen de los flags
+El frontend `16e9ac2` está READY en Vercel. El código y las pruebas de clientes y
+lector están preparados; la API del VPS sigue en `0ecb292` hasta ejecutar la
+actualización de [OPERATIONS.md](OPERATIONS.md). Hasta entonces los botones dependen de los flags
 que declare el servidor existente, por lo que pueden no aparecer. El estado
 verificable está en [VALIDATION.md](VALIDATION.md) y [OPERATIONS.md](OPERATIONS.md).

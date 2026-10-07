@@ -153,7 +153,8 @@ Los diez skills oficiales de Spec Kit 1.0.7 vienen incluidos; no hace falta
 regenerar el proyecto. [SPECKIT.md](docs/SPECKIT.md) documenta cada comando,
 la auditoría y cómo seleccionar la feature de adaptación `002`.
 
-Sigue [la guía de los 20 minutos](docs/EXAM_20_MIN.md) y copia
+Cuando llegue el material, cópialo en `prueba-tecnica/` y ejecuta `/prueba-tecnica`
+dentro de `make exam-claude`. Sigue [la guía de los 20 minutos](docs/EXAM_20_MIN.md) y copia
 [el prompt de adaptación](docs/EXAM_PROMPT.txt) cuando llegue el ZIP real.
 La base no puede anticipar requisitos todavía desconocidos: el objetivo es reducir
 el trabajo inicial y dejar tiempo para resolver lo que realmente evalúen.

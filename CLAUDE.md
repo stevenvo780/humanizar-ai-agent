@@ -27,6 +27,8 @@ allowed build commands constitute an OS sandbox for Claude Code.
 - scripts: setup, local run, scoped verification, sanitized ZIP import/package.
 - .claude/skills/speckit-*: actual Spec Kit skills installed by specify-cli.
 - specs/001-company-agent: baseline intent and architecture; adapt to real brief.
+- prueba-tecnica/: drop zone for the exam material (git-ignored except README);
+  /prueba-tecnica runs the read → goal → implement → verify → ship procedure.
 
 ## Adaptation sequence
 

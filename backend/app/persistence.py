@@ -8,7 +8,7 @@ from app.database import Customer, User
 
 class PersistenceUnavailable(RuntimeError):
     def __init__(self) -> None:
-        super().__init__("El almacenamiento no está disponible. Probá nuevamente más tarde.")
+        super().__init__("El almacenamiento no está disponible. Prueba de nuevo más tarde.")
 
 
 class IdentityStore(Protocol):

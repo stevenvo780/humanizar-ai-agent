@@ -29,7 +29,7 @@ class CompanyInfo(BaseModel):
     company_description: str
     assistant_name: str
     website: str | None = None
-    suggested_questions: list[str] = Field(default_factory=list)
+    suggested_questions: list[str] | None = None
 
 
 class Document(BaseModel):

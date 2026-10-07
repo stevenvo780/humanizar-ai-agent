@@ -76,7 +76,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Prepare disposable demo configuration
-        run: cp .env.example .env
+        run: cp config/env.example .env
       - name: Build and start isolated services
         run: docker compose up --build --detach --wait --wait-timeout 180
       - name: Verify authentication, retrieval, docs and isolated terminal

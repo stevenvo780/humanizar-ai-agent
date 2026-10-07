@@ -20,8 +20,12 @@ __pycache__/
 .ruff_cache/
 .coverage
 coverage/
-data/
+/data*/
+/backend/data*/
+/sandbox/data*/
 material/
+/prueba-tecnica/*
+!/prueba-tecnica/README.md
 artifacts/
 playwright-report/
 test-results/

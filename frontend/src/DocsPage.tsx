@@ -27,9 +27,13 @@ import {
   Wrench,
 } from 'lucide-react';
 import { SiteLink } from './navigation';
+import { api } from './api';
+import { companyPresentation } from './company';
+import type { CompanyIdentity } from './types';
 import './docs.css';
 
 const REPOSITORY_URL = 'https://github.com/stevenvo780/humanizar-ai-agent';
+const REPOSITORY_SLUG = new URL(REPOSITORY_URL).pathname.slice(1);
 const sections = [
   { id: 'vision', label: 'El proyecto', icon: <BookOpen size={15} /> },
   { id: 'arquitectura', label: 'Arquitectura', icon: <Network size={15} /> },
@@ -67,7 +71,7 @@ function Section({
   );
 }
 
-function Architecture() {
+function Architecture({ assistant }: { assistant: string }) {
   return (
     <figure className="docs-architecture">
       <figcaption>
@@ -82,7 +86,7 @@ function Architecture() {
           role="img"
           aria-labelledby="architecture-title architecture-description"
         >
-          <title id="architecture-title">Arquitectura de Humanizar IA</title>
+          <title id="architecture-title">Arquitectura de {assistant}</title>
           <desc id="architecture-description">
             React se sirve desde Vercel. Las llamadas REST y SSE del mismo origen pasan por un
             rewrite que añade una cabecera privada hacia FastAPI en Docker en el VPS. La API valida
@@ -219,8 +223,26 @@ function Architecture() {
 
 export default function DocsPage() {
   const [active, setActive] = useState('vision');
+  const [identity, setIdentity] = useState<CompanyIdentity | null>(null);
+  const { company, assistant } = companyPresentation(null, identity);
   useEffect(() => {
-    document.title = 'Humanizar IA — Documentación técnica';
+    let current = true;
+    api
+      .company()
+      .then((result) => {
+        if (current) setIdentity(result);
+      })
+      .catch(() => {
+        /* The public page keeps a neutral name when the API is unavailable. */
+      });
+    return () => {
+      current = false;
+    };
+  }, []);
+  useEffect(() => {
+    document.title = `${identity ? assistant : 'Asistente'} — Documentación técnica`;
+  }, [assistant, identity]);
+  useEffect(() => {
     const initialSection = window.location.hash.slice(1);
     if (sections.some((section) => section.id === initialSection)) {
       const element = document.getElementById(initialSection);
@@ -250,7 +272,8 @@ export default function DocsPage() {
         <SiteLink href="/" className="docs-brand">
           <Sparkles size={25} strokeWidth={1.4} />
           <strong>
-            Humanizar IA<span>.</span>
+            {assistant}
+            <span>.</span>
           </strong>
           <span className="docs-header-divider" />
           <span className="docs-header-label">Ingeniería, a la vista</span>
@@ -312,7 +335,8 @@ export default function DocsPage() {
             aria-labelledby="docs-hero-title"
           >
             <div className="docs-eyebrow">
-              <GitBranch size={13} /> DOCUMENTACIÓN TÉCNICA <span>01 / HUMANIZAR</span>
+              <GitBranch size={13} /> DOCUMENTACIÓN TÉCNICA{' '}
+              <span>01 / {company.toUpperCase()}</span>
             </div>
             <h1 id="docs-hero-title">
               La claridad también
@@ -321,11 +345,14 @@ export default function DocsPage() {
             </h1>
             <p className="docs-hero-intro">
               Una conversación sencilla por fuera. Una arquitectura con contratos, fuentes y límites
-              claros por dentro. Así está construido Humanizar IA.
+              claros por dentro. Así está construido {assistant}.
             </p>
             <p className="docs-snapshot-note">
-              Base preparada para la prueba técnica de Softop. Humanizar es la empresa de ejemplo
-              actual; el perfil, los documentos y las herramientas se adaptan a los requisitos.
+              Base preparada para la prueba técnica de Softop.{' '}
+              {identity
+                ? `${company} es la empresa configurada actualmente;`
+                : 'La empresa se configura en el backend;'}{' '}
+              el perfil, los documentos y las herramientas se adaptan a los requisitos.
             </p>
             <div className="docs-hero-tags">
               <span>
@@ -349,11 +376,11 @@ export default function DocsPage() {
             </div>
             <div className="docs-metrics">
               <div>
-                <span className="docs-metric-number">
-                  533<span> / pruebas</span>
+                <span className="docs-metric-title">
+                  <FileCheck2 size={18} /> Pruebas por capa
                 </span>
-                <p>En la base de comprobación</p>
-                <small>259 API · 120 sandbox/scripts · 28 despliegue · 126 web</small>
+                <p>API, sandbox, despliegue y web</p>
+                <small>Se ejecutan en cada comprobación</small>
               </div>
               <div>
                 <span className="docs-metric-title">
@@ -388,7 +415,7 @@ export default function DocsPage() {
               índice local persistente. SQLite sigue disponible para desarrollo local sin base
               remota.
             </p>
-            <Architecture />
+            <Architecture assistant={assistant} />
             <div className="docs-two-columns">
               <div className="docs-info-card">
                 <Code2 size={21} />
@@ -669,10 +696,10 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La base cuenta con <strong>533 pruebas aprobadas</strong>, incluidas pruebas reales de
-              persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
-              describe la base registrada; cada cambio posterior debe volver a pasar sus
-              comprobaciones.
+              La base cuenta con <strong>pruebas automatizadas en cada capa</strong>, incluidas
+              pruebas reales de persistencia PostgreSQL, y comprobaciones de formato, tipos y build.
+              La evidencia describe la base registrada; cada cambio posterior debe volver a pasar
+              sus comprobaciones.
             </p>
             <div className="docs-quality-table-wrap">
               <table className="docs-quality-table">
@@ -681,7 +708,6 @@ export default function DocsPage() {
                   <tr>
                     <th scope="col">Capa</th>
                     <th scope="col">Comprobaciones</th>
-                    <th scope="col">Pruebas</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -690,31 +716,19 @@ export default function DocsPage() {
                     <td>
                       Ruff, formato, mypy estricto, agente, autenticación y persistencia PostgreSQL
                     </td>
-                    <td>
-                      <strong>259</strong>
-                    </td>
                   </tr>
                   <tr>
                     <th scope="row">Sandbox y utilidades</th>
                     <td>Ruff, formato, tipos, límites de ejecución, importación y empaquetado</td>
-                    <td>
-                      <strong>120</strong>
-                    </td>
                   </tr>
                   <tr>
                     <th scope="row">Helpers de despliegue</th>
                     <td>Orígenes, TLS, secretos, bootstrap y configuración reproducible</td>
-                    <td>
-                      <strong>28</strong>
-                    </td>
                   </tr>
                   <tr>
                     <th scope="row">Frontend</th>
                     <td>
                       ESLint con tipos, hooks y accesibilidad; Prettier; TypeScript; Vitest; build
-                    </td>
-                    <td>
-                      <strong>126</strong>
                     </td>
                   </tr>
                 </tbody>
@@ -807,7 +821,7 @@ export default function DocsPage() {
             <p>
               El{' '}
               <a
-                href="https://github.com/stevenvo780/humanizar-ai-agent/blob/dev/docs/OPERATIONS.md"
+                href={`${REPOSITORY_URL}/blob/dev/docs/OPERATIONS.md`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -908,8 +922,8 @@ export default function DocsPage() {
               </a>
             </div>
             <p className="docs-repository-state" id="docs-repository-state">
-              Consulta el repositorio público <code>stevenvo780/humanizar-ai-agent</code> y su
-              README para explorar el proyecto y las instrucciones de arranque.
+              Consulta el repositorio público <code>{REPOSITORY_SLUG}</code> y su README para
+              explorar el proyecto y las instrucciones de arranque.
             </p>
             <div className="docs-start-code">
               <div>
@@ -932,7 +946,8 @@ export default function DocsPage() {
             <div>
               <Sparkles size={20} />
               <span>
-                Humanizar IA<strong>Información clara. Código que explica sus decisiones.</strong>
+                {assistant}
+                <strong>Información clara. Código que explica sus decisiones.</strong>
               </span>
             </div>
             <SiteLink href="/">

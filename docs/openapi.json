@@ -1023,10 +1023,17 @@
             "title": "Website"
           },
           "suggested_questions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Suggested Questions"
           }
         },

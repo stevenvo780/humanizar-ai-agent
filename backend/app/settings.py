@@ -59,6 +59,14 @@ class Settings(BaseSettings):
         "http://localhost:3000",
     ]
 
+    @field_validator("knowledge_dir", mode="before")
+    @classmethod
+    def optional_knowledge_dir(cls, value: object) -> object:
+        # KNOWLEDGE_DIR= (empty) must disable the corpus, not load backend/ itself as Path(".").
+        if isinstance(value, str) and value.strip().lower() in {"", "none", "null"}:
+            return None
+        return value
+
     @field_validator("database_schema")
     @classmethod
     def dedicated_schema(cls, value: str) -> str:
@@ -108,10 +116,11 @@ class Settings(BaseSettings):
         return self.company_website or ("https://humanizar.tech/" if self.is_humanizar else None)
 
     @property
-    def suggested_questions(self) -> list[str]:
+    def suggested_questions(self) -> list[str] | None:
+        """None lets the UI show its generic prompts; an explicit [] hides suggestions."""
         if self.company_suggested_questions is not None:
             return list(self.company_suggested_questions)
-        return list(HUMANIZAR_QUESTIONS) if self.is_humanizar else []
+        return list(HUMANIZAR_QUESTIONS) if self.is_humanizar else None
 
     @property
     def products(self) -> tuple[ProductDefinition, ...]:

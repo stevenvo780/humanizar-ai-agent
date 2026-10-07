@@ -86,10 +86,8 @@ al proveedor autenticó la clave del backend y devolvió respuesta con
 ni imprimir secretos. Esta llamada no sustituye el smoke del chat tras actualizar
 el contenedor productivo.
 
-Fedora: la copia solicitada es `~/Documentos/repos/SoftopPrueba`. El alias `fedora`
-no resuelve en este entorno; falta un host/usuario SSH accesible. El helper y la
-guía usan esa ruta y conservan checkouts existentes. Sintaxis, ayuda y nueve casos
-sintéticos de destino pasaron; no equivalen a una instalación real en el portátil.
+Fedora: el portátil Fedora 44 ya contiene el checkout en `~/Documentos/repos/SoftopPrueba` (enlace simbólico a un disco de datos); con uv 0.11.21, `make setup` y `make check` pasaron allí el 2026-10-07. El destino es un enlace simbólico, así que
+el helper `prepare-fedora.sh` no se usa en ese equipo.
 
 ## Servicios reales locales
 

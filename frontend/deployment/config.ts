@@ -13,6 +13,22 @@ const PRIVATE_RESPONSE_HEADERS = {
   'x-vercel-enable-rewrite-caching': '0',
 };
 
+/** Every non-API route can serve the SPA, so every one of them carries the same policy. */
+export const NON_API_ROUTE = '^/(?!api(?:/|$)).*$';
+
+export const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+].join('; ');
+
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
@@ -78,19 +94,24 @@ export function createDeploymentConfig(environment: DeploymentEnvironment): Depl
     routes: [
       { src: '^/(.*)$', headers: SECURITY_HEADERS, continue: true },
       {
-        src: '^/(?:docs/?)?$',
+        src: NON_API_ROUTE,
         headers: {
-          'Content-Security-Policy':
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+          'Content-Security-Policy': CONTENT_SECURITY_POLICY,
           'Cache-Control': 'no-cache',
         },
+        continue: true,
+      },
+      // Vite emits content-hashed assets: cache them for a year, never the HTML shell.
+      {
+        src: '^/assets/(.*)$',
+        headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
         continue: true,
       },
       { src: '^/api(?:/.*)?$', headers: PRIVATE_RESPONSE_HEADERS, continue: true },
       apiRewrite,
       { handle: 'filesystem' },
       // An API failure must remain an API response instead of falling through to HTML.
-      { src: '^/(?!api(?:/|$))(.*)$', dest: '/index.html' },
+      { src: NON_API_ROUTE, dest: '/index.html' },
     ],
   } satisfies DeploymentConfig;
 }

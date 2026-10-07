@@ -43,6 +43,20 @@ describe('configured company presentation', () => {
     expect(changed.prompts.some((prompt) => prompt.question.includes('pedido'))).toBe(false);
   });
 
+  it('hides suggestions for an explicit empty list and keeps defaults only when absent', () => {
+    const identity = {
+      company_name: config.company_name,
+      company_description: config.company_description,
+      assistant_name: config.assistant_name,
+    };
+    expect(companyPresentation(config, { ...identity, suggested_questions: [] }).prompts).toEqual(
+      [],
+    );
+    const absent = companyPresentation(config, identity).prompts;
+    expect(absent.length).toBeGreaterThan(0);
+    expect(companyPresentation(config, null).prompts).toEqual(absent);
+  });
+
   it.each([
     'javascript:alert(1)',
     'data:text/html,hello',

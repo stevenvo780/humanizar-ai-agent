@@ -1,6 +1,6 @@
 CLAUDE_CODE_MODEL ?= claude-opus-5-5
 
-.PHONY: setup dev lan check docker stop package claude speckit speckit-check
+.PHONY: setup dev lan check docker stop package claude exam-claude speckit speckit-check
 setup:
 	bash scripts/bootstrap.sh
 dev:
@@ -16,6 +16,10 @@ stop:
 package:
 	bash scripts/package.sh
 claude:
+	claude --model "$(CLAUDE_CODE_MODEL)"
+# Exam session: Spec Kit commands target the pending adaptation feature 002, never 001.
+exam-claude:
+	SPECIFY_FEATURE=002-exam-adaptation SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation \
 	claude --model "$(CLAUDE_CODE_MODEL)"
 speckit:
 	uv tool install specify-cli==1.0.7

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 import uuid
 from collections.abc import Awaitable, Callable
@@ -21,10 +22,69 @@ from app.embeddings import QUESTION_WORDS, terms
 from app.models import ChatRequest, ChatResponse, Source, ToolTrace, Usage
 from app.security import redact
 from app.settings import Settings
+from app.tool_definitions import BY_NAME
 from app.tools import ToolRegistry, normalized
 
 Emit = Callable[[str, dict[str, Any]], Awaitable[None]]
 TextCallback = Callable[[str], Awaitable[None]]
+logger = logging.getLogger(__name__)
+
+# Tools whose output are company facts: shown only through validated [S#] citations.
+FACT_TOOLS = frozenset({"search_knowledge", "recommend_product"})
+REQUEST_INTENTS = (
+    ("create_demo_request", "solicitud de demo", ("demo", "demostracion")),
+    (
+        "create_support_ticket",
+        "caso de soporte",
+        ("soporte", "ticket", "incidencia", "no puedo", "no funciona"),
+    ),
+)
+# Tools with a dedicated deterministic rendering in CompanyAgent._without_sources.
+RENDERED_TOOLS = frozenset(
+    {
+        "calculate",
+        "create_demo_request",
+        "create_support_ticket",
+        "list_my_requests",
+        "terminal",
+        "mcp_company_info",
+    }
+)
+
+
+def provider_failure(exc: Exception) -> "AgentFailure":
+    if isinstance(exc, anthropic.AuthenticationError):
+        return AgentFailure("La clave de Anthropic no está autorizada.", "authentication")
+    if isinstance(exc, anthropic.RateLimitError):
+        return AgentFailure("Anthropic alcanzó su límite de uso. Prueba más tarde.", "rate_limit")
+    if isinstance(
+        exc, anthropic.NotFoundError | anthropic.BadRequestError | anthropic.PermissionDeniedError
+    ):
+        # Usually a wrong ANTHROPIC_MODEL or account permissions: not a transient outage.
+        return AgentFailure(
+            "Anthropic rechazó la configuración de la consulta (modelo o permisos).",
+            "provider_configuration",
+        )
+    if isinstance(exc, anthropic.APIError | TimeoutError):
+        return AgentFailure("Anthropic no está disponible en este momento.", "provider_unavailable")
+    return AgentFailure("No se pudo completar la respuesta de Claude.", "provider_error")
+
+
+def log_provider_failure(exc: Exception) -> None:
+    """Record type, status and request id only: never bodies, prompts or credentials."""
+    logger.warning(
+        "Anthropic request failed: %s status=%s request_id=%s",
+        type(exc).__name__,
+        getattr(exc, "status_code", None),
+        getattr(exc, "request_id", None),
+    )
+
+
+def readable(output: str) -> str:
+    try:
+        return json.dumps(json.loads(output), ensure_ascii=False, indent=2)
+    except json.JSONDecodeError:
+        return output
 
 
 class AgentFailure(Exception):
@@ -89,8 +149,8 @@ def grounded_sources(answer: str, sources: list[Source]) -> tuple[str, list[Sour
     cited: list[Source] = []
     identifiers: dict[str, int] = {}
 
-    def replace(match: re.Match[str]) -> str:
-        index = int(match.group(1)) - 1
+    def citation(number: str) -> str:
+        index = int(number) - 1
         if index < 0 or index >= len(sources):
             return "[fuente no disponible]"
         source = sources[index]
@@ -99,7 +159,12 @@ def grounded_sources(answer: str, sources: list[Source]) -> tuple[str, list[Sour
             identifiers[source.chunk_id] = len(cited)
         return f"[S{identifiers[source.chunk_id]}]"
 
-    return re.sub(r"\[S(\d+)\]", replace, redact(answer)), cited
+    def replace(match: re.Match[str]) -> str:
+        # Models sometimes group citations as [S1, S2]; normalize them to [S1][S2].
+        return "".join(citation(number) for number in re.findall(r"\d+", match.group(1)))
+
+    pattern = r"\[(S\d+(?:\s*[,;]\s*S?\d+)*)\]"
+    return re.sub(pattern, replace, redact(answer)), cited
 
 
 class CompanyAgent:
@@ -161,7 +226,7 @@ class CompanyAgent:
             else:
                 answer = (
                     "Modo demostración · no encontré información relacionada en los documentos. "
-                    "Cargá un archivo de la empresa o reformulá la pregunta."
+                    "Carga un archivo de la empresa o reformula la pregunta."
                 )
         trace.append(result.trace)
         await emit("tool", result.trace.model_dump())
@@ -194,7 +259,7 @@ class CompanyAgent:
             "Para aritmética usa calculate. Terminal solo admite presets en un sandbox separado. "
             "mcp_company_info consulta identidad configurada vía un servidor MCP real. "
             "No expongas razonamiento interno; puedes explicar resultados y citar evidencia. "
-            "No afirmes que una acción ocurrió si la herramienta falló."
+            "No afirmes que una acción ocurrió si la herramienta falló. "
             "Puedes recomendar productos con recommend_product, consultar solicitudes propias "
             "con list_my_requests y preparar solicitudes de demo o soporte. "
             "Pide los datos que falten antes de crear una solicitud. "
@@ -228,6 +293,10 @@ class CompanyAgent:
                 outputs.append(
                     f"Resultado del cálculo: {item.input.get('expression', '')} = {item.output}"
                 )
+                continue
+            if item.tool not in FACT_TOOLS | RENDERED_TOOLS:
+                # Any other tool output is deterministic application data, not model prose.
+                outputs.append(f"Resultado de {item.tool}:\n```\n{readable(item.output)}\n```")
                 continue
             try:
                 value = json.loads(item.output)
@@ -272,9 +341,21 @@ class CompanyAgent:
                 f"Hola. Soy {redact(self.settings.assistant_name)}, asistente de "
                 f"{redact(self.settings.company_name)}. ¿En qué puedo ayudarte?"
             )
+        enabled = {tool["name"] for tool in self.registry.catalog() if tool["enabled"]}
+        for tool, label, keywords in REQUEST_INTENTS:
+            if tool in enabled and any(keyword in query for keyword in keywords):
+                fields = [
+                    str(rules.get("title", name))
+                    for name, rules in BY_NAME[tool].properties.items()
+                ]
+                listed = ", ".join(fields[:-1]) + f" y {fields[-1]}" if len(fields) > 1 else ""
+                return (
+                    f"Para preparar tu {label} necesito: {listed or fields[0]}. "
+                    "Compártelos y te mostraré la solicitud para que la confirmes."
+                )
         return (
             "No encontré evidencia suficiente en los documentos para responder. "
-            "Probá reformular la consulta o cargar la información que falta."
+            "Prueba a reformular la consulta o carga la información que falta."
         )
 
     async def _anthropic(self, request: ChatRequest, emit: Emit) -> ChatResponse:
@@ -298,28 +379,18 @@ class CompanyAgent:
                         self._system(),
                         None,
                     )
-            except anthropic.AuthenticationError as exc:
-                raise AgentFailure(
-                    "La clave de Anthropic no está autorizada.", "authentication"
-                ) from exc
-            except anthropic.RateLimitError as exc:
-                raise AgentFailure(
-                    "Anthropic alcanzó su límite de uso. Probá más tarde.", "rate_limit"
-                ) from exc
-            except (anthropic.APIError, TimeoutError) as exc:
-                raise AgentFailure(
-                    "Anthropic no está disponible en este momento.", "provider_unavailable"
-                ) from exc
             except Exception as exc:
-                raise AgentFailure(
-                    "No se pudo completar la respuesta de Claude.", "provider_error"
-                ) from exc
+                log_provider_failure(exc)
+                raise provider_failure(exc) from exc
             usage.input_tokens += response.usage.input_tokens
             usage.output_tokens += response.usage.output_tokens
+            if response.stop_reason == "refusal":
+                raise AgentFailure("Claude rechazó responder a esta consulta.", "refusal")
+            if response.stop_reason == "max_tokens":
+                # A truncated turn may also contain an incomplete tool_use block.
+                raise AgentFailure("La respuesta excedió el límite de salida.", "output_limit")
             calls = [block for block in response.content if isinstance(block, ToolUseBlock)]
             if not calls:
-                if response.stop_reason == "max_tokens":
-                    raise AgentFailure("La respuesta excedió el límite de salida.", "output_limit")
                 answer = "\n".join(
                     block.text for block in response.content if isinstance(block, TextBlock)
                 ).strip()

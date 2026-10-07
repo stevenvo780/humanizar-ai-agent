@@ -1,9 +1,12 @@
+/** Known modes get specific copy; a newer backend mode is shown with a generic label. */
+export type AssistantMode = 'demo' | 'anthropic' | (string & Record<never, never>);
+
 export interface Config {
   company_name: string;
   company_description: string;
   assistant_name: string;
   model: string;
-  mode: 'demo' | 'anthropic';
+  mode: AssistantMode;
   embedding: string;
   max_upload_mb: number;
 }
@@ -18,7 +21,7 @@ export interface CompanyIdentity {
 
 export interface Health {
   status: string;
-  mode: 'demo' | 'anthropic';
+  mode: AssistantMode;
   model: string;
   embedding: string;
   tools: { sandbox: boolean; mcp: boolean };
@@ -75,7 +78,7 @@ export interface ChatResponse {
   answer: string;
   sources: Source[];
   trace: ToolTrace[];
-  mode: 'demo' | 'anthropic';
+  mode: AssistantMode;
   model: string;
   usage: { input_tokens: number; output_tokens: number };
   session_id: string;
@@ -123,9 +126,12 @@ export interface CustomerAccountList {
   offset: number;
 }
 
+/** Unknown request kinds from a newer backend are listed with a generic label. */
+export type CustomerRequestKind = 'demo' | 'support' | (string & Record<never, never>);
+
 export interface CustomerRequest {
   id: string;
-  kind: 'demo' | 'support';
+  kind: CustomerRequestKind;
   status: string;
   created_at: string;
   details: Record<string, unknown>;

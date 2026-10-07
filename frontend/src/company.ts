@@ -74,8 +74,9 @@ export function companyPresentation(config: Config | null, identity: CompanyIden
           question: `¿Qué opciones de soporte ofrece ${company}?`,
         },
       ];
+  // Only an absent list falls back to defaults; an explicit empty list hides the suggestions.
   const questions = currentIdentity?.suggested_questions;
-  const prompts = questions?.length
+  const prompts = questions
     ? questions.map(
         (question): QuickPrompt =>
           defaults.find((prompt) => prompt.question === question) ?? {

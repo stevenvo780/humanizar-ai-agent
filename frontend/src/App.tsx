@@ -31,7 +31,6 @@ import {
   WifiOff,
   X,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import { api, errorMessage, streamChat } from './api';
 import { createId } from './id';
 import { ActionConfirmation, actionProposal, useConfirmedAction } from './actions';
@@ -41,6 +40,7 @@ import { SiteLink } from './navigation';
 import { workspaceNavigation } from './workspaceNavigation';
 import { useDialogFocus } from './useDialogFocus';
 import { DocumentReader } from './DocumentReader';
+import { ChatMarkdown } from './DocumentMarkdown';
 import { ToolsPanel } from './ToolsPanel';
 import { toolLabel } from './toolSchema';
 import { companyPresentation } from './company';
@@ -61,6 +61,10 @@ import type {
 } from './types';
 
 const EMPTY_MESSAGES: ChatMessage[] = [];
+
+function plural(count: number, singular: string, pluralForm: string): string {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
+}
 const MOBILE_NAVIGATION = '(max-width: 760px)';
 const promptStyles = [
   { icon: BookOpen, color: 'mint' },
@@ -239,14 +243,14 @@ function EvidencePanel({
         <span>
           <StatusDot online />
           {isAdmin
-            ? `${documents.documents.length} documentos disponibles`
+            ? plural(documents.documents.length, 'documento disponible', 'documentos disponibles')
             : sources.length
-              ? `${sources.length} fuentes consultadas`
+              ? plural(sources.length, 'fuente consultada', 'fuentes consultadas')
               : 'Respuestas con documentación'}
         </span>
         <span>
           {isAdmin
-            ? `${documents.total_chunks} fragmentos`
+            ? plural(documents.total_chunks, 'fragmento', 'fragmentos')
             : 'Explora las referencias de cada respuesta'}
         </span>
       </div>
@@ -269,7 +273,9 @@ function EvidencePanel({
               </span>
               <span>
                 {doc.name}
-                <small>{doc.chunks} fragmentos · Disponible para consultar</small>
+                <small>
+                  {plural(doc.chunks, 'fragmento', 'fragmentos')} · Disponible para consultar
+                </small>
               </span>
               <ChevronRight size={13} />
             </button>
@@ -318,7 +324,7 @@ function EvidencePanel({
             <span>03</span>
             <p>
               <strong>Responde con fuentes</strong>
-              <small>Podés explorar cada referencia.</small>
+              <small>Puedes explorar cada referencia.</small>
             </p>
           </div>
         </div>
@@ -331,7 +337,10 @@ function EvidencePanel({
         </div>
       </div>
       <div className="panel-bottom">
-        <span className="tiny-star">✦</span> Menos buscar. Más avanzar.
+        <span className="tiny-star" aria-hidden="true">
+          ✦
+        </span>{' '}
+        Menos buscar. Más avanzar.
       </div>
     </aside>
   );
@@ -566,7 +575,8 @@ function Knowledge({
                   <BookOpen size={16} />
                 </button>
                 <span>
-                  {doc.chunks} fragmentos · {doc.characters.toLocaleString('es')} caracteres
+                  {plural(doc.chunks, 'fragmento', 'fragmentos')} ·{' '}
+                  {doc.characters.toLocaleString('es')} caracteres
                 </span>
               </div>
               {deleteId === doc.id ? (
@@ -676,7 +686,7 @@ function Composer({
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={keyDown}
-          placeholder="Pregunta por servicios, agentes de IA o cómo podemos ayudarte…"
+          placeholder="Pregunta por productos, servicios o cómo podemos ayudarte…"
           maxLength={10000}
           disabled={!online}
         />
@@ -714,11 +724,11 @@ function Composer({
       <div className="composer-footnote">
         <ShieldCheck size={11} />
         <span>
-          {config?.mode === 'demo'
-            ? 'Modo demo · Respuestas de demostración, sin llamadas a Claude.'
-            : config?.mode === 'anthropic'
-              ? 'El asistente puede cometer errores. Consulta las fuentes de cada respuesta.'
-              : 'Conectando con el asistente…'}
+          {!config
+            ? 'Conectando con el asistente…'
+            : config.mode === 'demo'
+              ? 'Modo demo · Respuestas de demostración, sin llamadas a Claude.'
+              : 'El asistente puede cometer errores. Consulta las fuentes de cada respuesta.'}
         </span>
         <span className="composer-powered">
           Hecho para pensar contigo <Sparkles size={10} />
@@ -1082,7 +1092,9 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
         <button className="new-chat" onClick={newConversation} disabled={busy || historyLoading}>
           <Plus size={17} />
           <span>Nueva conversación</span>
-          <span className="new-shortcut">↗</span>
+          <span className="new-shortcut" aria-hidden="true">
+            ↗
+          </span>
         </button>
         <div className="sidebar-section-label">EXPLORA</div>
         <nav className="sidebar-navigation" aria-label="Secciones del espacio">
@@ -1145,7 +1157,9 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               {config
                 ? config.mode === 'demo'
                   ? 'Modo demo · Sin llamadas a Claude'
-                  : `${config.model} · Anthropic`
+                  : config.mode === 'anthropic'
+                    ? `${config.model} · Anthropic`
+                    : `${config.model} · Modo ${config.mode}`
                 : 'Esperando la configuración'}
             </p>
             <span>
@@ -1202,8 +1216,8 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               <Menu size={20} />
             </button>
             <span className="breadcrumb">
-              Asistente de {company}
-              <ChevronRight size={12} />
+              <span className="breadcrumb-root">Asistente de {company}</span>
+              <ChevronRight size={12} aria-hidden="true" />
               <strong id="workspace-section-title">{activeNavigation.label}</strong>
             </span>
           </div>
@@ -1273,33 +1287,37 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                           <br className="desktop-break" /> Te ayudamos a dar el siguiente paso.
                         </p>
                       </div>
-                      <div className="prompt-section-heading">
-                        <span>¿Cómo podemos ayudarte?</span>
-                        <ArrowDown size={13} />
-                      </div>
-                      <div className="prompt-grid">
-                        {prompts.map((prompt, index) => {
-                          const style = promptStyles[index % promptStyles.length] ?? {
-                            icon: BookOpen,
-                            color: 'mint',
-                          };
-                          return (
-                            <button
-                              className="prompt-card"
-                              key={`${index}-${prompt.question}`}
-                              disabled={!online || busy || historyLoading}
-                              onClick={() => void send(prompt.question)}
-                            >
-                              <span className={`prompt-icon ${style.color}`}>
-                                <style.icon size={19} strokeWidth={1.7} />
-                              </span>
-                              <strong>{prompt.title}</strong>
-                              <p>{prompt.subtitle}</p>
-                              <ArrowUpRight className="prompt-arrow" size={17} />
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {prompts.length > 0 && (
+                        <>
+                          <div className="prompt-section-heading">
+                            <span>¿Cómo podemos ayudarte?</span>
+                            <ArrowDown size={13} />
+                          </div>
+                          <div className="prompt-grid">
+                            {prompts.map((prompt, index) => {
+                              const style = promptStyles[index % promptStyles.length] ?? {
+                                icon: BookOpen,
+                                color: 'mint',
+                              };
+                              return (
+                                <button
+                                  className="prompt-card"
+                                  key={`${index}-${prompt.question}`}
+                                  disabled={!online || busy || historyLoading}
+                                  onClick={() => void send(prompt.question)}
+                                >
+                                  <span className={`prompt-icon ${style.color}`}>
+                                    <style.icon size={19} strokeWidth={1.7} />
+                                  </span>
+                                  <strong>{prompt.title}</strong>
+                                  <p>{prompt.subtitle}</p>
+                                  <ArrowUpRight className="prompt-arrow" size={17} />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
                     </section>
                   ) : (
                     <section className="conversation" aria-label="Conversación" aria-busy={busy}>
@@ -1327,20 +1345,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                               {message.role === 'assistant' && <span>Asistente de {company}</span>}
                             </div>
                             {message.content ? (
-                              <div className="markdown">
-                                <ReactMarkdown
-                                  components={{
-                                    a: ({ children, href }) => (
-                                      <a href={href} target="_blank" rel="noopener noreferrer">
-                                        {children}
-                                        <ArrowUpRight size={12} />
-                                      </a>
-                                    ),
-                                  }}
-                                >
-                                  {message.content}
-                                </ReactMarkdown>
-                              </div>
+                              <ChatMarkdown content={message.content} />
                             ) : (
                               !message.error && (
                                 <div className="thinking">
@@ -1360,7 +1365,11 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                               <div className="message-sources">
                                 <span>
                                   <BookOpen size={12} />
-                                  {message.sources.length} fuentes consultadas
+                                  {plural(
+                                    message.sources.length,
+                                    'fuente consultada',
+                                    'fuentes consultadas',
+                                  )}
                                 </span>
                                 {message.sources.map((source, index) => (
                                   <SourceCard
@@ -1375,7 +1384,11 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                               <details className="message-tools">
                                 <summary>
                                   <Terminal size={12} />
-                                  {message.trace.length} herramientas ejecutadas
+                                  {plural(
+                                    message.trace.length,
+                                    'herramienta ejecutada',
+                                    'herramientas ejecutadas',
+                                  )}
                                   <ChevronDown size={12} />
                                 </summary>
                                 {message.trace.map((trace) => (

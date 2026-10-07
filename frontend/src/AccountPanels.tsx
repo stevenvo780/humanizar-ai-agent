@@ -12,6 +12,19 @@ import {
 import { api, errorMessage } from './api';
 import type { CustomerRequest } from './types';
 
+/** Known kinds keep their copy; a kind added by a newer backend gets a generic label. */
+export function requestKindLabel(kind: CustomerRequest['kind']): string {
+  if (kind === 'demo') return 'Solicitud de demostración';
+  if (kind === 'support') return 'Ticket de soporte';
+  return 'Solicitud';
+}
+
+function RequestKindIcon({ kind }: { kind: CustomerRequest['kind'] }) {
+  if (kind === 'demo') return <Sparkles size={21} />;
+  if (kind === 'support') return <CircleHelp size={21} />;
+  return <MessageSquare size={21} />;
+}
+
 export function RequestsPanel({ onChat, isAdmin }: { onChat: () => void; isAdmin: boolean }) {
   const [requests, setRequests] = useState<CustomerRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,12 +105,18 @@ export function RequestsPanel({ onChat, isAdmin }: { onChat: () => void; isAdmin
           <span className="empty-icon">
             <MessageSquare size={25} />
           </span>
-          <h2>El siguiente paso lo decides tú.</h2>
-          <p>
-            Cuando confirmes una demo o un ticket de soporte,
-            <br />
-            su registro y estado aparecerán aquí.
-          </p>
+          <h2>{isAdmin ? 'Todavía no hay solicitudes.' : 'El siguiente paso lo decides tú.'}</h2>
+          {isAdmin ? (
+            <p>
+              Las demostraciones y los tickets de soporte que confirmen los clientes
+              <br className="desktop-break" /> aparecerán aquí con su estado.
+            </p>
+          ) : (
+            <p>
+              Cuando confirmes una demo o un ticket de soporte,
+              <br className="desktop-break" /> su registro y estado aparecerán aquí.
+            </p>
+          )}
           <button className="primary-button" onClick={onChat}>
             Hablar con el asistente
             <ArrowRight size={15} />
@@ -108,13 +127,13 @@ export function RequestsPanel({ onChat, isAdmin }: { onChat: () => void; isAdmin
           {requests.map((request) => (
             <article className="request-card" key={request.id}>
               <div className="request-card-header">
-                <span className={`request-kind-icon ${request.kind}`}>
-                  {request.kind === 'demo' ? <Sparkles size={21} /> : <CircleHelp size={21} />}
+                <span
+                  className={`request-kind-icon ${request.kind === 'support' ? 'support' : ''}`}
+                >
+                  <RequestKindIcon kind={request.kind} />
                 </span>
                 <div>
-                  <h2>
-                    {request.kind === 'demo' ? 'Solicitud de demostración' : 'Ticket de soporte'}
-                  </h2>
+                  <h2>{requestKindLabel(request.kind)}</h2>
                   <span className="request-id">#{request.id}</span>
                 </div>
                 <span className="request-status">

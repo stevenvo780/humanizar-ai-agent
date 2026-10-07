@@ -36,9 +36,11 @@ veinte minutos.
    ejemplo de Humanizar sólo para Humanizar y `[]` desactiva esas sugerencias
    o productos. Los documentos siguen siendo la evidencia de las respuestas.
 4. Añadir cada herramienta en `backend/app/tool_definitions.py` y su ejecución
-   validada en `backend/app/tools.py`. El esquema por sí solo no concede ejecución
-   ni permisos. La consola admite campos simples; esquemas complejos requieren
-   una interfaz explícita.
+   validada en `backend/app/tools.py`. El esquema admite string, number/integer,
+   boolean y parámetros opcionales; por sí solo no concede ejecución ni permisos.
+   Sin citas, el agente muestra el resultado determinista de cualquier herramienta
+   que no esté en `FACT_TOOLS`. La consola admite campos simples; esquemas
+   complejos requieren una interfaz explícita.
 5. Ejecutar `make check`, validar los escenarios de la nueva feature y comprobar
    el navegador. El código nuevo debe pasar las mismas puertas que la base.
 

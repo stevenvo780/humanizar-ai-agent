@@ -17,11 +17,11 @@ def test_company_defaults_only_apply_to_humanizar(settings: Settings) -> None:
     assert humanizar.website == "https://humanizar.tech/"
     assert humanizar.products and humanizar.suggested_questions
     other = settings.model_copy(update={"company_name": "Acme"})
-    assert other.website is None and other.products == () and other.suggested_questions == []
+    assert other.website is None and other.products == () and other.suggested_questions is None
     with TestClient(create_app(other)) as client:
         company = client.get("/api/company").json()
         assert company["company_name"] == "Acme"
-        assert "website" not in company and company["suggested_questions"] == []
+        assert "website" not in company and "suggested_questions" not in company
         tools = client.get("/api/tools").json()["tools"]
         assert "Humanizar" not in str(tools)
         for item in tools:

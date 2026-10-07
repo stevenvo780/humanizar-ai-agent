@@ -456,3 +456,27 @@ def test_exam_documents_are_saved_without_becoming_company_facts(tmp_path: Path,
     write_zip(path, [(name, b"Exam criteria and implementation details.")])
     documents, _ = importer.collect_documents(path)
     assert len(documents) == 1 and documents[0].project_document
+
+
+@pytest.mark.parametrize(
+    "requirement",
+    [
+        "Para cambiar tu password: ingresa a Ajustes > Seguridad.",
+        "Password: mínimo 8 caracteres, una mayúscula.",
+        "JWT con access token, refresh token y cookie HttpOnly segura.",
+        "El endpoint usa Authorization: Bearer <token> en cada llamada.",
+        "Token: el usuario recibe un token válido por 15 minutos.",
+    ],
+)
+def test_requirement_prose_is_not_redacted(requirement: str) -> None:
+    assert importer.sanitize(requirement) == requirement
+
+
+def test_skipped_inputs_are_named_in_report(tmp_path: Path) -> None:
+    path = tmp_path / "brief.zip"
+    write_zip(path, [("README.md", b"Brief."), ("api/openapi.yaml", b"openapi: 3.1.0")])
+    documents, report = importer.collect_documents(path)
+    assert [document.name for document in documents] == ["001-README.md"]
+    assert report["skipped"] == [
+        {"entry": 2, "name": "api/openapi.yaml", "reason": "unsupported format"}
+    ]

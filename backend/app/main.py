@@ -211,7 +211,11 @@ def create_app(
                 break
             characters += len(message.content)
             bounded.append(message)
-        return request.model_copy(update={"history": list(reversed(bounded))})
+        history = list(reversed(bounded))
+        # Trimming can leave an assistant turn first; providers expect a user turn first.
+        while history and history[0].role != "user":
+            history.pop(0)
+        return request.model_copy(update={"history": history})
 
     def conversation_lock(request: ChatRequest, user: User | None) -> asyncio.Lock:
         key = f"{user.id if user else 'anonymous'}:{request.session_id or id(request)}"
@@ -298,7 +302,9 @@ def create_app(
             company_description=redact(config.company_description),
             assistant_name=redact(config.assistant_name),
             website=redact(config.website) if config.website else None,
-            suggested_questions=[redact(item) for item in config.suggested_questions],
+            suggested_questions=None
+            if config.suggested_questions is None
+            else [redact(item) for item in config.suggested_questions],
         )
 
     @api.get("/api/search")

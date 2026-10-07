@@ -1,5 +1,11 @@
 # Local development only: expose the sandbox on loopback for the host API.
+# Docker does not publish ports of a container attached only to an internal network,
+# so the sandbox also joins a dev-only bridge. Presets never use the network.
 services:
   sandbox:
     ports:
       - "127.0.0.1:8081:8001"
+    networks: [tools, devhost]
+
+networks:
+  devhost:

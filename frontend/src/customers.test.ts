@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { api } from './api';
 import { setAccessToken } from './auth';
-import { isCustomerAccount, isCustomerAccountList, isHealth } from './validation';
+import { requestKindLabel } from './AccountPanels';
+import {
+  isConfig,
+  isCustomerAccount,
+  isCustomerAccountList,
+  isHealth,
+  isRequestList,
+} from './validation';
 
 const customer = {
   id: 'customer-test',
@@ -95,5 +102,56 @@ describe('admin customer contract', () => {
         password: 'test-only-password',
       }),
     ).rejects.toThrow('No se pudo crear la cuenta.');
+  });
+});
+
+describe('forward-compatible response contract', () => {
+  const health = {
+    status: 'ok',
+    mode: 'demo',
+    model: 'demo',
+    embedding: 'hash',
+    tools: { sandbox: false, mcp: false },
+  };
+  const config = {
+    company_name: 'Empresa Ejemplo',
+    company_description: 'Descripción sintética.',
+    assistant_name: 'Asistente Ejemplo',
+    model: 'modelo-nuevo',
+    mode: 'demo',
+    embedding: 'hash',
+    max_upload_mb: 20,
+  };
+
+  it('keeps health and config usable when the backend adds an assistant mode', () => {
+    expect(isHealth({ ...health, mode: 'openai-compatible' })).toBe(true);
+    expect(isConfig({ ...config, mode: 'openai-compatible' })).toBe(true);
+    expect(isHealth({ ...health, mode: '' })).toBe(false);
+    expect(isConfig({ ...config, mode: 4 })).toBe(false);
+  });
+
+  it('lists requests of an unknown kind with a generic label instead of rejecting the list', () => {
+    const request = {
+      id: 'request-test',
+      status: 'received',
+      created_at: '2026-10-07T00:00:00Z',
+      details: { topic: 'Sintético' },
+    };
+    const list = {
+      requests: [
+        { ...request, kind: 'demo' },
+        { ...request, id: 'request-new', kind: 'callback' },
+      ],
+    };
+    expect(isRequestList(list)).toBe(true);
+    expect(isRequestList({ requests: [{ ...request, kind: '' }] })).toBe(false);
+    expect(isRequestList({ requests: [{ ...request, kind: null }] })).toBe(false);
+    expect(requestKindLabel('demo')).toBe('Solicitud de demostración');
+    expect(requestKindLabel('support')).toBe('Ticket de soporte');
+    expect(requestKindLabel('callback')).toBe('Solicitud');
+  });
+
+  it('keeps account roles strict because they gate administrator features', () => {
+    expect(isCustomerAccount({ ...customer, role: 'owner' })).toBe(false);
   });
 });
