@@ -39,8 +39,13 @@ brief is clear; `/speckit-plan` only if architecture changes.
   the exact `.env` lines to paste (COMPANY_NAME, COMPANY_DESCRIPTION, ASSISTANT_NAME,
   COMPANY_WEBSITE, COMPANY_SUGGESTED_QUESTIONS, COMPANY_PRODUCTS, KNOWLEDGE_DIR, a new
   DATA_DIR, SEED_DEMO=false). Never read `.env`. Do not rename "Humanizar" protocol identifiers.
-- Split independent work across agents by **disjoint files** (e.g. backend tools/agent, data/API,
-  frontend) and do the rest inline. Keep agent count small; no overlapping edits.
+- Split independent work by **disjoint files** and do the core inline. Delegate one sizable,
+  independent slice (frontend, corpus or tests) to Codex: `bash scripts/codex-worker.sh prepare`,
+  write the task (goal, exact files it owns, checks to run) to a file and launch
+  `bash scripts/codex-worker.sh run <name> <file>` in the background (~1 min fixed latency).
+  When it finishes, read `material/codex/<name>.md`, run `bash scripts/codex-worker.sh apply`,
+  review the staged diff and re-run the checks. Use Claude subagents for other slices; never let
+  two workers own the same file.
 - New tool: `ToolDefinition` (string/number/integer/boolean, `optional`) + branch in
   `ToolRegistry.run` + test. Writes with confirmation follow docs/EXAM_20_MIN.md.
 - Keep sources/citations, confirmation for writes, auth and ownership checks unless the brief
@@ -49,6 +54,7 @@ brief is clear; `/speckit-plan` only if architecture changes.
 ## 4. Verify (≤4 min)
 
 1. `make check` (or the proportional subset while iterating, full run before committing).
+   Optionally launch `make codex-review` in the background for an independent second opinion.
 2. With `make dev` running: a grounded answer with source, an unknown fact admitted as missing,
    an upload, a real tool call, and every acceptance criterion. Use the browser tools for the UI.
 3. Do not switch to demo mode to hide a provider error; report it.

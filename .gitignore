@@ -34,6 +34,8 @@ Lumen-source*.zip
 *.log
 .DS_Store
 /.codex/
+# Codex CLI shell session artifacts.
+/:memory:*
 .vercel/
 /.claude/cache/
 /.claude/debug/

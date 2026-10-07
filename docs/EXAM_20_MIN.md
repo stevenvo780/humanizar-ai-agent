@@ -64,6 +64,24 @@ interfaces y criterios de aceptación. Escribe una matriz breve:
 | Web y API Python | React + FastAPI | Adaptar campos o rutas | UI + Swagger |
 | Persistencia vectorial | Qdrant local/remoto | Elegir embedding/URL | Reinicio y búsqueda |
 
+## Claude Code + Codex (opcional)
+
+Claude Code coordina y Codex actúa como segundo trabajador en su propio worktree
+(`../SoftopPrueba-codex`, rama `codex/work`), así nunca editan los mismos archivos:
+
+- `make codex-prepare` crea o reinicia el worktree en el commit actual (3 s con cachés).
+- `bash scripts/codex-worker.sh run <nombre> <archivo|->` ejecuta una tarea sin intervención
+  (`gpt-6.1-sol`, sandbox `workspace-write` con acceso a las cachés de uv/npm); resultado en
+  `material/codex/<nombre>.md`. Medido: ~35–70 s por tarea pequeña, con checks incluidos.
+- `bash scripts/codex-worker.sh apply` trae sus cambios como parche 3-way al checkout
+  principal, para revisarlos y verificarlos antes del commit.
+- `make codex-review` hace una revisión enfocada de sólo lectura con esfuerzo medio. Evita
+  `codex exec review`: tardó 6 minutos con un diff de 7 líneas.
+- `make exam-tmux` abre Claude Code, `make dev` y un Codex interactivo en paneles.
+
+Conviene darle a Codex un bloque grande e independiente (por ejemplo frontend, corpus o
+pruebas) mientras Claude Code hace el núcleo; tareas diminutas no compensan su latencia.
+
 ## Minutos 3–5: especificación y plan acotados
 
 Copia `docs/EXAM_PROMPT.txt` en Claude Code e indica la ruta real del material.

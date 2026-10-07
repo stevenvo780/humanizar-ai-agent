@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-bash -n scripts/bootstrap.sh scripts/dev.sh scripts/check.sh scripts/package.sh scripts/install-gitleaks.sh scripts/prepare-fedora.sh
+bash -n scripts/bootstrap.sh scripts/dev.sh scripts/check.sh scripts/package.sh scripts/install-gitleaks.sh scripts/prepare-fedora.sh scripts/codex-worker.sh scripts/exam-tmux.sh
 uv run --project backend --locked --extra dev --extra semantic ruff check --config backend/pyproject.toml backend/app backend/tests
 uv run --project backend --locked --extra dev --extra semantic ruff format --check --config backend/pyproject.toml backend/app backend/tests
 uv run --project backend --locked --extra dev --extra semantic mypy --config-file backend/pyproject.toml backend/app backend/tests

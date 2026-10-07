@@ -33,6 +33,13 @@ def test_tool_definitions_accept_typed_and_optional_parameters() -> None:
             definition.validate(invalid)
 
 
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_tool_definitions_reject_non_finite_numbers(value: float) -> None:
+    definition = ToolDefinition("quote", "Cotización de prueba", {"amount": number(0, 10)})
+    with pytest.raises(ValueError):
+        definition.validate({"amount": value})
+
+
 @pytest.mark.parametrize(
     "prose",
     [

@@ -1,6 +1,6 @@
 CLAUDE_CODE_MODEL ?= claude-opus-5-5
 
-.PHONY: setup dev lan check docker stop package claude exam-claude speckit speckit-check
+.PHONY: setup dev lan check docker stop package claude exam-claude exam-tmux codex-prepare codex-review speckit speckit-check
 setup:
 	bash scripts/bootstrap.sh
 dev:
@@ -21,6 +21,14 @@ claude:
 exam-claude:
 	SPECIFY_FEATURE=002-exam-adaptation SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation \
 	claude --model "$(CLAUDE_CODE_MODEL)"
+# Optional layout: Claude Code, make dev and an interactive Codex on its own worktree.
+exam-tmux:
+	bash scripts/exam-tmux.sh
+# Codex second worker (see docs/EXAM_20_MIN.md): isolated worktree and focused review.
+codex-prepare:
+	bash scripts/codex-worker.sh prepare
+codex-review:
+	bash scripts/codex-worker.sh review
 speckit:
 	uv tool install specify-cli==1.0.7
 speckit-check:
