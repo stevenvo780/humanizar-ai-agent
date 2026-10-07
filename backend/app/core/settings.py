@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     )
     anthropic_api_key: SecretStr = SecretStr("")
     llm_mode: Literal["auto", "demo", "anthropic"] = "auto"
-    anthropic_model: str = "claude-haiku-4-5"
+    anthropic_model: str = "claude-sonnet-5-5"
     company_name: str = DEFAULT_COMPANY_NAME
     company_description: str = DEFAULT_COMPANY_DESCRIPTION
     assistant_name: str = DEFAULT_ASSISTANT_NAME

@@ -76,7 +76,7 @@ export function HeroSection({
           <Braces size={12} /> FastAPI
         </span>
         <span>
-          <Sparkles size={12} /> Claude Haiku
+          <Sparkles size={12} /> Claude Sonnet 5.5
         </span>
         <span>
           <Database size={12} /> PostgreSQL + Qdrant

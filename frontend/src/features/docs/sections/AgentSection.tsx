@@ -10,7 +10,7 @@ export function AgentSection() {
     >
       <p>
         El modo Anthropic utiliza el ciclo nativo de <code>tool_use</code> y{' '}
-        <code>tool_result</code> de Claude Haiku 4.5. Cada conversación tiene límites de turnos,
+        <code>tool_result</code> de Claude Sonnet 5.5. Cada conversación tiene límites de turnos,
         tokens, tiempo y llamadas a herramientas.
       </p>
       <ol className="docs-process">

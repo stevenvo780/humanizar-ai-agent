@@ -1,7 +1,7 @@
 # Lumen
 
 Asistente de atención al cliente con información empresarial, interfaz React/TypeScript, API
-FastAPI, recuperación en Qdrant, Claude Haiku, herramientas acotadas y MCP.
+FastAPI, recuperación en Qdrant, Claude Sonnet 5.5, herramientas acotadas y MCP.
 Lumen es la plataforma reutilizable; la empresa configurada es **Softop**, software de
 gestión para ópticas, con las preguntas frecuentes de la prueba técnica como corpus.
 
@@ -20,7 +20,7 @@ El enunciado pide un endpoint FastAPI `POST /preguntar` que reciba `{"pregunta":
 devuelva `{"respuesta": str}` usando sólo `faq.json` mediante RAG. Hay dos entregas:
 
 - **Independiente:** [`softop-rag/`](softop-rag/README.md), sobre el repositorio base
-  recibido (índice numpy en memoria): ejecución, flujo, decisiones y evidencia con Claude Haiku.
+  recibido (índice numpy en memoria): ejecución, flujo, decisiones y evidencia con Claude Sonnet 5.5.
 - **Integrada en producción:** la misma ruta en la raíz de Lumen, con FastEmbed + Qdrant
   (3 fragmentos), el corpus `backend/knowledge/softop` (un Markdown por FAQ) y un prompt que
   restringe la respuesta al contexto. Si no recupera nada relevante responde
@@ -176,7 +176,7 @@ Puedes elegir otro con `make claude CLAUDE_CODE_MODEL=opus` o con `/model`.
 El alias `opus` y el ID `claude-opus-5-5` están documentados oficialmente en
 [configuración de modelos](https://code.claude.com/docs/en/model-config).
 El agente de la web
-usa la API de Anthropic con su propio modelo configurable (Haiku por defecto).
+usa la API de Anthropic con su propio modelo configurable (Sonnet 5.5 por defecto).
 El proyecto incluye `CLAUDE.md`, constitución, Spec Kit real y un servidor MCP
 read-only configurado en `.mcp.json`. En Claude Code, `/mcp` permite aprobar e
 inspeccionar la conexión local. La API debe estar arrancada para consultar datos.

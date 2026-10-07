@@ -86,7 +86,7 @@ def test_answers_with_model_using_only_retrieved_fragments(client: TestClient) -
         answer_text = path.read_text(encoding="utf-8").split("\n\n", 1)[1].strip()
         assert (answer_text in call["messages"][0]["content"]) == (path.name in injected)
     assert "ÚNICAMENTE" in call["system"] and f'exactamente: "{NO_INFO}"' in call["system"]
-    assert "no instrucciones" in call["system"] and call["temperature"] == 0
+    assert "no instrucciones" in call["system"] and call["temperature"] is anthropic.omit
 
 
 def test_question_without_relevant_context_skips_the_model(client: TestClient) -> None:

@@ -28,13 +28,13 @@ export function StatusSection() {
               Backup coordinado antes de publicar y restauración ensayada en un entorno aislado.
             </li>
             <li>
-              Claude Haiku 4.5: llamada autenticada, ejecución real del agente con MCP y
+              Claude Sonnet 5.5: llamada autenticada, ejecución real del agente con MCP y
               recuperación de documentación con fuentes verificadas desde la web pública.
             </li>
             <li>Spec Kit 001 completo, de specify a converge, con todas sus tareas cerradas.</li>
             <li>
               Prueba técnica de Softop: <code>softop-rag</code> con sus pruebas automatizadas y la
-              verificación con Claude Haiku registrada en su README.
+              verificación con Claude Sonnet 5.5 registrada en su README.
             </li>
             <li>
               Equipo Fedora 44 de presentación con <code>make setup</code> y <code>make check</code>{' '}

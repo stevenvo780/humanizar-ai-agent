@@ -119,7 +119,7 @@ export function ProcessSection() {
         <div>
           <h3>Dos modelos, dos papeles</h3>
           <p>
-            El agente de esta web responde con Claude Haiku a través del backend; la clave del
+            El agente de esta web responde con Claude Sonnet 5.5 a través del backend; la clave del
             proveedor nunca llega al navegador. Claude Code (Opus 5.5) y Codex son herramientas de
             desarrollo: no intervienen en las conversaciones de los visitantes.
           </p>

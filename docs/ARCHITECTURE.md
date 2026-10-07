@@ -9,7 +9,7 @@ flowchart LR
   API --> ING[Parseo y fragmentación]
   ING --> V[Qdrant persistente]
   API --> AG[Ciclo de agente limitado]
-  AG -->|messages y tool results| C[Claude Haiku]
+  AG -->|messages y tool results| C[Claude Sonnet 5.5]
   AG --> R[Registro de herramientas]
   R --> V
   R --> CAL[Calculadora AST]

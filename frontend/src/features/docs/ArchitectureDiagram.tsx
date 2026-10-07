@@ -20,9 +20,9 @@ export function ArchitectureDiagram({ assistant }: { assistant: string }) {
             React se sirve desde Vercel. Las llamadas REST y SSE del mismo origen pasan por un
             rewrite que añade una cabecera privada hacia FastAPI en Docker en el VPS. La API valida
             JWT, consulta PostgreSQL con TLS en el schema lumen, recupera evidencia de Qdrant local
-            y coordina Claude Haiku y el sandbox aislado. SQLite es la alternativa local opcional.
-            MCP consulta la misma API por HTTP. Este diagrama describe la configuración desplegada;
-            la evidencia de cada comprobación se registra por separado.
+            y coordina Claude Sonnet 5.5 y el sandbox aislado. SQLite es la alternativa local
+            opcional. MCP consulta la misma API por HTTP. Este diagrama describe la configuración
+            desplegada; la evidencia de cada comprobación se registra por separado.
           </desc>
           <defs>
             <marker
@@ -93,7 +93,7 @@ export function ArchitectureDiagram({ assistant }: { assistant: string }) {
               FastAPI · VPS Docker
             </text>
             <text x="230" y="185">
-              Claude Haiku 4.5
+              Claude Sonnet 5.5
             </text>
             <text x="434" y="185">
               PostgreSQL + Qdrant

@@ -6,7 +6,7 @@ externo). Estas recetas usan piezas que ya existen y fueron **verificadas el 202
 
 | Comprobación (2026-10-07) | Resultado |
 | --- | --- |
-| Clave Anthropic local (`claude-haiku-4-5`) | Respuesta real en 1,3 s |
+| Clave Anthropic local (`claude-sonnet-5-5`) | Respuesta real en 1,3 s |
 | `POST /api/ask` real (FastEmbed + Qdrant local + Haiku, corpus Humanizar) | Respuesta citada `[S1]` en 3,8 s; dato ausente admitido |
 | Qdrant como servidor (`QDRANT_URL`, imagen `qdrant/qdrant` en caché) | Ingesta y búsqueda semántica correctas |
 | Imágenes Docker del stack (`docker compose build`) | Construidas y en caché (2 min) |
