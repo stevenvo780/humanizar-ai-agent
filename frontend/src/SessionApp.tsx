@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,
@@ -33,11 +33,14 @@ function AuthScreen({
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(initialError);
+  const submitting = useRef(false);
   const creating = setup || mode === 'register';
   const assistant = config?.assistant_name ?? 'Humanizar IA';
 
   async function submit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setError('');
     try {
@@ -52,6 +55,7 @@ function AuthScreen({
     } catch (err) {
       setError(errorMessage(err));
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -142,8 +146,20 @@ function AuthScreen({
           {!setup && (
             <div className="auth-tabs" role="tablist" aria-label="Acceso a la cuenta">
               <button
+                id="auth-tab-login"
                 role="tab"
+                aria-controls="auth-panel"
                 aria-selected={mode === 'login'}
+                tabIndex={mode === 'login' ? 0 : -1}
+                disabled={busy}
+                onKeyDown={(event) => {
+                  if (['ArrowLeft', 'ArrowRight', 'End'].includes(event.key)) {
+                    event.preventDefault();
+                    setMode('register');
+                    setError('');
+                    document.getElementById('auth-tab-register')?.focus();
+                  }
+                }}
                 onClick={() => {
                   setMode('login');
                   setError('');
@@ -153,8 +169,20 @@ function AuthScreen({
                 Entrar
               </button>
               <button
+                id="auth-tab-register"
                 role="tab"
+                aria-controls="auth-panel"
                 aria-selected={mode === 'register'}
+                tabIndex={mode === 'register' ? 0 : -1}
+                disabled={busy}
+                onKeyDown={(event) => {
+                  if (['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) {
+                    event.preventDefault();
+                    setMode('login');
+                    setError('');
+                    document.getElementById('auth-tab-login')?.focus();
+                  }
+                }}
                 onClick={() => {
                   setMode('register');
                   setError('');
@@ -165,7 +193,13 @@ function AuthScreen({
               </button>
             </div>
           )}
-          <form className="auth-form" onSubmit={(event) => void submit(event)}>
+          <form
+            id="auth-panel"
+            role={setup ? undefined : 'tabpanel'}
+            aria-labelledby={setup ? undefined : `auth-tab-${mode}`}
+            className="auth-form"
+            onSubmit={(event) => void submit(event)}
+          >
             {creating && (
               <>
                 <label htmlFor="auth-name">Tu nombre</label>
@@ -252,34 +286,50 @@ export default function SessionApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState(false);
+  const bootstrapRevision = useRef(0);
 
   const bootstrap = useCallback(async () => {
+    const revision = ++bootstrapRevision.current;
     setLoading(true);
     setError('');
     setUnavailable(false);
     try {
       const status = await api.authStatus();
+      if (revision !== bootstrapRevision.current) return;
       setSetup(status.setup_required);
       try {
-        setConfig(await api.config());
+        const configuration = await api.config();
+        if (revision !== bootstrapRevision.current) return;
+        setConfig(configuration);
       } catch {
         /* Brand fallback is available offline. */
       }
+      if (revision !== bootstrapRevision.current) return;
       if (!status.setup_required) {
         const session = await refreshSession();
-        if (session) setUser(await api.me());
+        if (revision !== bootstrapRevision.current) return;
+        if (session) {
+          const account = await api.me();
+          if (revision === bootstrapRevision.current) setUser(account);
+        }
       }
     } catch (err) {
-      setError(errorMessage(err));
-      setUnavailable(true);
+      if (revision === bootstrapRevision.current) {
+        setError(errorMessage(err));
+        setUnavailable(true);
+      }
     } finally {
-      setLoading(false);
+      if (revision === bootstrapRevision.current) setLoading(false);
     }
   }, []);
 
+  const invalidateBootstrap = useCallback(() => {
+    bootstrapRevision.current++;
+  }, []);
   useEffect(() => {
     void bootstrap();
-  }, [bootstrap]);
+    return invalidateBootstrap;
+  }, [bootstrap, invalidateBootstrap]);
   useEffect(() => {
     const expired = () => {
       setUser(null);

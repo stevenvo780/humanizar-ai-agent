@@ -1,4 +1,5 @@
 import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -16,12 +17,16 @@ SPEC.loader.exec_module(auditor)
     [
         ".env",
         "backend/.env.production",
+        "backend/.env.example",
+        "backend/.env.private/.env.example",
         "data/application.sqlite3",
         ".codex/agent-parity-manifest.json",
         "backend/private.key",
         ".application-secret",
         ".claude/settings.local.json",
         ".claude/sessions/session.json",
+        ".CLAUDE/Sessions/session.json",
+        ".specify/feature.json",
         "material/customer.md",
         "artifacts/customer.png",
         "frontend/node_modules/pkg/package.json",
@@ -52,3 +57,19 @@ def test_accepts_public_source(filename: str) -> None:
 def test_rejects_symlinks_and_submodules() -> None:
     assert auditor.private_path("frontend/src/link.ts", "120000")
     assert auditor.private_path("external/private", "160000")
+
+
+def test_audit_rejects_private_files_forced_into_git_index(tmp_path: Path) -> None:
+    subprocess.run(["git", "init", "--quiet", str(tmp_path)], check=True, capture_output=True)
+    filenames = [".env.example", "config/env.example", ".CLAUDE/Sessions/session.json"]
+    for filename in filenames:
+        target = tmp_path / filename
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("synthetic fixture\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "add", "--force", "--", *filenames],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+    )
+    assert auditor.audit_index(tmp_path) == [".CLAUDE/Sessions/session.json"]

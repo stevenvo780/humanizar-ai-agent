@@ -19,7 +19,6 @@ import {
   LoaderCircle,
   Menu,
   MessageSquare,
-  KeyRound,
   LogOut,
   ClipboardList,
   Plus,
@@ -38,7 +37,7 @@ import ReactMarkdown from 'react-markdown';
 import { api, errorMessage, streamChat } from './api';
 import { createId } from './id';
 import { ActionConfirmation, actionProposal, useConfirmedAction } from './actions';
-import { ProviderPanel, RequestsPanel } from './AccountPanels';
+import { RequestsPanel } from './AccountPanels';
 import { SiteLink } from './navigation';
 import type {
   ChatMessage,
@@ -595,6 +594,7 @@ function Tools({
   const [value, setValue] = useState('(120 + 80) * 2');
   const [preset, setPreset] = useState('pwd');
   const [running, setRunning] = useState(false);
+  const runningRef = useRef(false);
   const [result, setResult] = useState<ToolTrace | null>(null);
   const [error, setError] = useState('');
   const definition = tools.find((tool) => tool.name === selected);
@@ -625,6 +625,8 @@ function Tools({
 
   async function run(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+    if (runningRef.current || !online || !definition?.enabled) return;
+    runningRef.current = true;
     setRunning(true);
     setError('');
     setResult(null);
@@ -647,7 +649,9 @@ function Tools({
     } catch (err) {
       setError(errorMessage(err));
     } finally {
+      runningRef.current = false;
       setRunning(false);
+      setWriteConfirmed(false);
     }
   }
 
@@ -671,6 +675,7 @@ function Tools({
             className={`tool-card ${selected === tool.name ? 'selected' : ''}`}
             key={tool.name}
             aria-pressed={selected === tool.name}
+            disabled={running}
             onClick={() => {
               setSelected(tool.name);
               setValue(tool.name === 'calculate' ? '(120 + 80) * 2' : 'servicios de la empresa');
@@ -1234,7 +1239,6 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
       ? ([
           { id: 'knowledge', label: 'Documentación', icon: <BookOpen size={17} /> },
           { id: 'tools', label: 'Herramientas', icon: <WandSparkles size={17} /> },
-          { id: 'provider', label: 'Conexión Claude', icon: <KeyRound size={17} /> },
         ] satisfies { id: Tab; label: string; icon: ReactNode }[])
       : []),
   ];
@@ -1444,12 +1448,17 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
                   className={tab === item.id ? 'selected' : ''}
                   onClick={() => selectTab(item.id)}
                   onKeyDown={(event) => {
-                    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+                    if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) {
+                      event.preventDefault();
                       const index = tabItems.findIndex((next) => next.id === item.id);
                       const next =
                         tabItems[
-                          (index + (event.key === 'ArrowRight' ? 1 : tabItems.length - 1)) %
-                            tabItems.length
+                          event.key === 'Home'
+                            ? 0
+                            : event.key === 'End'
+                              ? tabItems.length - 1
+                              : (index + (event.key === 'ArrowRight' ? 1 : tabItems.length - 1)) %
+                                tabItems.length
                         ];
                       if (next) {
                         selectTab(next.id);
@@ -1646,7 +1655,6 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               {tab === 'requests' && (
                 <RequestsPanel isAdmin={isAdmin} onChat={() => selectTab('assistant')} />
               )}
-              {tab === 'provider' && isAdmin && <ProviderPanel onChanged={refresh} />}
             </div>
           </main>
           {tab === 'assistant' && (
@@ -1692,7 +1700,7 @@ export default function App({ user, onLogout }: { user: User; onLogout: () => Pr
               En <strong>Mis solicitudes</strong> puedes revisar las demostraciones y los tickets de
               soporte que confirmaste.{' '}
               {isAdmin &&
-                'Desde tu cuenta de administrador también puedes gestionar la documentación, las herramientas y la conexión con Claude.'}
+                'Desde tu cuenta de administrador también puedes gestionar la documentación y las herramientas.'}
             </p>
             <p className="help-detail">
               {config?.mode === 'demo'

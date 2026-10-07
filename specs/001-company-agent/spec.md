@@ -22,7 +22,7 @@
 - Read-only MCP connected to the API and configured for Claude Code.
 - Reproducible local setup and locked container build; sanitized packaging.
 - JWT access with rotating refresh, Argon2, roles and persistent private histories.
-- Admin-only provider configuration encrypted at rest and real connection verification.
+- Backend-only provider environment configuration, without browser key forms or HTTP key routes.
 - Public Humanizar corpus preloaded; grounded product recommendations and confirmed requests.
 
 ## Scope limits
@@ -44,7 +44,7 @@ and arbitrary autonomous code execution are outside this implementation.
 | FR-006 | MCP reads through the API without another Qdrant writer | Handshake/company identity; protected search requires authentication |
 | FR-007 | Locked setup, source packaging and ten Spec Kit skills are portable | Setup/check commands, allowlist tests and scaffold hash/reference audit |
 | FR-008 | JWT/Argon2, roles, revocable sessions and histories isolate accounts | Auth, refresh, role and conversation ownership tests |
-| FR-009 | Admin provider credentials are encrypted and verification is guarded | Settings/provider race and permission tests; live call requires a user's key |
+| FR-009 | Provider credentials come only from the backend environment | Removed HTTP routes, ignored legacy DB configuration and public-response isolation tests; live calls require a user's key |
 | FR-010 | Public Humanizar evidence supports recommendations and confirmed local requests | Recommendation, idempotency, owner listing and admin inbox tests |
 
 Build, types, lint and responsive browser checks apply across these requirements.

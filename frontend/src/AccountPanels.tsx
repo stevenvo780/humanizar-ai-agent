@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { SyntheticEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowRight,
-  CheckCheck,
   CircleHelp,
   Clock3,
-  KeyRound,
   LoaderCircle,
   MessageSquare,
   RefreshCw,
@@ -13,31 +10,40 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { api, errorMessage } from './api';
-import type { CustomerRequest, ProviderSettings } from './types';
+import type { CustomerRequest } from './types';
 
 export function RequestsPanel({ onChat, isAdmin }: { onChat: () => void; isAdmin: boolean }) {
   const [requests, setRequests] = useState<CustomerRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const loadRevision = useRef(0);
   const load = useCallback(async () => {
+    const revision = ++loadRevision.current;
     setLoading(true);
     setError('');
     try {
-      setRequests((await (isAdmin ? api.adminRequests() : api.requests())).requests);
+      const result = await (isAdmin ? api.adminRequests() : api.requests());
+      if (revision === loadRevision.current) setRequests(result.requests);
     } catch (err) {
-      setError(errorMessage(err));
+      if (revision === loadRevision.current) setError(errorMessage(err));
     } finally {
-      setLoading(false);
+      if (revision === loadRevision.current) setLoading(false);
     }
   }, [isAdmin]);
+  const invalidateLoad = useCallback(() => {
+    loadRevision.current++;
+  }, []);
   useEffect(() => {
     void load();
     const changed = () => {
       void load();
     };
     window.addEventListener('humanizar-requests-changed', changed);
-    return () => window.removeEventListener('humanizar-requests-changed', changed);
-  }, [load]);
+    return () => {
+      invalidateLoad();
+      window.removeEventListener('humanizar-requests-changed', changed);
+    };
+  }, [load, invalidateLoad]);
   const labels: Record<string, string> = {
     received: 'Recibida',
     open: 'Abierta',
@@ -142,164 +148,6 @@ export function RequestsPanel({ onChat, isAdmin }: { onChat: () => void; isAdmin
         <ShieldCheck size={13} /> Las solicitudes se guardan en la plataforma. No se envían mensajes
         externos automáticamente.
       </p>
-    </section>
-  );
-}
-
-export function ProviderPanel({ onChanged }: { onChanged: () => Promise<void> }) {
-  const [settings, setSettings] = useState<ProviderSettings | null>(null);
-  const [key, setKey] = useState('');
-  const [busy, setBusy] = useState<'load' | 'save' | 'test' | null>('load');
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-  const load = useCallback(async () => {
-    setBusy('load');
-    setError('');
-    try {
-      setSettings(await api.provider());
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
-  async function save(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    setBusy('save');
-    setError('');
-    setNotice('');
-    const credential = key.trim();
-    setKey('');
-    try {
-      await api.saveProvider(credential);
-      setSettings(await api.provider());
-      await onChanged();
-      setNotice('Clave guardada. Verifica la conexión para comprobar que Claude está disponible.');
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-  async function test(): Promise<void> {
-    setBusy('test');
-    setError('');
-    setNotice('');
-    try {
-      const result = await api.testProvider();
-      setSettings(await api.provider());
-      await onChanged();
-      if (result.ok) setNotice(result.message);
-      else setError(result.message);
-    } catch (err) {
-      setError(errorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-  return (
-    <section className="workspace-page provider-page">
-      <div className="page-eyebrow">
-        <KeyRound size={15} /> ADMINISTRACIÓN · CONEXIÓN CLAUDE
-      </div>
-      <h1>
-        Conecta la inteligencia.
-        <br />
-        <span>Conserva el control.</span>
-      </h1>
-      <p className="page-intro">
-        Configura el proveedor del asistente desde tu cuenta de administrador.
-        <br className="desktop-break" /> El modelo de esta conexión es Claude Haiku 4.5.
-      </p>
-      <div className="provider-status-card">
-        <span className="provider-logo">
-          <Sparkles size={27} />
-        </span>
-        <div>
-          <h2>Claude Haiku 4.5</h2>
-          <p>
-            {busy === 'load'
-              ? 'Consultando configuración…'
-              : settings?.verified
-                ? 'Conexión verificada con el proveedor'
-                : settings?.configured
-                  ? 'Clave configurada · Verificación pendiente'
-                  : 'Sin clave configurada · Modo demo'}
-          </p>
-        </div>
-        <span className={`provider-state ${settings?.verified ? 'verified' : ''}`}>
-          <span className="status-dot" />
-          {settings?.verified ? 'Verificada' : 'Pendiente'}
-        </span>
-      </div>
-      <form className="provider-form" onSubmit={(event) => void save(event)}>
-        <div className="provider-form-heading">
-          <ShieldCheck size={19} />
-          <div>
-            <h2>{settings?.configured ? 'Actualizar clave de API' : 'Añadir clave de API'}</h2>
-            <p>
-              Se envía al backend para su custodia. No se guarda en el historial ni en el
-              almacenamiento del navegador.
-            </p>
-          </div>
-        </div>
-        <label htmlFor="provider-key">Clave de Anthropic</label>
-        <input
-          id="provider-key"
-          type="password"
-          autoComplete="off"
-          value={key}
-          onChange={(event) => setKey(event.target.value)}
-          placeholder="Ingresa una clave nueva"
-          required
-          minLength={8}
-          spellCheck={false}
-        />
-        <div className="provider-form-actions">
-          <button className="primary-button" disabled={!!busy || !key.trim()}>
-            {busy === 'save' ? <LoaderCircle size={15} className="spin" /> : <KeyRound size={15} />}
-            {busy === 'save' ? 'Guardando…' : 'Guardar clave'}
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            disabled={!!busy || !settings?.configured}
-            onClick={() => void test()}
-          >
-            {busy === 'test' ? (
-              <LoaderCircle size={15} className="spin" />
-            ) : (
-              <CheckCheck size={16} />
-            )}
-            {busy === 'test' ? 'Verificando…' : 'Verificar conexión'}
-          </button>
-        </div>
-        {error && (
-          <div className="notice error" role="alert">
-            {error}
-          </div>
-        )}
-        {notice && (
-          <div className="notice success" role="status">
-            <CheckCheck size={16} />
-            {notice}
-          </div>
-        )}
-      </form>
-      <div className="provider-explanation">
-        <ShieldCheck size={20} />
-        <div>
-          <h3>El estado cuenta lo que está comprobado.</h3>
-          <p>
-            Guardar una clave no confirma su validez. La conexión se presenta como verificada
-            únicamente después de una comprobación exitosa. Sin conexión activa, el asistente
-            informa que está en modo demo.
-          </p>
-        </div>
-      </div>
     </section>
   );
 }

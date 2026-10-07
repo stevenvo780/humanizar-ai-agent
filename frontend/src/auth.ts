@@ -1,58 +1,83 @@
 import type { AuthResponse } from './types';
+import { isAuthResponse, validate } from './validation';
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<AuthResponse | null> | null = null;
+let sessionRevision = 0;
 
 export function setAccessToken(token: string | null): void {
+  sessionRevision++;
   accessToken = token;
+  refreshInFlight = null;
 }
 
 export async function refreshSession(): Promise<AuthResponse | null> {
   if (refreshInFlight) return refreshInFlight;
-  refreshInFlight = (async () => {
+  const revision = sessionRevision;
+  const pending = (async () => {
     const response = await fetch('/api/auth/refresh', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'X-Requested-With': 'Humanizar' },
     });
+    if (revision !== sessionRevision) return null;
     if (!response.ok) {
       accessToken = null;
       return null;
     }
-    const result = (await response.json()) as AuthResponse;
+    const result = validate(await response.json(), isAuthResponse);
+    if (revision !== sessionRevision) return null;
     accessToken = result.access_token;
     return result;
   })();
+  refreshInFlight = pending;
   try {
-    return await refreshInFlight;
+    return await pending;
   } finally {
-    refreshInFlight = null;
+    if (refreshInFlight === pending) refreshInFlight = null;
   }
 }
 
 export async function authenticatedFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const revision = sessionRevision;
   const perform = () => {
     const headers = new Headers(init.headers);
     if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
     return fetch(path, { ...init, headers, credentials: 'same-origin' });
   };
   const response = await perform();
-  if (response.status !== 401) return response;
+  if (response.status !== 401 || revision !== sessionRevision) return response;
+  init.signal?.throwIfAborted();
   const session = await refreshSession();
-  if (session) return perform();
+  init.signal?.throwIfAborted();
+  if (revision !== sessionRevision) return response;
+  if (session) {
+    const retry = await perform();
+    if (retry.status !== 401 || revision !== sessionRevision) return retry;
+    setAccessToken(null);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('humanizar-session-expired'));
+    return retry;
+  }
+  setAccessToken(null);
   if (typeof window !== 'undefined') window.dispatchEvent(new Event('humanizar-session-expired'));
   return response;
 }
 
 export async function logoutSession(): Promise<void> {
+  const token = accessToken;
+  setAccessToken(null);
+  const headers = new Headers({ 'X-Requested-With': 'Humanizar' });
+  if (token) headers.set('Authorization', `Bearer ${token}`);
   try {
-    const response = await authenticatedFetch('/api/auth/logout', {
+    const response = await fetch('/api/auth/logout', {
       method: 'POST',
-      headers: { 'X-Requested-With': 'Humanizar' },
+      headers,
+      credentials: 'same-origin',
     });
     if (!response.ok)
       throw new Error('No se pudo cerrar la sesión en el servidor. Intenta de nuevo.');
   } finally {
-    accessToken = null;
+    // Also invalidate refreshes started while the logout request was in progress.
+    setAccessToken(null);
   }
 }

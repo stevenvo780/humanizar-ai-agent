@@ -1,6 +1,5 @@
-"""Application identities, revocable sessions, private conversations and encrypted settings."""
+"""Application identities, revocable sessions, private conversations and reserved legacy config."""
 
-import base64
 import hashlib
 import hmac
 import json
@@ -17,8 +16,6 @@ from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
-
-from cryptography.fernet import Fernet, InvalidToken
 
 from app.security import redact, safe_input
 
@@ -86,8 +83,6 @@ class ApplicationDatabase:
         data_dir.mkdir(parents=True, exist_ok=True)
         master = _master_secret(data_dir)
         self._jwt_secret = hmac.digest(master, b"humanizar.access.v1", "sha256")
-        encryption_key = hmac.digest(master, b"humanizar.configuration.v1", "sha256")
-        self._fernet = Fernet(base64.urlsafe_b64encode(encryption_key))
         self._lock = threading.RLock()
         path = data_dir / "application.sqlite3"
         if path.is_symlink():
@@ -396,35 +391,6 @@ class ApplicationDatabase:
             self._owned_conversation(user_id, identifier)
             self._db.execute("DELETE FROM conversations WHERE id=?", (identifier,))
             return True
-
-    def get_provider_key(self) -> str:
-        with self._lock:
-            row = self._db.execute(
-                "SELECT value FROM config WHERE key='anthropic_api_key'"
-            ).fetchone()
-            if row is None:
-                return ""
-            try:
-                return self._fernet.decrypt(str(row["value"]).encode("ascii")).decode("utf-8")
-            except (InvalidToken, ValueError, UnicodeError):
-                raise RuntimeError(
-                    "No se pudo leer la configuración cifrada del proveedor."
-                ) from None
-
-    def set_provider_key(self, value: str) -> None:
-        value = value.strip()
-        if len(value) > 512:
-            raise ValueError("Clave del proveedor inválida.")
-        with self._lock:
-            if not value:
-                self._db.execute("DELETE FROM config WHERE key='anthropic_api_key'")
-                return
-            encrypted = self._fernet.encrypt(value.encode("utf-8")).decode("ascii")
-            self._db.execute(
-                "INSERT INTO config VALUES ('anthropic_api_key', ?) "
-                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                (encrypted,),
-            )
 
     def close(self) -> None:
         with self._lock:

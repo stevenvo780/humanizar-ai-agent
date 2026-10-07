@@ -29,10 +29,15 @@ Cada consulta recupera evidencia y limita turnos, tokens y llamadas. Las herrami
 devuelven resultados estructurados y se registran con duración y estado. Los eventos
 SSE permiten mostrar avances sin inventar cadenas de razonamiento. Los errores del
 proveedor se informan sin exponer claves ni mensajes internos sensibles.
+Un límite global compartido por REST y SSE evita iniciar más llamadas de modelo
+que las permitidas. El trabajo síncrono de autenticación y recuperación se ejecuta
+fuera del event loop. La ingesta mantiene su exclusión hasta terminar el trabajo
+real, incluso si el cliente cancela la subida.
 
 Qdrant local guarda vectores y SQLite conserva documentos y fragmentos bajo DATA_DIR.
 Otra base relacional persistente, `application.sqlite3`, guarda cuentas, sesiones,
-conversaciones, mensajes, solicitudes y la configuración cifrada de Anthropic.
+conversaciones, mensajes y solicitudes. La configuración de Anthropic procede
+exclusivamente del entorno privado del backend; ninguna ruta HTTP acepta claves.
 JWT usa claves persistentes privadas, Argon2 protege contraseñas y el refresh está
 en una cookie HttpOnly. Logout revoca la familia de sesiones rotadas.
 El servidor obtiene el historial por usuario; descarta el historial enviado por el cliente.

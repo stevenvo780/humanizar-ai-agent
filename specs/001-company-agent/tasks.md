@@ -8,11 +8,12 @@
 - [x] T006 FR-001–FR-010: proportional gates and browser integration (`scripts/check.sh`, `docs/VALIDATION.md`).
 - [x] T007 FR-010: sourced public Humanizar corpus and branding (`backend/knowledge/humanizar`).
 - [x] T008 FR-008: JWT, sessions, roles and private histories (`backend/app/auth.py`, `backend/app/database.py`).
-- [x] T009 FR-009: encrypted provider settings and guarded verification (`backend/app/main.py`, `backend/tests`).
+- [x] T009 FR-009: backend-only environment configuration; remove browser key routes and ignore legacy provider records (`backend/app/main.py`, `backend/tests`).
 - [x] T010 FR-010: sourced recommendations and confirmed requests/admin inbox (`backend/app/business.py`, `backend/app/tools.py`).
 
-Pending environment checks: real Anthropic authentication, remote Qdrant and Docker
-image/runtime execution. See docs/VALIDATION.md for evidence and limitations.
+Pending environment checks: remote Qdrant and Docker image/runtime execution.
+Real local Anthropic authentication is recorded in docs/VALIDATION.md, together
+with evidence and limitations; credentials are excluded from the public clone.
 
 The actual exam will introduce new tasks based on its brief; do not mark those done
 without implementation and acceptance evidence.

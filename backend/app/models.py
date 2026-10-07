@@ -1,6 +1,6 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Mode = Literal["demo", "anthropic"]
 
@@ -83,8 +83,3 @@ class ActionConfirmation(BaseModel):
     tool: Literal["create_demo_request", "create_support_ticket"]
     input: dict[str, Any]
     action_key: str = Field(pattern=r"^[a-fA-F0-9-]{36}$")
-
-
-class ProviderConfiguration(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    api_key: SecretStr = Field(min_length=20, max_length=512)

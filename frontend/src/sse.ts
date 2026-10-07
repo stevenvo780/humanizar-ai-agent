@@ -49,7 +49,8 @@ export class SseParser {
 
 export async function consumeSse(
   response: Response,
-  onEvent: (event: SseEvent) => void,
+  // Returning false marks a terminal event and closes the reader immediately.
+  onEvent: (event: SseEvent) => unknown,
 ): Promise<void> {
   if (!response.body) throw new Error('El servidor no devolvió un flujo de respuesta.');
   const reader = response.body.getReader();
@@ -59,10 +60,16 @@ export async function consumeSse(
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
-      for (const event of parser.feed(decoder.decode(value, { stream: true }))) onEvent(event);
+      for (const event of parser.feed(decoder.decode(value, { stream: true }))) {
+        if (onEvent(event) === false) return;
+      }
     }
-    for (const event of parser.feed(decoder.decode())) onEvent(event);
-    for (const event of parser.finish()) onEvent(event);
+    for (const event of parser.feed(decoder.decode())) {
+      if (onEvent(event) === false) return;
+    }
+    for (const event of parser.finish()) {
+      if (onEvent(event) === false) return;
+    }
   } finally {
     await reader.cancel().catch(() => undefined);
     reader.releaseLock();

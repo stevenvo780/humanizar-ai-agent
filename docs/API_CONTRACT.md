@@ -7,7 +7,7 @@ Both are available through the same-origin frontend proxy, including LAN access.
 
 Authentication is enabled by default. `/health`, `/config`, `/company` and auth
 setup/login/register/status are public. Other routes require an access JWT in
-`Authorization: Bearer TOKEN`. Document management, manual tools, provider settings
+`Authorization: Bearer TOKEN`. Document management, manual tools
 and `/admin/requests` require the admin role. Tests explicitly disable auth only
 for legacy isolated component checks.
 
@@ -71,18 +71,24 @@ Successful output is `{request:{id,kind,status:"received",created_at,details},me
 `GET /requests` lists the user's records. `GET /admin/requests` lists the admin inbox.
 No external notifications or calendar bookings are made.
 
-`GET /settings/provider` -> `{configured,model,mode,verified}`; admin-only
-`PUT /settings/provider` accepts `{api_key}` and encrypts it at rest. The key is never
-returned. `POST /settings/provider/test` makes a real eight-token Haiku call and
-only verifies the current configuration. Saving activates the Anthropic provider
-without restarting. SDK authentication errors are explicit; no silent demo fallback.
+JSON and SSE chat share a global concurrency bound (`MAX_CONCURRENT_CHATS=4`).
+When all slots are occupied, requests receive 429 with `Retry-After: 2` rather
+than starting additional model calls. Cancellation releases a chat slot after
+the agent stops. Ingestion holds its exclusive slot until parsing/storage workers
+actually finish, including when the requesting client disconnects.
+
+Anthropic configuration comes exclusively from the backend environment. There are
+no HTTP routes for reading, saving or testing API keys. Restart the API after
+changing its private configuration. `/health` and `/config` expose only the active
+mode and model. SDK authentication errors are explicit; no silent demo fallback.
 
 The sandbox interface (port 8001) is `GET /health` and `POST /run` with `{command: string}` -> `{stdout: string, stderr: string, exit_code: number}`. No credentials, arbitrary shell, Docker socket or writable host mounts. Commands cannot make network requests; Compose attaches only an internal network. The API accesses it using `SANDBOX_URL`.
 
 The read-only MCP server lives at `backend/app/mcp_server.py`, invoked with `uv run --project backend --extra semantic python -m app.mcp_server`. It exposes company_info and search_knowledge via persistent API HTTP calls to avoid a second writer opening Qdrant local storage. Default URL `http://127.0.0.1:8000`, configurable with `LUMEN_API_URL`. `GET /api/company` exposes configured identity; `GET /api/search?query=...` returns `{sources: Source[]}` for MCP retrieval.
 
 Backend settings: `ANTHROPIC_API_KEY`, `LLM_MODE=demo|anthropic|auto`,
-`ANTHROPIC_MODEL=claude-haiku-4-5`, `COMPANY_NAME=Humanizar`, `COMPANY_DESCRIPTION`,
+`ANTHROPIC_MODEL=claude-haiku-4-5`, `MAX_CONCURRENT_CHATS=4`,
+`COMPANY_NAME=Humanizar`, `COMPANY_DESCRIPTION`,
 `ASSISTANT_NAME=Humanizar IA`, `DATA_DIR`, `AUTH_ENABLED=true`, `SEED_DEMO=false`,
 `KNOWLEDGE_DIR=knowledge/humanizar`, `EMBEDDING_PROVIDER=hash|fastembed`, `QDRANT_URL`,
 `SANDBOX_URL`, `MCP_ENABLED=true`. Relative `KNOWLEDGE_DIR` resolves from backend/;

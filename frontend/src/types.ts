@@ -96,13 +96,6 @@ export interface AuthResponse {
   user: User;
 }
 
-export interface ProviderSettings {
-  configured: boolean;
-  model: string;
-  mode: 'demo' | 'anthropic';
-  verified: boolean;
-}
-
 export interface CustomerRequest {
   id: string;
   kind: 'demo' | 'support';
@@ -111,4 +104,4 @@ export interface CustomerRequest {
   details: Record<string, unknown>;
 }
 
-export type Tab = 'assistant' | 'knowledge' | 'tools' | 'requests' | 'provider';
+export type Tab = 'assistant' | 'knowledge' | 'tools' | 'requests';

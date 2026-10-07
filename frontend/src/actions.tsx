@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CheckCheck, LoaderCircle, Send, ShieldCheck } from 'lucide-react';
 import { api, errorMessage } from './api';
@@ -97,9 +97,11 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
   const [results, setResults] = useState<Record<string, ToolTrace>>({});
   const [pending, setPending] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const inFlight = useRef(new Set<string>());
   async function confirm(trace: ToolTrace): Promise<void> {
     const proposal = actionProposal(trace);
-    if (!proposal || results[trace.id] || pending.includes(trace.id)) return;
+    if (!proposal || results[trace.id] || inFlight.current.has(trace.id)) return;
+    inFlight.current.add(trace.id);
     setPending((current) => [...current, trace.id]);
     setErrors((current) => ({ ...current, [trace.id]: '' }));
     try {
@@ -110,6 +112,7 @@ export function ActionsProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       setErrors((current) => ({ ...current, [trace.id]: errorMessage(err) }));
     } finally {
+      inFlight.current.delete(trace.id);
       setPending((current) => current.filter((id) => id !== trace.id));
     }
   }

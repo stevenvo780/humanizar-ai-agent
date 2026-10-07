@@ -1,8 +1,4 @@
-import asyncio
-import secrets
 import sqlite3
-import threading
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -10,11 +6,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 import app.main as main_module
-from app.agent import CompanyAgent, Emit, MessageProvider, no_emit
+from app.agent import CompanyAgent
 from app.business import BusinessStore
 from app.database import ApplicationDatabase
 from app.main import create_app
-from app.models import ChatRequest, ChatResponse, Usage
 from app.settings import Settings
 from app.storage import KnowledgeStore
 from app.tools import ToolRegistry
@@ -117,133 +112,17 @@ def test_lifespan_failure_closes_previous_resources(
     assert closed == expected_closed
 
 
-def administrator(client: TestClient) -> dict[str, str]:
-    response = client.post(
-        "/api/auth/setup",
-        json={
-            "name": "Test owner",
-            "email": "owner@example.invalid",
-            "password": secrets.token_urlsafe(24),
-        },
-    )
-    assert response.status_code == 200
-    return {"Authorization": "Bearer " + str(response.json()["access_token"])}
-
-
-def test_provider_replacement_closes_idle_and_defers_inflight_agents(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    started, released = threading.Event(), threading.Event()
-    agents: list[CompanyAgent] = []
-    closures: dict[CompanyAgent, int] = {}
-
-    class TrackedAgent(CompanyAgent):
-        def __init__(
-            self,
-            config: Settings,
-            registry: ToolRegistry,
-            provider: MessageProvider | None = None,
-        ) -> None:
-            # These tests exercise lifetime management without creating or calling an SDK client.
-            super().__init__(config.model_copy(update={"llm_mode": "demo"}), registry, provider)
-            agents.append(self)
-
-        async def answer(self, request: ChatRequest, emit: Emit = no_emit) -> ChatResponse:
-            assert not closures.get(self)
-            started.set()
-            assert await asyncio.to_thread(released.wait, 5)
-            assert not closures.get(self)
-            return ChatResponse(
-                answer="Test response",
-                sources=[],
-                trace=[],
-                mode="demo",
-                model="test",
-                usage=Usage(),
-                session_id=request.session_id or "test-session",
-            )
-
-        async def close(self) -> None:
-            closures[self] = closures.get(self, 0) + 1
-            await super().close()
-
-    monkeypatch.setattr(main_module, "CompanyAgent", TrackedAgent)
-    application = create_app(settings.model_copy(update={"auth_enabled": True}))
-    with TestClient(application) as client:
-        owner = administrator(client)
-        original = application.state.agent
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            pending = executor.submit(
-                client.post, "/api/chat", json={"message": "hello"}, headers=owner
-            )
-            try:
-                assert started.wait(5)
-                response = client.put(
-                    "/api/settings/provider",
-                    json={"api_key": secrets.token_urlsafe(32)},
-                    headers=owner,
-                )
-                assert response.status_code == 200
-                assert not closures.get(original)
-                assert application.state.retired_agents == {original}
-            finally:
-                released.set()
-            assert pending.result(timeout=5).status_code == 200
-        assert closures[original] == 1
-        assert not application.state.retired_agents
-        replacement = application.state.agent
-        response = client.put(
-            "/api/settings/provider",
-            json={"api_key": secrets.token_urlsafe(32)},
-            headers=owner,
-        )
-        assert response.status_code == 200 and closures[replacement] == 1
-        assert not application.state.retired_agents
-    assert len(agents) == 3 and all(closures[agent] == 1 for agent in agents)
-
-
-def test_failed_provider_persistence_closes_replacement_and_keeps_active_agent(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    closed: list[CompanyAgent] = []
-    original_close = CompanyAgent.close
-
-    async def observe_close(agent: CompanyAgent) -> None:
-        closed.append(agent)
-        await original_close(agent)
-
-    def fail_save(_value: str) -> None:
-        raise RuntimeError("Simulated storage failure")
-
-    monkeypatch.setattr(CompanyAgent, "close", observe_close)
-    application = create_app(settings.model_copy(update={"auth_enabled": True}))
-    with TestClient(application) as client:
-        owner = administrator(client)
-        previous = application.state.agent
-        monkeypatch.setattr(application.state.database, "set_provider_key", fail_save)
-        response = client.put(
-            "/api/settings/provider",
-            json={"api_key": secrets.token_urlsafe(32)},
-            headers=owner,
-        )
-        assert response.status_code == 500 and "Simulated" not in response.text
-        assert application.state.agent is previous
-        assert application.state.settings.mode == "demo"
-        assert len(closed) == 1 and closed[0] is not previous
-        assert not application.state.retired_agents
-        assert client.post("/api/chat", json={"message": "hello"}, headers=owner).status_code == 200
-
-
 def test_shutdown_continues_after_agent_close_failure(
     settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     application = create_app(settings)
 
-    async def failed_close() -> None:
+    async def failed_close(_agent: CompanyAgent) -> None:
         raise RuntimeError("Simulated close failure")
 
+    monkeypatch.setattr(CompanyAgent, "close", failed_close)
     with pytest.raises(RuntimeError, match="Simulated close failure"), TestClient(application):
-        monkeypatch.setattr(application.state.agent, "close", failed_close)
+        pass
     assert application.state.registry.http.is_closed
     for connection in (
         application.state.database._db,

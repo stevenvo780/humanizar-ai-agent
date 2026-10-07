@@ -2757,14 +2757,12 @@ summary::-webkit-details-marker {
   display: flex;
   flex-direction: column;
 }
-.auth-form label,
-.provider-form label {
+.auth-form label {
   color: #adc2bb;
   font-size: 11px;
   margin-bottom: 9px;
 }
 .auth-form input,
-.provider-form input,
 .tool-json {
   padding: 12px 13px;
   color: #d5e7dc;
@@ -2777,12 +2775,10 @@ summary::-webkit-details-marker {
   outline: none;
 }
 .auth-form input:focus,
-.provider-form input:focus,
 .tool-json:focus {
   border-color: #94c7aa;
 }
-.auth-form input::placeholder,
-.provider-form input::placeholder {
+.auth-form input::placeholder {
   color: #677d80;
 }
 .auth-password-hint {
@@ -3004,138 +3000,6 @@ summary::-webkit-details-marker {
 .request-card-footer > span:last-child {
   margin-left: auto;
 }
-.provider-status-card {
-  border: 1px solid #3c454c;
-  background: #1e272e;
-  border-radius: 10px;
-  padding: 21px 24px;
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin: 32px 0 23px;
-}
-.provider-logo {
-  width: 48px;
-  height: 48px;
-  background: #3f302b;
-  color: #e0bda1;
-  border: 1px solid #604d3f;
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 48px;
-}
-.provider-status-card h2 {
-  font-size: 15px;
-  margin: 0 0 7px;
-  font-weight: 550;
-  color: #decebe;
-}
-.provider-status-card p {
-  margin: 0;
-  font-size: 10px;
-  color: #958d87;
-  line-height: 1.6;
-}
-.provider-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  color: #ceb09a;
-  background: #3b342c;
-  border: 1px solid #564c3d;
-  border-radius: 5px;
-  padding: 6px 8px;
-  font-size: 8px;
-}
-.provider-state .status-dot {
-  background: #cfb794;
-}
-.provider-state.verified {
-  color: #b2d9bd;
-  background: #293e30;
-  border-color: #3d5a43;
-}
-.provider-state.verified .status-dot {
-  background: #95d0ac;
-}
-.provider-form {
-  border: 1px solid #344a43;
-  background: #19262b;
-  border-radius: 10px;
-  padding: 28px;
-}
-.provider-form-heading {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 25px;
-}
-.provider-form-heading > svg {
-  color: #9ccaaf;
-  flex-shrink: 0;
-}
-.provider-form-heading h2 {
-  font-size: 15px;
-  color: #c2decd;
-  font-weight: 550;
-  margin: 0 0 10px;
-}
-.provider-form-heading p {
-  font-size: 10px;
-  color: #7c9b8c;
-  line-height: 1.8;
-  margin: 0;
-  max-width: 450px;
-}
-.provider-form label {
-  display: block;
-}
-.provider-form input {
-  margin-bottom: 18px;
-}
-.provider-form-actions {
-  display: flex;
-  gap: 11px;
-  flex-wrap: wrap;
-}
-.secondary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 10px 14px;
-  background: #263d33;
-  border: 1px solid #476151;
-  color: #b6d1c1;
-  border-radius: 6px;
-  font-size: 10px;
-}
-.secondary-button:hover {
-  background: #324c3e;
-}
-.provider-explanation {
-  display: flex;
-  gap: 13px;
-  padding: 23px 0;
-  color: #789e8c;
-}
-.provider-explanation > svg {
-  flex-shrink: 0;
-}
-.provider-explanation h3 {
-  color: #98b6a7;
-  font-size: 11px;
-  font-weight: 500;
-  margin-bottom: 9px;
-}
-.provider-explanation p {
-  font-size: 10px;
-  line-height: 1.85;
-  margin: 0;
-  max-width: 550px;
-}
 .trace-proposal {
   border-color: #597560;
   background: #1a2d25;
@@ -3328,19 +3192,6 @@ summary::-webkit-details-marker {
     gap: 10px;
     font-size: 9px;
   }
-  .provider-status-card {
-    gap: 11px;
-    padding: 18px;
-  }
-  .provider-status-card h2 {
-    font-size: 13px;
-  }
-  .provider-status-card p {
-    font-size: 9px;
-  }
-  .provider-form {
-    padding: 22px;
-  }
 }
 @media (max-width: 430px) {
   .auth-story {
@@ -3405,29 +3256,5 @@ summary::-webkit-details-marker {
     margin-left: 0;
     width: 100%;
     padding-left: 18px;
-  }
-  .provider-logo {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
-  }
-  .provider-status-card {
-    flex-wrap: wrap;
-  }
-  .provider-state {
-    margin-left: 49px;
-  }
-  .provider-form {
-    padding: 20px 17px;
-  }
-  .provider-form-actions {
-    gap: 9px;
-  }
-  .provider-form-actions > button {
-    font-size: 9px;
-    padding: 10px 11px;
-  }
-  .provider-explanation p {
-    font-size: 9px;
   }
 }

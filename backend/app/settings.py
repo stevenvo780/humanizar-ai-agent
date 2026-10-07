@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     max_zip_ratio: int = Field(default=100, ge=1, le=1000)
     max_agent_iterations: int = Field(default=5, ge=1, le=10)
     max_tool_calls: int = Field(default=8, ge=1, le=20)
+    max_concurrent_chats: int = Field(default=4, ge=1, le=32)
     anthropic_timeout_seconds: float = Field(default=45, ge=1, le=120)
     max_output_tokens: int = Field(default=1500, ge=128, le=4096)
     cors_origins: list[str] = [

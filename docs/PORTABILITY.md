@@ -66,7 +66,7 @@ make claude CLAUDE_CODE_MODEL=opus
 
 El valor preparado es `claude-opus-5-5`. La disponibilidad efectiva depende de
 tu cuenta/proveedor; confirma el modelo en `/model`. El modelo de la web permanece
-independiente y se configura en Conexión Claude como administrador.
+independiente y se configura en el entorno privado del backend.
 
 Los diez skills de Spec Kit ya están versionados. Para administrar la CLI fijada:
 
@@ -82,8 +82,9 @@ La selección de feature y el flujo de adaptación están en [SPECKIT.md](SPECKI
 
 ## Datos propios
 
-Crea tu administrador desde la web. Configura allí una credencial Anthropic propia
-y verifica la conexión si vas a usar Haiku. No existen credenciales predeterminadas.
+Crea tu administrador desde la web. Configura una credencial Anthropic propia
+en el `.env` privado del backend y reinicia la API si vas a usar Haiku.
+No existen credenciales predeterminadas ni formularios web para introducir claves.
 Las pruebas automatizadas simulan el proveedor; no validan tu cuenta de Anthropic.
 `make check` ejecuta los controles del proyecto. [VALIDATION.md](VALIDATION.md)
 separa la evidencia registrada de Docker, Anthropic y otros pendientes.

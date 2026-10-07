@@ -84,7 +84,7 @@ def test_cors_allows_only_configured_authenticated_frontend(settings: Settings) 
             ("POST", "x-requested-with,content-type"),
         ):
             response = client.options(
-                "/api/settings/provider",
+                "/api/chat",
                 headers={
                     "Origin": origin,
                     "Access-Control-Request-Method": method,
@@ -95,7 +95,7 @@ def test_cors_allows_only_configured_authenticated_frontend(settings: Settings) 
             assert response.headers["access-control-allow-origin"] == origin
             assert response.headers["access-control-allow-credentials"] == "true"
         rejected = client.options(
-            "/api/settings/provider",
+            "/api/chat",
             headers={
                 "Origin": "https://other.example.invalid",
                 "Access-Control-Request-Method": "PUT",

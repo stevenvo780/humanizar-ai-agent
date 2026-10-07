@@ -643,99 +643,6 @@
         }
       }
     },
-    "/api/settings/provider": {
-      "get": {
-        "summary": "Provider Status",
-        "operationId": "provider_status_api_settings_provider_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Provider Status Api Settings Provider Get"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "put": {
-        "summary": "Configure Provider",
-        "operationId": "configure_provider_api_settings_provider_put",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProviderConfiguration"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Configure Provider Api Settings Provider Put"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/settings/provider/test": {
-      "post": {
-        "summary": "Test Provider",
-        "operationId": "test_provider_api_settings_provider_test_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Test Provider Api Settings Provider Test Post"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/api/chat": {
       "post": {
         "summary": "Chat",
@@ -1070,24 +977,6 @@
           "password"
         ],
         "title": "LoginRequest"
-      },
-      "ProviderConfiguration": {
-        "properties": {
-          "api_key": {
-            "type": "string",
-            "maxLength": 512,
-            "minLength": 20,
-            "format": "password",
-            "title": "Api Key",
-            "writeOnly": true
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "api_key"
-        ],
-        "title": "ProviderConfiguration"
       },
       "PublicUser": {
         "properties": {

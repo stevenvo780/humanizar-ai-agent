@@ -343,12 +343,12 @@ export default function DocsPage() {
               <span>
                 <FileCheck2 size={13} /> ÚLTIMA BASE VERIFICADA
               </span>
-              <time dateTime="2026-10-06T22:53:00Z">6 de octubre de 2026 · 22:53 UTC</time>
+              <time dateTime="2026-10-07T00:20:00Z">7 de octubre de 2026 · 00:20 UTC</time>
             </div>
             <div className="docs-metrics">
               <div>
                 <span className="docs-metric-number">
-                  214<span> / pruebas</span>
+                  241<span> / pruebas</span>
                 </span>
                 <p>Aprobadas en la base registrada</p>
                 <small>127 backend · 71 sandbox y utilidades · 16 web</small>
@@ -496,9 +496,9 @@ export default function DocsPage() {
                 </span>
                 <h3>SQLite · datos de la aplicación</h3>
                 <p>
-                  Cuentas, familias de sesiones, conversaciones, mensajes, solicitudes y
-                  configuración del proveedor. El historial se obtiene por propietario; el servidor
-                  ignora el historial que envía el cliente autenticado.
+                  Cuentas, familias de sesiones, conversaciones, mensajes y solicitudes. El
+                  historial se obtiene por propietario; el servidor ignora el historial que envía el
+                  cliente autenticado.
                 </p>
               </article>
             </div>
@@ -563,8 +563,8 @@ export default function DocsPage() {
                   <h3>Roles y propiedad comprobados en el backend</h3>
                   <p>
                     Los clientes acceden a su chat y solicitudes. Administradores gestionan
-                    documentación, herramientas, proveedor y bandeja de clientes. La API exige
-                    permisos y propiedad de cada conversación; ocultar un botón no sustituye esas
+                    documentación, herramientas y bandeja de clientes. La API exige permisos y
+                    propiedad de cada conversación; ocultar un botón no sustituye esas
                     comprobaciones.
                   </p>
                 </div>
@@ -586,9 +586,9 @@ export default function DocsPage() {
               <div>
                 <h3>La clave del proveedor permanece en el backend</h3>
                 <p>
-                  El administrador puede guardarla y verificar la conexión. Se cifra en reposo y
-                  nunca se devuelve al navegador. Guardar una clave y comprobar su autenticación son
-                  estados distintos.
+                  La clave de Anthropic se configura exclusivamente en el entorno del backend. No se
+                  introduce en la web, no se guarda desde la API y nunca se devuelve al navegador.
+                  Cada instalación necesita su propia configuración privada.
                 </p>
               </div>
             </div>
@@ -653,13 +653,13 @@ export default function DocsPage() {
             title="El estándar se demuestra con comprobaciones."
           >
             <p>
-              La última base registrada reúne <strong>214 pruebas aprobadas</strong> y
+              La última base registrada reúne <strong>241 pruebas aprobadas</strong> y
               verificaciones de formato, tipos y build. Los resultados describen esa base; cualquier
               cambio posterior debe volver a pasar sus comprobaciones.
             </p>
             <div className="docs-quality-table-wrap">
               <table className="docs-quality-table">
-                <caption>Comprobaciones registradas el 6 de octubre de 2026 · 22:53 UTC</caption>
+                <caption>Comprobaciones registradas el 7 de octubre de 2026 · 00:20 UTC</caption>
                 <thead>
                   <tr>
                     <th scope="col">Capa</th>
@@ -674,14 +674,14 @@ export default function DocsPage() {
                       Ruff, formato, mypy estricto, recuperación, autenticación y herramientas
                     </td>
                     <td>
-                      <strong>127</strong>
+                      <strong>140</strong>
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">Sandbox y utilidades</th>
                     <td>Ruff, formato, tipos, límites de ejecución, importación y empaquetado</td>
                     <td>
-                      <strong>71</strong>
+                      <strong>76</strong>
                     </td>
                   </tr>
                   <tr>
@@ -690,7 +690,7 @@ export default function DocsPage() {
                       ESLint con tipos, hooks y accesibilidad; Prettier; TypeScript; Vitest; build
                     </td>
                     <td>
-                      <strong>16</strong>
+                      <strong>25</strong>
                     </td>
                   </tr>
                 </tbody>
@@ -734,8 +734,8 @@ export default function DocsPage() {
                   <li>Chat con fuentes, solicitudes confirmadas e inbox admin.</li>
                   <li>Identidad MCP y verificaciones de código.</li>
                   <li>
-                    Claude Haiku 4.5: llamada autenticada y ejecución real del agente con MCP
-                    verificadas localmente.
+                    Claude Haiku 4.5: llamada autenticada, ejecución real del agente con MCP y
+                    recuperación de documentación con fuentes verificadas localmente.
                   </li>
                 </ul>
               </div>

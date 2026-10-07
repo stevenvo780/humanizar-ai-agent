@@ -23,6 +23,7 @@ from app.business import (
     validate_user_id,
 )
 from app.calculator import calculate
+from app.concurrency import run_sync
 from app.models import Source, ToolTrace
 from app.security import redact, safe_input
 from app.settings import Settings
@@ -304,7 +305,7 @@ class ToolRegistry:
         return self.business
 
     async def _recommend(self, process: str) -> tuple[dict[str, Any], list[Source]]:
-        evidence = await asyncio.to_thread(self.store.search, process, 5)
+        evidence = await run_sync(self.store.search, process, 5)
         sources = [
             source.model_copy(
                 update={
@@ -382,7 +383,7 @@ class ToolRegistry:
         try:
             if name == "search_knowledge":
                 query = self._string(arguments, "query", 1000)
-                sources = await asyncio.to_thread(self.store.search, query)
+                sources = await run_sync(self.store.search, query)
                 output = json.dumps(
                     {"sources": [source.model_dump() for source in sources]}, ensure_ascii=False
                 )
@@ -405,7 +406,7 @@ class ToolRegistry:
                         ensure_ascii=False,
                     )
                 else:
-                    record = await asyncio.to_thread(
+                    record = await run_sync(
                         business.create_request, user_id, kind, details, action_key
                     )
                     output = json.dumps(
@@ -423,7 +424,7 @@ class ToolRegistry:
                     )
                 business = self._business_for_user(user_id)
                 assert user_id is not None
-                records = await asyncio.to_thread(business.list_requests, user_id)
+                records = await run_sync(business.list_requests, user_id)
                 visible: list[dict[str, Any]] = []
                 for record in records:
                     if len(json.dumps(visible + [record], ensure_ascii=False)) > 7000:

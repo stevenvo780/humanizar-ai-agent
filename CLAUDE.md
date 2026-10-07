@@ -16,7 +16,8 @@ allowed build commands constitute an OS sandbox for Claude Code.
 - backend/app: FastAPI, settings, document ingestion, persistent Qdrant retrieval,
   bounded Anthropic Haiku tool loop, demo mode, SSE and MCP server.
 - backend/app/auth.py and database.py: JWT, Argon2, rotating refresh/session families,
-  roles, SQLite conversations and encrypted provider credentials.
+  roles, SQLite conversations and business requests. Anthropic credentials come
+  exclusively from the backend environment; no browser configuration endpoint.
 - backend/knowledge/humanizar: public sourced initial corpus. Clear KNOWLEDGE_DIR
   and use a new DATA_DIR when adapting another company.
 - frontend/src: strict React/TypeScript UI, real login, chats, requests and admin views.

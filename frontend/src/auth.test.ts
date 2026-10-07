@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authenticatedFetch, logoutSession, setAccessToken } from './auth';
+import { authenticatedFetch, logoutSession, refreshSession, setAccessToken } from './auth';
 
 afterEach(() => {
   setAccessToken(null);
@@ -37,14 +37,22 @@ describe('in-memory authenticated requests', () => {
   });
 
   it('does not refresh a second time if the retried request still returns 401', async () => {
+    vi.stubGlobal('window', new EventTarget());
+    const expired = vi.fn();
+    window.addEventListener('humanizar-session-expired', expired);
     const mock = vi
       .fn()
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(refreshed)))
-      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response('ok'));
     vi.stubGlobal('fetch', mock);
     expect((await authenticatedFetch('/api/requests')).status).toBe(401);
     expect(mock).toHaveBeenCalledTimes(3);
+    expect(expired).toHaveBeenCalledOnce();
+    await authenticatedFetch('/api/health');
+    const later = mock.mock.calls[3]?.[1] as RequestInit;
+    expect(new Headers(later.headers).has('Authorization')).toBe(false);
   });
 
   it('deduplicates refresh for concurrent expired requests', async () => {
@@ -81,6 +89,74 @@ describe('in-memory authenticated requests', () => {
     const logout = mock.mock.calls[0]?.[1] as RequestInit;
     const later = mock.mock.calls[1]?.[1] as RequestInit;
     expect(new Headers(logout.headers).get('X-Requested-With')).toBe('Humanizar');
+    expect(new Headers(later.headers).has('Authorization')).toBe(false);
+  });
+
+  it('cannot restore a token from a refresh that finishes after logout', async () => {
+    let resolveRefresh: (value: Response) => void = () => undefined;
+    const pending = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const mock = vi
+      .fn()
+      .mockReturnValueOnce(pending)
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response('ok'));
+    vi.stubGlobal('fetch', mock);
+    const refresh = refreshSession();
+    await logoutSession();
+    resolveRefresh(new Response(JSON.stringify(refreshed)));
+    expect(await refresh).toBeNull();
+    await authenticatedFetch('/api/health');
+    const later = mock.mock.calls[2]?.[1] as RequestInit;
+    expect(new Headers(later.headers).has('Authorization')).toBe(false);
+  });
+
+  it('cannot replace the access token of a newly authenticated account with an old refresh', async () => {
+    let resolveRefresh: (value: Response) => void = () => undefined;
+    const pending = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const mock = vi.fn().mockReturnValueOnce(pending).mockResolvedValueOnce(new Response('ok'));
+    vi.stubGlobal('fetch', mock);
+    const refresh = refreshSession();
+    setAccessToken('test-different-account');
+    resolveRefresh(new Response(JSON.stringify(refreshed)));
+    expect(await refresh).toBeNull();
+    await authenticatedFetch('/api/conversations');
+    const next = mock.mock.calls[1]?.[1] as RequestInit;
+    expect(new Headers(next.headers).get('Authorization')).toBe('Bearer test-different-account');
+  });
+
+  it('clears a refresh that completed while the logout request was still in progress', async () => {
+    let resolveLogout: (value: Response) => void = () => undefined;
+    const pending = new Promise<Response>((resolve) => {
+      resolveLogout = resolve;
+    });
+    const mock = vi
+      .fn()
+      .mockReturnValueOnce(pending)
+      .mockResolvedValueOnce(new Response(JSON.stringify(refreshed)))
+      .mockResolvedValueOnce(new Response('ok'));
+    vi.stubGlobal('fetch', mock);
+    const logout = logoutSession();
+    await refreshSession();
+    resolveLogout(new Response(null, { status: 204 }));
+    await logout;
+    await authenticatedFetch('/api/health');
+    const later = mock.mock.calls[2]?.[1] as RequestInit;
+    expect(new Headers(later.headers).has('Authorization')).toBe(false);
+  });
+
+  it('rejects a malformed refresh response without accepting its token', async () => {
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('{"access_token":"unexpected"}'))
+      .mockResolvedValueOnce(new Response('ok'));
+    vi.stubGlobal('fetch', mock);
+    await expect(refreshSession()).rejects.toThrow('datos inválidos');
+    await authenticatedFetch('/api/health');
+    const later = mock.mock.calls[1]?.[1] as RequestInit;
     expect(new Headers(later.headers).has('Authorization')).toBe(false);
   });
 });

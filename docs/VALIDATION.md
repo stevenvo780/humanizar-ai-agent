@@ -1,23 +1,25 @@
 # Estado de validación
 
-Validación realizada el 2026-10-06. No representa validación de los requisitos de
+Validación actualizada el 2026-10-07. No representa validación de los requisitos de
 la prueba, todavía desconocidos.
 
 `bash scripts/check.sh`: aprobado.
 
 | Componente | Evidencia |
 | --- | --- |
-| Backend | Ruff, formato, mypy estricto y 127 pruebas |
-| Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 71 pruebas |
-| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 16 pruebas y build |
+| Backend | Ruff, formato, mypy estricto en app y pruebas, 140 pruebas |
+| Sandbox e importador/paquete/publicación | Ruff, formato, mypy estricto y 76 pruebas |
+| Frontend | ESLint con tipos/hooks/a11y, Prettier, TypeScript strict, 25 pruebas y build |
 | Dependencias web | npm audit: 0 vulnerabilidades en la comprobación del frontend |
 | Configuración | JSON válido, Compose principal y override local válidos |
 | Claude/Spec Kit | Claude Code 2.1.286, specify-cli 1.0.7; 10 skills instalados |
 | Paridad | 20 artefactos compatibles sin cambios; AGENTS.md manual preservado |
 
-Total: **214 pruebas aprobadas**. Comprobación completa repetida desde un clon
-descargado del repositorio público con Python 3.12.3 en backend y sandbox. El
-backend también se verificó en 3.11.15; Docker apunta a Python 3.12. Mypy utiliza
+Total actual: **241 pruebas aprobadas**. La base anterior de 214 pruebas también
+se verificó desde un clon descargado del repositorio público con Python 3.12.3
+en backend y sandbox. La comprobación actual utiliza Python 3.11.15 en backend
+y 3.12 en sandbox; las 140 pruebas del backend también pasaron en un entorno
+aislado con Python 3.12.3. Docker apunta a Python 3.12. Mypy utiliza
 objetivo 3.12 para interpretar los stubs PEP 695 de NumPy, manteniendo el código
 compatible con Python 3.11 mediante Ruff. Existe una advertencia externa de deprecación
 de TestClient/httpx en cada suite Python; no impide los resultados.
@@ -38,11 +40,16 @@ de TestClient/httpx en cada suite Python; no impide los resultados.
   y logout. Datos sintéticos en una instancia temporal; servicios cerrados al terminar.
 - Build de producción servido en navegador: acceso y `/docs` en móvil sin errores
   JavaScript ni overflow; `/docs` no realiza solicitudes de autenticación.
+- Auditoría del 7 de octubre: build de producción con API y SQLite temporales,
+  administrador con contraseña de seis caracteres, login, chat SSE, historial al
+  recargar, logout y acceso posterior. Navegación por teclado en las pestañas de
+  autenticación; desktop 1440x1000 y móvil 390x844 sin overflow ni errores JS.
+  Sin formulario de claves ni solicitudes a rutas de configuración del proveedor.
 
 - FastEmbed multilingüe descargado e inferencia de vectores de 384 dimensiones.
 - Corpus activo: cinco resúmenes de Humanizar con URLs oficiales y fecha de consulta.
   La carga inicial es idempotente y usa datos separados del corpus anterior de Forma.
-- SQLite persistente para cuentas, sesiones, chats, configuración cifrada y solicitudes.
+- SQLite persistente para cuentas, sesiones, chats y solicitudes.
 - Horario, precios e integraciones se validaron con el corpus ficticio anterior;
   CEO y facturación anual ausentes producen respuesta sin fuentes inventadas.
 - Calculadora: 21% de 4500 = 945; total con IVA = 5445.
@@ -73,6 +80,17 @@ PDF con límites y streams anidados. El revisor no modificó código.
 La ampliación auth se revisó de manera independiente: aislamiento SSE, bootstrap
 concurrente, permisos y JWT; corregidas y revalidadas las carreras de logout/refresh,
 verificación de proveedor y el reinicio del rate limit mediante login exitoso.
+
+Auditoría del 7 de octubre: corregidos y reproducidos independientemente el bloqueo
+del event loop durante autenticación SQLite y la liberación prematura de permisos
+al cancelar ingesta o búsqueda del chat. REST y SSE comparten un límite de llamadas
+con 429 mientras un worker sigue ocupado. Se añadieron pruebas de desconexión SSE
+real y heartbeat. En frontend se validan respuestas en runtime, se ignoran refresh
+de sesiones anteriores y se cierra el lector SSE al recibir `done`.
+Retirados formulario, tipos, CSS, rutas HTTP y prioridad SQLite para configurar Claude;
+las filas legacy se conservan, se ignoran y no alteran el JWT persistente.
+La auditoría de publicación rechaza directorios de entorno privados, sesiones Claude
+con variaciones de mayúsculas y el puntero local de Spec Kit, incluido un índice Git real.
 
 ## Pendientes y límites
 
@@ -124,4 +142,5 @@ realiza el integrador después de completar los gates; no acreditan hosting de l
 
 Para repetir: `make setup`, `make check`, `make dev`. Para terminal real, activa
 Docker y usa `make docker` o el override local de `make dev`. Para Anthropic,
-configura una credencial propia desde Conexión Claude o únicamente en `.env` local.
+configura una credencial propia únicamente en el `.env` privado del backend y
+reinicia la API. La interfaz y el contrato HTTP no permiten introducir claves.

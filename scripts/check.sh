@@ -5,7 +5,7 @@ cd "$ROOT"
 bash -n scripts/bootstrap.sh scripts/dev.sh scripts/check.sh scripts/package.sh scripts/install-gitleaks.sh
 uv run --project backend --locked --extra dev --extra semantic ruff check --config backend/pyproject.toml backend/app backend/tests
 uv run --project backend --locked --extra dev --extra semantic ruff format --check --config backend/pyproject.toml backend/app backend/tests
-uv run --project backend --locked --extra dev --extra semantic mypy --config-file backend/pyproject.toml backend/app
+uv run --project backend --locked --extra dev --extra semantic mypy --config-file backend/pyproject.toml backend/app backend/tests
 uv run --project backend --locked --extra dev --extra semantic pytest backend/tests -q
 uv run --project sandbox --locked ruff check --config sandbox/pyproject.toml sandbox scripts
 uv run --project sandbox --locked ruff format --check --config sandbox/pyproject.toml sandbox scripts

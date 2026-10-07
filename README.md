@@ -32,9 +32,8 @@ Al abrir la web crea tu primera cuenta de administrador. Las cuentas posteriores
 son de clientes. El acceso usa JWT de 30 minutos y sesiones renovables revocables;
 las contraseñas se guardan con Argon2 y el historial pertenece a cada cuenta.
 
-Para usar Claude, abre **Conexión Claude** como administrador, introduce una clave
-**nueva**, guarda y verifica la conexión. La clave se cifra en la base de datos y
-no se devuelve al navegador. También puedes configurarla en `.env` con tu editor.
+Para usar Claude, configura `ANTHROPIC_API_KEY` en el `.env` privado del backend
+con tu editor. El navegador no tiene un formulario ni rutas para guardar claves.
 `LLM_MODE=auto` utiliza Anthropic cuando existe una clave; `LLM_MODE=anthropic`
 exige una. Reinicia la API después de cambiar la configuración.
 Las claves nunca se envían al navegador ni al sandbox.
@@ -88,8 +87,8 @@ determinista y sin descargas; no es una representación semántica neuronal.
 La opción `fastembed` utiliza embeddings semánticos con un modelo descargable.
 Consulta [las instrucciones de RAG](docs/RAG.md) antes de cambiar el proveedor.
 
-SQLite guarda usuarios, sesiones, conversaciones, mensajes, configuración cifrada
-y solicitudes comerciales en `DATA_DIR/application.sqlite3`. Documentos y vectores
+SQLite guarda usuarios, sesiones, conversaciones, mensajes y solicitudes comerciales
+en `DATA_DIR/application.sqlite3`. Documentos y vectores
 persisten junto a esa base. No hay cuentas ni contraseñas predeterminadas.
 Las solicitudes son registros reales de esta aplicación; no envían notificaciones
 ni confirman reuniones externas.

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { streamChat } from './api';
+import { api, streamChat } from './api';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -82,5 +82,89 @@ describe('chat stream lifecycle', () => {
     await expect(
       streamChat('hola', [], undefined, new AbortController().signal, () => undefined),
     ).rejects.toThrow('Mensaje demasiado largo');
+  });
+
+  it('rejects invalid nested source data before passing a done event to the UI', async () => {
+    reply(
+      `event: done\ndata: ${JSON.stringify({
+        answer: 'Hola',
+        sources: [{ document_name: { unexpected: true } }],
+        trace: [],
+        mode: 'demo',
+        model: 'demo',
+        usage: { input_tokens: 0, output_tokens: 0 },
+        session_id: 'session',
+      })}\n\n`,
+    );
+    const onEvent = vi.fn();
+    await expect(
+      streamChat('hola', [], undefined, new AbortController().signal, onEvent),
+    ).rejects.toThrow('incompleta');
+    expect(onEvent).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tool traces before they can reach React', async () => {
+    reply('event: tool\ndata: {"id":"tool","input":null}\n\n');
+    const onEvent = vi.fn();
+    await expect(
+      streamChat('hola', [], undefined, new AbortController().signal, onEvent),
+    ).rejects.toThrow('datos inválidos');
+    expect(onEvent).not.toHaveBeenCalled();
+  });
+
+  it('finishes on done and cancels a still-open stream without delivering trailing tokens', async () => {
+    const done = {
+      answer: 'Respuesta final',
+      sources: [],
+      trace: [],
+      mode: 'demo',
+      model: 'demo',
+      usage: { input_tokens: 0, output_tokens: 0 },
+      session_id: 'session',
+    };
+    const cancel = vi.fn();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            `event: done\ndata: ${JSON.stringify(done)}\n\nevent: token\ndata: {"text":"extra"}\n\n`,
+          ),
+        );
+      },
+      cancel,
+    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(stream)));
+    const events: unknown[] = [];
+    await streamChat('hola', [], undefined, new AbortController().signal, (event) => {
+      events.push(event);
+    });
+    expect(events).toEqual([{ type: 'done', response: done }]);
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it('rejects corrupted database history instead of loading it into the conversation UI', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('{"conversations":[{"id":"chat","messages":null}]}')),
+    );
+    await expect(api.conversations()).rejects.toThrow('datos inválidos');
+  });
+
+  it('rejects an authentication response with an unknown role', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            access_token: 'test-access',
+            token_type: 'bearer',
+            user: { id: 'test-user', name: 'Test', email: 'test@example.invalid', role: 'other' },
+          }),
+        ),
+      ),
+    );
+    await expect(
+      api.authenticate('login', { email: 'test@example.invalid', password: 'test-only' }),
+    ).rejects.toThrow('datos inválidos');
   });
 });

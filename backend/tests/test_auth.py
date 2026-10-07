@@ -450,23 +450,23 @@ def test_conversation_isolation_and_persistence(tmp_path: Path) -> None:
         reopened.close()
 
 
-def test_provider_key_encrypted_persistent_and_private_secret(tmp_path: Path) -> None:
-    value = "test-provider-" + secrets.token_urlsafe(32)
+def test_private_master_secret_and_legacy_config_survive_restart(tmp_path: Path) -> None:
+    value = "legacy-ciphertext-placeholder"
     database = ApplicationDatabase(tmp_path)
-    assert database.get_provider_key() == ""
-    database.set_provider_key(value)
-    assert database.get_provider_key() == value
+    database._db.execute("INSERT INTO config VALUES ('anthropic_api_key', ?)", (value,))
     initial_signing = database.jwt_secret
     database.close()
     metadata = (tmp_path / ".application-secret").stat()
     assert stat.S_IMODE(metadata.st_mode) == 0o600
-    assert value.encode() not in (tmp_path / "application.sqlite3").read_bytes()
     reopened = ApplicationDatabase(tmp_path)
     try:
         assert reopened.jwt_secret == initial_signing
-        assert reopened.get_provider_key() == value
-        reopened.set_provider_key("")
-        assert reopened.get_provider_key() == ""
+        assert (
+            reopened._db.execute(
+                "SELECT value FROM config WHERE key='anthropic_api_key'"
+            ).fetchone()[0]
+            == value
+        )
     finally:
         reopened.close()
 

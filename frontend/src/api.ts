@@ -1,19 +1,22 @@
-import type {
-  ChatResponse,
-  DocumentList,
-  Config,
-  Health,
-  ToolDefinition,
-  ToolTrace,
-  UploadResult,
-  Conversation,
-  User,
-  AuthResponse,
-  ProviderSettings,
-  CustomerRequest,
-} from './types';
+import type { ChatResponse, ToolTrace } from './types';
 import { consumeSse } from './sse';
 import { authenticatedFetch } from './auth';
+import {
+  isAuthResponse,
+  isAuthStatus,
+  isChatResponse,
+  isConfig,
+  isConversationList,
+  isDocumentList,
+  isHealth,
+  isRequestList,
+  isToolList,
+  isToolTrace,
+  isUploadResult,
+  isUser,
+  validate,
+} from './validation';
+import type { Validator } from './validation';
 
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Ocurrió un error inesperado. Intenta de nuevo.';
@@ -34,59 +37,50 @@ async function checkResponse(response: Response): Promise<void> {
   throw new Error(message);
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, check: Validator<T>, init?: RequestInit): Promise<T> {
   const response =
     path.startsWith('/auth/') && path !== '/auth/me'
       ? await fetch(`/api${path}`, { ...init, credentials: 'same-origin' })
       : await authenticatedFetch(`/api${path}`, init);
   await checkResponse(response);
-  return (await response.json()) as T;
+  return validate(await response.json(), check);
 }
 
 export const api = {
-  authStatus: () => request<{ setup_required: boolean }>('/auth/status'),
-  me: () => request<User>('/auth/me'),
+  authStatus: () => request('/auth/status', isAuthStatus),
+  me: () => request('/auth/me', isUser),
   authenticate: (
     action: 'setup' | 'register' | 'login',
     input: { name?: string; email: string; password: string },
   ) =>
-    request<AuthResponse>(`/auth/${action}`, {
+    request(`/auth/${action}`, isAuthResponse, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     }),
-  conversations: () => request<{ conversations: Conversation[] }>('/conversations'),
+  conversations: () => request('/conversations', isConversationList),
   deleteConversation: async (id: string) => {
     const response = await authenticatedFetch(`/api/conversations/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     });
     await checkResponse(response);
   },
-  requests: () => request<{ requests: CustomerRequest[] }>('/requests'),
-  adminRequests: () => request<{ requests: CustomerRequest[] }>('/admin/requests'),
-  provider: () => request<ProviderSettings>('/settings/provider'),
-  saveProvider: (key: string) =>
-    request<ProviderSettings>('/settings/provider', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: key }),
-    }),
-  testProvider: () =>
-    request<{ ok: boolean; message: string }>('/settings/provider/test', { method: 'POST' }),
+  requests: () => request('/requests', isRequestList),
+  adminRequests: () => request('/admin/requests', isRequestList),
   confirmAction: (tool: string, input: Record<string, unknown>, actionKey: string) =>
-    request<ToolTrace>('/actions/confirm', {
+    request('/actions/confirm', isToolTrace, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tool, input, action_key: actionKey }),
     }),
-  config: () => request<Config>('/config'),
-  health: () => request<Health>('/health'),
-  documents: () => request<DocumentList>('/documents'),
-  tools: () => request<{ tools: ToolDefinition[] }>('/tools'),
+  config: () => request('/config', isConfig),
+  health: () => request('/health', isHealth),
+  documents: () => request('/documents', isDocumentList),
+  tools: () => request('/tools', isToolList),
   upload: (file: File) => {
     const form = new FormData();
     form.append('file', file);
-    return request<UploadResult>('/documents', { method: 'POST', body: form });
+    return request('/documents', isUploadResult, { method: 'POST', body: form });
   },
   deleteDocument: async (id: string) => {
     const response = await authenticatedFetch(`/api/documents/${encodeURIComponent(id)}`, {
@@ -95,7 +89,7 @@ export const api = {
     await checkResponse(response);
   },
   runTool: (name: string, input: Record<string, unknown>, confirmed = false) =>
-    request<ToolTrace>('/tools/run', {
+    request('/tools/run', isToolTrace, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, input, confirmed }),
@@ -124,6 +118,7 @@ export async function streamChat(
   await checkResponse(response);
   const completion = { done: false };
   await consumeSse(response, (event) => {
+    if (!['status', 'token', 'tool', 'done', 'error'].includes(event.event)) return;
     const parsed: unknown = JSON.parse(event.data);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       throw new Error('El servidor envió un evento de respuesta inválido.');
@@ -134,23 +129,24 @@ export async function streamChat(
         typeof data.message === 'string' ? data.message : 'La respuesta se interrumpió.',
       );
     }
-    if (event.event === 'status' && typeof data.message === 'string') {
+    if (event.event === 'status') {
+      if (typeof data.message !== 'string')
+        throw new Error('El servidor envió un estado de respuesta inválido.');
       onEvent({ type: 'status', message: data.message });
     }
-    if (event.event === 'token' && typeof data.text === 'string') {
+    if (event.event === 'token') {
+      if (typeof data.text !== 'string')
+        throw new Error('El servidor envió un fragmento de respuesta inválido.');
       onEvent({ type: 'token', text: data.text });
     }
-    if (event.event === 'tool') onEvent({ type: 'tool', trace: data as unknown as ToolTrace });
+    if (event.event === 'tool') onEvent({ type: 'tool', trace: validate(data, isToolTrace) });
     if (event.event === 'done') {
-      if (
-        typeof data.answer !== 'string' ||
-        !Array.isArray(data.sources) ||
-        !Array.isArray(data.trace)
-      ) {
+      if (!isChatResponse(data)) {
         throw new Error('La respuesta del servidor está incompleta.');
       }
       completion.done = true;
-      onEvent({ type: 'done', response: data as unknown as ChatResponse });
+      onEvent({ type: 'done', response: data });
+      return false;
     }
   });
   if (!completion.done)

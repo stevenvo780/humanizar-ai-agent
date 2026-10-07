@@ -37,24 +37,21 @@ BLOCKED_CLAUDE = frozenset(
 
 def private_path(name: str, mode: str = "100644") -> bool:
     path = PurePosixPath(name)
+    parts = tuple(part.casefold() for part in path.parts)
     if path.is_absolute() or ".." in path.parts or mode not in {"100644", "100755"}:
         return True
-    if any(part.casefold() in BLOCKED_DIRECTORIES for part in path.parts):
+    if any(part in BLOCKED_DIRECTORIES for part in parts):
+        return True
+    if parts == (".specify", "feature.json"):
         return True
     if path.name.casefold().startswith((".application-secret", "settings.local", "credentials.")):
         return True
     if path.name.casefold().endswith(BLOCKED_SUFFIXES + (".sqlite3-wal", ".sqlite3-shm")):
         return True
-    if (
-        any(part.casefold().startswith(".env") for part in path.parts)
-        and path.name != ".env.example"
-    ):
+    if any(part.startswith(".env") for part in parts) and name != ".env.example":
         return True
-    if ".claude" in path.parts:
-        return any(
-            part.casefold() in BLOCKED_CLAUDE or part.casefold().startswith("history")
-            for part in path.parts
-        )
+    if ".claude" in parts:
+        return any(part in BLOCKED_CLAUDE or part.startswith("history") for part in parts)
     return False
 
 

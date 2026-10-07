@@ -1,16 +1,15 @@
 import json
 import secrets
-import threading
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-from types import SimpleNamespace
 from typing import Any
 
-import anthropic
 import pytest
+from anthropic.types import Message
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
 from app.agent import Emit, no_emit
+from app.database import ApplicationDatabase
 from app.ingestion import ParsedDocument
 from app.main import create_app
 from app.models import ChatRequest, ChatResponse
@@ -102,66 +101,48 @@ def test_customer_confirmations_persist_once_and_do_not_expose_other_requests(
         assert client.post("/api/actions/confirm", json=forbidden, headers=user).status_code == 422
 
 
-def test_provider_configuration_private_encrypted_and_restored(settings: Settings) -> None:
-    settings = settings.model_copy(update={"auth_enabled": True})
-    placeholder = "not-a-real-credential-" + secrets.token_hex(20)
-    with TestClient(create_app(settings)) as client:
-        admin = account(client, "/api/auth/setup", "owner@example.invalid")
-        customer = account(client, "/api/auth/register", "client@example.invalid")
-        assert client.get("/api/settings/provider", headers=customer).status_code == 403
-        invalid = client.put("/api/settings/provider", json={"api_key": "tiny"}, headers=admin)
-        assert invalid.status_code == 422 and "tiny" not in invalid.text
-        configured = client.put(
-            "/api/settings/provider", json={"api_key": placeholder}, headers=admin
-        )
-        assert configured.status_code == 200 and configured.json()["mode"] == "anthropic"
-        assert placeholder not in configured.text
-        assert placeholder not in client.get("/api/config").text
-        assert client.get("/api/settings/provider", headers=admin).json()["verified"] is False
-    assert placeholder.encode() not in (settings.data_dir / "application.sqlite3").read_bytes()
-    with TestClient(create_app(settings)) as client:
-        status = client.get("/api/settings/provider", headers=admin)
-        assert status.status_code == 200 and status.json()["configured"] is True
-        assert client.get("/api/config").json()["mode"] == "anthropic"
-
-
-def test_provider_test_cannot_verify_a_replaced_credential(
-    settings: Settings, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    ("mode", "configured", "expected"),
+    [("auto", False, "demo"), ("auto", True, "anthropic"), ("demo", True, "demo")],
+)
+def test_provider_config_is_backend_only_and_legacy_database_does_not_override(
+    settings: Settings, mode: str, configured: bool, expected: str
 ) -> None:
-    started, released = threading.Event(), threading.Event()
+    # A deliberately invalid legacy ciphertext proves startup neither decodes nor uses it.
+    legacy = "legacy-ciphertext-placeholder"
+    database = ApplicationDatabase(settings.data_dir)
+    database._db.execute("INSERT INTO config VALUES ('anthropic_api_key', ?)", (legacy,))
+    database.close()
+    placeholder = "synthetic-environment-provider-value"
+    config = settings.model_copy(
+        update={
+            "llm_mode": mode,
+            "anthropic_api_key": SecretStr(placeholder if configured else ""),
+        }
+    )
 
-    class DelayedClient:
-        def __init__(self, **_kwargs: Any) -> None:
-            self.messages = self
+    class NoNetworkProvider:
+        async def complete(self, *_args: Any, **_kwargs: Any) -> Message:
+            raise AssertionError("This configuration test must not call any provider")
 
-        async def __aenter__(self) -> "DelayedClient":
-            return self
-
-        async def __aexit__(self, *_args: Any) -> None:
-            pass
-
-        async def create(self, **_kwargs: Any) -> SimpleNamespace:
-            import asyncio
-
-            started.set()
-            assert await asyncio.to_thread(released.wait, 5)
-            return SimpleNamespace(content=["OK"])
-
-    application = create_app(settings.model_copy(update={"auth_enabled": True}))
+    application = create_app(config, NoNetworkProvider())
     with TestClient(application) as client:
-        admin = account(client, "/api/auth/setup", "owner@example.invalid")
-        key_a, key_b = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
-        client.put("/api/settings/provider", json={"api_key": key_a}, headers=admin)
-        monkeypatch.setattr(anthropic, "AsyncAnthropic", DelayedClient)
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            checking = pool.submit(client.post, "/api/settings/provider/test", headers=admin)
-            try:
-                assert started.wait(5)
-                updated = client.put(
-                    "/api/settings/provider", json={"api_key": key_b}, headers=admin
-                )
-                assert updated.status_code == 200
-            finally:
-                released.set()
-            assert checking.result(timeout=5).status_code == 409
-        assert client.get("/api/settings/provider", headers=admin).json()["verified"] is False
+        for path in ("/api/health", "/api/config"):
+            result = client.get(path)
+            assert result.status_code == 200 and result.json()["mode"] == expected
+            assert placeholder not in result.text and legacy not in result.text
+        for method, path in (
+            ("GET", "/api/settings/provider"),
+            ("PUT", "/api/settings/provider"),
+            ("POST", "/api/settings/provider/test"),
+        ):
+            assert client.request(method, path).status_code == 404
+        schema = client.get("/api/openapi.json").json()
+        assert not any(path.startswith("/api/settings/provider") for path in schema["paths"])
+        assert "ProviderConfiguration" not in schema["components"]["schemas"]
+        assert (
+            application.state.database._db.execute(
+                "SELECT value FROM config WHERE key='anthropic_api_key'"
+            ).fetchone()[0]
+            == legacy
+        )

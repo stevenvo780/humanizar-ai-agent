@@ -3,7 +3,8 @@
 ## Antes de la prueba
 
 1. Abre la web y crea tu administrador. Prepara una credencial Anthropic propia.
-   Configura y verifica Haiku en Conexión Claude; también admite `.env` local.
+   Configura `ANTHROPIC_API_KEY` en el `.env` privado del backend, reinicia la API
+   y verifica una respuesta con el modo Anthropic visible.
 2. Ejecuta `make setup`, `make check`, `make dev` y una consulta con fuentes.
 3. Abre `make claude` (Claude Code >=2.1.280). Comprueba `/mcp` y los diez skills
    `/speckit-*`; puedes cambiar el modelo con `CLAUDE_CODE_MODEL`.

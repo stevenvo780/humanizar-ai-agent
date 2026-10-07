@@ -8,8 +8,9 @@ deterministic hash vectors remain the explicitly labelled offline alternative.
 React, Vite, TypeScript strict, ESLint typed rules, safe Markdown and handcrafted CSS.
 Docker Compose separates web, API and preset terminal sandbox. MCP uses stdio.
 PyJWT and pwdlib/Argon2 protect accounts. SQLite WAL stores identities, revocable
-session families, private conversations, messages and business requests. Fernet
-encrypts provider credentials using a private persistent server secret.
+session families, private conversations, messages and business requests. A private
+persistent server secret signs sessions. Anthropic uses only backend environment
+configuration; legacy provider records are preserved but never read or activated.
 
 ## Contracts and data
 
@@ -25,7 +26,8 @@ unknown facts, mocked provider tool loops and tool budgets. Verify frontend SSE
 chunk boundaries, typecheck, lint and build. Inspect UI in a browser with real API.
 Verify MCP handshake/read-only calls. Validate Compose and report daemon limits.
 Verify setup concurrency, role and ownership checks, expired/tampered JWTs,
-refresh rotation and stale logout, confirmation idempotency and provider-test races.
+refresh rotation and stale logout, confirmation idempotency, backend-only provider
+configuration, canceled ingestion limits and authentication event-loop responsiveness.
 
 ## Assessment adaptation
 

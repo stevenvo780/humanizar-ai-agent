@@ -5,19 +5,18 @@ from contextlib import AsyncExitStack, asynccontextmanager, suppress
 from typing import Annotated, Any
 from weakref import WeakValueDictionary
 
-import anthropic
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import SecretStr
 from starlette.requests import Request
 
 from app.agent import AgentFailure, CompanyAgent, MessageProvider
 from app.auth import CURRENT_USER_ID, User, require_admin, require_user
 from app.auth import router as auth_router
 from app.business import BusinessStore
+from app.concurrency import run_sync
 from app.database import ApplicationDatabase
 from app.ingestion import IngestionError, parse_upload
 from app.knowledge_bootstrap import load_initial_knowledge
@@ -27,7 +26,6 @@ from app.models import (
     ChatResponse,
     DocumentList,
     HistoryMessage,
-    ProviderConfiguration,
     ToolRequest,
     ToolTrace,
     UploadResponse,
@@ -87,8 +85,9 @@ def create_app(
     config = settings or Settings()
     ingestion_slots = asyncio.Semaphore(1)
     conversation_locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
-    active_agents: dict[CompanyAgent, int] = {}
-    retired_agents: set[CompanyAgent] = set()
+    chat_slots: asyncio.Queue[None] = asyncio.Queue(maxsize=config.max_concurrent_chats)
+    for _ in range(config.max_concurrent_chats):
+        chat_slots.put_nowait(None)
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
@@ -100,17 +99,12 @@ def create_app(
             if config.seed_demo and config.company_name.casefold() == "forma":
                 await asyncio.to_thread(store.seed, DEMO_DOCUMENTS)
             await asyncio.to_thread(load_initial_knowledge, store, config)
-            runtime_config = config
-            saved_key = await asyncio.to_thread(database.get_provider_key)
-            if saved_key:
-                runtime_config = config.model_copy(
-                    update={"anthropic_api_key": SecretStr(saved_key), "llm_mode": "auto"}
-                )
             business = await asyncio.to_thread(BusinessStore, config.data_dir)
             resources.push_async_callback(asyncio.to_thread, business.close)
-            registry = ToolRegistry(runtime_config, store, business)
+            registry = ToolRegistry(config, store, business)
             resources.push_async_callback(registry.close)
-            agent = CompanyAgent(runtime_config, registry, provider)
+            agent = CompanyAgent(config, registry, provider)
+            resources.push_async_callback(agent.close)
             application.state.store, application.state.registry, application.state.agent = (
                 store,
                 registry,
@@ -118,20 +112,7 @@ def create_app(
             )
             application.state.database = database
             application.state.business = business
-            application.state.settings = runtime_config
-            application.state.provider_verified = False
-            application.state.provider_generation = 0
-            application.state.provider_lock = asyncio.Lock()
-            application.state.retired_agents = retired_agents
-
-            async def close_agents() -> None:
-                async with AsyncExitStack() as closers:
-                    for current in {application.state.agent, *retired_agents}:
-                        closers.push_async_callback(current.close)
-                retired_agents.clear()
-                active_agents.clear()
-
-            resources.push_async_callback(close_agents)
+            application.state.settings = config
             yield
 
     api = FastAPI(
@@ -159,7 +140,7 @@ def create_app(
         request: Request,
         _credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     ) -> AsyncIterator[User | None]:
-        user = require_user(request) if config.auth_enabled else None
+        user = await run_sync(require_user, request) if config.auth_enabled else None
         token = CURRENT_USER_ID.set(user.id if user is not None else None)
         try:
             yield user
@@ -170,37 +151,33 @@ def create_app(
         request: Request,
         _credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     ) -> AsyncIterator[User | None]:
-        user = require_admin(request) if config.auth_enabled else None
+        user = await run_sync(require_admin, request) if config.auth_enabled else None
         token = CURRENT_USER_ID.set(user.id if user is not None else None)
         try:
             yield user
         finally:
             CURRENT_USER_ID.reset(token)
 
-    @asynccontextmanager
-    async def agent_scope() -> AsyncIterator[CompanyAgent]:
-        async with api.state.provider_lock:
-            current: CompanyAgent = api.state.agent
-            active_agents[current] = active_agents.get(current, 0) + 1
+    async def chat_admission() -> AsyncIterator[None]:
         try:
-            yield current
+            chat_slots.get_nowait()
+        except asyncio.QueueEmpty:
+            raise HTTPException(
+                429,
+                "El asistente está ocupado. Intenta nuevamente en unos segundos.",
+                headers={"Retry-After": "2"},
+            ) from None
+        try:
+            yield
         finally:
-            async with api.state.provider_lock:
-                remaining = active_agents[current] - 1
-                if remaining:
-                    active_agents[current] = remaining
-                else:
-                    active_agents.pop(current)
-                    if current in retired_agents:
-                        retired_agents.remove(current)
-                        await current.close()
+            chat_slots.put_nowait(None)
 
     async def open_conversation(request: ChatRequest, user: User | None) -> ChatRequest:
         if user is None:
             return request
         database: ApplicationDatabase = api.state.database
         try:
-            identifier = await asyncio.to_thread(
+            identifier = await run_sync(
                 database.create_conversation, user.id, request.session_id, request.message[:90]
             )
         except PermissionError as exc:
@@ -211,9 +188,7 @@ def create_app(
         if user is None or request.session_id is None:
             return request
         database: ApplicationDatabase = api.state.database
-        records = await asyncio.to_thread(
-            database.conversation_history, user.id, request.session_id
-        )
+        records = await run_sync(database.conversation_history, user.id, request.session_id)
         bounded: list[HistoryMessage] = []
         characters = 0
         for record in reversed(records[-40:]):
@@ -235,7 +210,7 @@ def create_app(
     async def save_exchange(user: User | None, request: ChatRequest, result: ChatResponse) -> None:
         if user is not None and request.session_id is not None:
             database: ApplicationDatabase = api.state.database
-            await asyncio.to_thread(
+            await run_sync(
                 database.save_exchange,
                 user.id,
                 request.session_id,
@@ -306,12 +281,13 @@ def create_app(
         }
 
     @api.get("/api/search")
-    def search(
+    async def search(
         query: Annotated[str, Query(min_length=1, max_length=1000)],
         _user: Annotated[User | None, Depends(user_scope)],
     ) -> dict[str, Any]:
         store: KnowledgeStore = api.state.store
-        return {"sources": [source.model_dump() for source in store.search(query)]}
+        sources = await run_sync(store.search, query)
+        return {"sources": [source.model_dump() for source in sources]}
 
     @api.get("/api/documents", response_model=DocumentList)
     def documents(_user: Annotated[User | None, Depends(admin_scope)]) -> DocumentList:
@@ -331,15 +307,15 @@ def create_app(
                 data.extend(block)
                 if len(data) > limit:
                     raise HTTPException(413, "El archivo excede el tamaño permitido.")
-            parsed, skipped = await asyncio.to_thread(
+            parsed, skipped = await run_sync(
                 parse_upload,
                 file.filename or "",
                 bytes(data),
                 config,
             )
             store: KnowledgeStore = api.state.store
-            created = await asyncio.to_thread(store.add_documents, parsed)
-            current = await asyncio.to_thread(store.list_documents)
+            created = await run_sync(store.add_documents, parsed)
+            current = await run_sync(store.list_documents)
             return UploadResponse(
                 documents=created, total_chunks=current.total_chunks, skipped=skipped
             )
@@ -393,17 +369,17 @@ def create_app(
     @api.get("/api/requests", dependencies=[Depends(bearer)])
     async def my_requests(user: Annotated[User, Depends(require_user)]) -> dict[str, Any]:
         business: BusinessStore = api.state.business
-        return {"requests": await asyncio.to_thread(business.list_requests, user.id)}
+        return {"requests": await run_sync(business.list_requests, user.id)}
 
     @api.get("/api/admin/requests", dependencies=[Depends(bearer)])
     async def admin_requests(_user: Annotated[User, Depends(require_admin)]) -> dict[str, Any]:
         business: BusinessStore = api.state.business
-        return {"requests": await asyncio.to_thread(business.list_all_requests)}
+        return {"requests": await run_sync(business.list_all_requests)}
 
     @api.get("/api/conversations", dependencies=[Depends(bearer)])
     async def conversations(user: Annotated[User, Depends(require_user)]) -> dict[str, Any]:
         database: ApplicationDatabase = api.state.database
-        return {"conversations": await asyncio.to_thread(database.list_conversations, user.id)}
+        return {"conversations": await run_sync(database.list_conversations, user.id)}
 
     @api.delete("/api/conversations/{identifier}", status_code=204, dependencies=[Depends(bearer)])
     async def remove_conversation(
@@ -411,99 +387,32 @@ def create_app(
     ) -> Response:
         database: ApplicationDatabase = api.state.database
         try:
-            removed = await asyncio.to_thread(database.delete_conversation, user.id, identifier)
+            removed = await run_sync(database.delete_conversation, user.id, identifier)
         except PermissionError as exc:
             raise HTTPException(404, "Conversación no encontrada.") from exc
         if not removed:
             raise HTTPException(404, "Conversación no encontrada.")
         return Response(status_code=204)
 
-    @api.get("/api/settings/provider", dependencies=[Depends(bearer)])
-    def provider_status(_user: Annotated[User, Depends(require_admin)]) -> dict[str, Any]:
-        active: Settings = api.state.settings
-        return {
-            "configured": bool(active.anthropic_api_key.get_secret_value()),
-            "model": active.anthropic_model,
-            "mode": active.mode,
-            "verified": api.state.provider_verified,
-        }
-
-    @api.put("/api/settings/provider", dependencies=[Depends(bearer)])
-    async def configure_provider(
-        request: ProviderConfiguration, _user: Annotated[User, Depends(require_admin)]
-    ) -> dict[str, Any]:
-        database: ApplicationDatabase = api.state.database
-        secret = request.api_key.get_secret_value().strip()
-        if len(secret) < 20:
-            raise HTTPException(422, "Introduce una clave válida de Anthropic.")
-        async with api.state.provider_lock:
-            active: Settings = api.state.settings.model_copy(
-                update={"anthropic_api_key": SecretStr(secret), "llm_mode": "auto"}
-            )
-            replacement = CompanyAgent(active, api.state.registry)
-            try:
-                await asyncio.to_thread(database.set_provider_key, secret)
-            except BaseException:
-                await replacement.close()
-                raise
-            old: CompanyAgent = api.state.agent
-            api.state.settings = active
-            api.state.registry.settings = active
-            api.state.agent = replacement
-            api.state.provider_verified = False
-            api.state.provider_generation += 1
-            if active_agents.get(old, 0):
-                retired_agents.add(old)
-            else:
-                await old.close()
-        return {
-            "configured": True,
-            "model": active.anthropic_model,
-            "mode": active.mode,
-            "verified": False,
-        }
-
-    @api.post("/api/settings/provider/test", dependencies=[Depends(bearer)])
-    async def test_provider(_user: Annotated[User, Depends(require_admin)]) -> dict[str, Any]:
-        active: Settings = api.state.settings
-        generation: int = api.state.provider_generation
-        if not active.anthropic_api_key.get_secret_value():
-            raise HTTPException(409, "Configura una clave de Anthropic primero.")
-        try:
-            async with anthropic.AsyncAnthropic(
-                api_key=active.anthropic_api_key.get_secret_value(), timeout=20, max_retries=0
-            ) as client:
-                response = await client.messages.create(
-                    model=active.anthropic_model,
-                    max_tokens=8,
-                    messages=[{"role": "user", "content": "Responde solo OK."}],
-                )
-            if generation != api.state.provider_generation:
-                raise HTTPException(409, "La configuración cambió; verifica la clave actual.")
-            if not response.content:
-                raise HTTPException(503, "Anthropic devolvió una respuesta vacía.")
-            api.state.provider_verified = True
-        except anthropic.AuthenticationError as exc:
-            raise HTTPException(400, "Anthropic rechazó la clave.") from exc
-        except anthropic.APIError as exc:
-            raise HTTPException(503, "No se pudo verificar la conexión con Anthropic.") from exc
-        return {"ok": api.state.provider_verified, "message": "Claude Haiku conectado."}
-
     @api.post("/api/chat", response_model=ChatResponse)
     async def chat(
-        request: ChatRequest, user: Annotated[User | None, Depends(user_scope)]
+        request: ChatRequest,
+        user: Annotated[User | None, Depends(user_scope)],
+        _admission: Annotated[None, Depends(chat_admission, scope="request")],
     ) -> ChatResponse:
         request = await open_conversation(request, user)
         async with conversation_lock(request, user):
             request = await with_server_history(request, user)
-            async with agent_scope() as agent:
-                result = await agent.answer(request)
+            agent: CompanyAgent = api.state.agent
+            result = await agent.answer(request)
             await save_exchange(user, request, result)
             return result
 
     @api.post("/api/chat/stream")
     async def stream_chat(
-        request: ChatRequest, user: Annotated[User | None, Depends(user_scope)]
+        request: ChatRequest,
+        user: Annotated[User | None, Depends(user_scope)],
+        _admission: Annotated[None, Depends(chat_admission, scope="request")],
     ) -> StreamingResponse:
         request = await open_conversation(request, user)
 
@@ -514,9 +423,9 @@ def create_app(
                 async def persist(result: ChatResponse) -> None:
                     await save_exchange(user, prepared, result)
 
-                async with agent_scope() as agent:
-                    async for event in chat_events(agent, prepared, persist):
-                        yield event
+                agent: CompanyAgent = api.state.agent
+                async for event in chat_events(agent, prepared, persist):
+                    yield event
 
         return StreamingResponse(
             events(),

@@ -28,7 +28,9 @@ describe('SSE stream framing', () => {
       },
     });
     const events: unknown[] = [];
-    await consumeSse(new Response(stream), (event) => events.push(event));
+    await consumeSse(new Response(stream), (event) => {
+      events.push(event);
+    });
     expect(events).toEqual([{ event: 'token', data: '{"text":"¡Diseño ✨!"}' }]);
   });
 
