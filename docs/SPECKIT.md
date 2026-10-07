@@ -46,21 +46,31 @@ Comprobar la base explícitamente:
 make speckit-check
 ```
 
-Abrir Claude Code para la prueba real:
+### Feature 002 el día del examen
 
-```bash
-SPECIFY_FEATURE=002-exam-adaptation \
-SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation \
-make claude
-```
+`002` sólo contiene esqueletos y referencias de la base, etiquetadas como tales:
+`spec.md` y `tasks.md` (T001–T006 pendientes), `research.md` (tipo de requisito →
+implementación actual → archivos → comprobación), `quickstart.md` (escenarios de
+aceptación Q0–Q10 con comandos) y `checklists/requirements.md` (calidad del spec).
+No hay `plan.md` a propósito: `setup-plan.sh` omite la plantilla oficial si el archivo
+existe. Hasta `/speckit-plan`, los checks que exigen plan fallan con
+"Run /speckit-plan first": es el orden esperado.
 
-Lee primero el material importado con `--no-upload`. Ejecuta `/speckit-specify`
-indicando la ruta y los requisitos reales; después `/speckit-clarify` si faltan
-decisiones, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze` y `/speckit-implement`.
-El plan inicial de `002` explica el orden, pero no sustituye el análisis del enunciado.
+1. Copiar el material en `prueba-tecnica/` y abrir `make exam-claude`, que fija
+   `SPECIFY_FEATURE` y `SPECIFY_FEATURE_DIRECTORY` para `002`.
+2. `/speckit-specify SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation. Requisitos del brief en prueba-tecnica/ (importado con --no-upload); no crear 003.`
+3. `/speckit-clarify` sólo si quedan `NEEDS CLARIFICATION`.
+4. `/speckit-plan Conserva el mapa de research.md y Q0–Q10 de quickstart.md; añade las decisiones y criterios del brief.`
+5. `/speckit-tasks` y después `/speckit-analyze` (sólo lectura).
+6. `/speckit-implement`: usa `checklists/` como puerta y termina con `quickstart.md` (T006).
+
+El atajo `/prueba-tecnica` escribe `spec.md` y `tasks.md` directamente: ejecutar
+`/speckit-plan` antes de `/speckit-analyze` o `/speckit-implement`, que exigen `plan.md`.
 No marques una tarea como terminada hasta contar con implementación y evidencia.
+Ensayo del 2026-10-07 en un clon desechable: las cuatro plantillas se resuelven sin
+cambios, `setup-plan.sh` copia la oficial y `setup-tasks.sh` lista `research.md` y `quickstart.md`.
 
-Para cambiar manualmente el contexto en tu shell:
+Sin `make exam-claude`, fijar el contexto en tu shell:
 
 ```bash
 export SPECIFY_FEATURE=002-exam-adaptation
@@ -82,9 +92,10 @@ mediante las tareas de implementación, sin conflictos críticos de constitució
 requisitos originales se complementan con PostgreSQL, despliegue Vercel/Docker,
 gestión de clientes y legibilidad. La publicación de la nueva API de clientes tiene
 su propia tarea pendiente: T015, hasta recuperar acceso SSH y comprobar producción.
-T017 registra el lector pendiente en el VPS; T018, la copia y preparación en Fedora;
-T026, la publicación y comprobación del backend auditado. El listado canónico y
-el estado de las correcciones están en `specs/001-company-agent/tasks.md`.
+T017 registra el lector pendiente en el VPS y T026, la publicación y comprobación del
+backend auditado. T018 (copia y preparación en el portátil Fedora) ya está cerrada.
+El listado canónico y el estado de las correcciones están en
+`specs/001-company-agent/tasks.md`.
 Se corrigieron permisos de ingesta, descripción del embedding por defecto y las
 referencias a la persistencia del historial. La matriz FR/T de `001` hace explícita
 esa cobertura; la evidencia de ejecución vive en [VALIDATION.md](VALIDATION.md).
@@ -103,6 +114,13 @@ La sintaxis de los seis scripts Bash se verificó. Los templates se resuelven
 mediante `.specify/scripts/bash/resolve-template.sh`, con fallback local cuando
 no hay presets. La auditoría no ejecutó un workflow de implementación ni modelos
 de pago para fingir un resultado del examen.
+
+El 2026-10-07 se ejecutaron sobre `001`, con selección explícita y sin cambiar el
+puntero, `/speckit-clarify` (sección Clarifications de `spec.md`, respondida desde el
+código), `/speckit-checklist` (`checklists/requirements-quality.md`), `/speckit-analyze`
+(sin hallazgos críticos; deriva de rutas y documentación corregida) y `/speckit-converge`
+(fase 2 de `tasks.md`: T027–T030, pruebas de inyección, fallos del proveedor y ZIP
+cifrado, más la trazabilidad del tooling de examen).
 
 Fuentes: [Spec Kit](https://github.com/github/spec-kit) y
 [skills en Claude Code](https://code.claude.com/docs/en/skills).

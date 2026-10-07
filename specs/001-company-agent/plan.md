@@ -20,8 +20,9 @@ or cookies. Paginated lists use coherent read snapshots and expose only public f
 The Vercel UI proxies requests to the HTTPS Docker API on the VPS through a protected
 origin. Production uses external PostgreSQL, a persistent local Qdrant volume and one
 API worker; the terminal sandbox remains separate. Deployment and laptop preparation
-are documented in docs/DEPLOYMENT.md and docs/FEDORA.md. Installing on the actual
-Fedora laptop still requires its SSH address and local authentication.
+are documented in docs/DEPLOYMENT.md and docs/FEDORA.md. The actual Fedora 44 laptop
+already holds the checkout and passed `make setup` and `make check` (T018); its private
+Anthropic key, administrator and MCP login remain operator steps.
 
 ## Contracts and data
 
@@ -67,3 +68,10 @@ necessary corpus, branding, tool/schema and provider implementation. Reverify th
 paths and record any deviation from the baseline constitution.
 Use `specs/002-exam-adaptation` for those requirements; its tasks remain pending
 until the real brief and acceptance evidence exist.
+Exam-only development tooling supports the candidate (story 4, FR-007) and is not
+part of the product runtime: the `/prueba-tecnica` skill (`.claude/skills/prueba-tecnica/`),
+Codex copies of the skills (`.agents/skills/`), the isolated Codex worktree worker
+(`scripts/codex-worker.sh`) and the tmux layout (`scripts/exam-tmux.sh`), documented
+in docs/EXAM_20_MIN.md. The Codex worker is instructed not to read private files,
+commit or push; `/prueba-tecnica` commits, pushes and deploys only when the owner
+invokes the exam procedure.

@@ -105,8 +105,11 @@ Streaming uses SSE (`text/event-stream`) with standard `event: NAME\ndata: JSON\
 - `done`: complete `ChatResponse`.
 - `error`: `{message: string, code: string}`. Provider codes: `authentication`,
   `rate_limit`, `provider_configuration` (model or permissions rejected),
-  `provider_unavailable`, `provider_error`, `refusal`, `output_limit`, `tool_limit`,
-  `iteration_limit`. Provider failures are logged with type, status and request id only.
+  `provider_unavailable`, `provider_error`, `refusal`, `output_limit`, `empty_response`,
+  `tool_limit`, `iteration_limit`. An unexpected server failure emits `internal_error`
+  over SSE. The JSON route returns the agent codes as HTTP 503 `{detail, code}` and
+  an unexpected failure as HTTP 500 `{detail}`.
+  Provider failures are logged with type, status and request id only.
 
 `GET /api/tools`: `{tools: {name: string, description: string, enabled: boolean, input_schema: object}[]}`.
 The bounded JSON Schema has `type: "object"`, `properties`, `required` and

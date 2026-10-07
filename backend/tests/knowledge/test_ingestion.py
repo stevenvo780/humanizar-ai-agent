@@ -150,6 +150,24 @@ def test_zip_symlink(settings: Settings) -> None:
         parse_upload("links.zip", output.getvalue(), settings)
 
 
+def test_zip_with_encrypted_entry_is_rejected(settings: Settings) -> None:
+    # zipfile cannot write encrypted entries: set bit 0 of the general-purpose flag
+    # in the local and central headers so the archive declares an encrypted member.
+    data = bytearray(archive({"doc.md": b"Knowledge", "secret.md": b"Encrypted"}))
+    in_local = data.index(b"secret.md")  # name follows the 30-byte local header
+    in_central = data.index(b"secret.md", in_local + 1)  # and the 46-byte central header
+    local, central = in_local - 30, in_central - 46
+    assert data[local : local + 4] == b"PK\x03\x04"
+    assert data[central : central + 4] == b"PK\x01\x02"
+    data[local + 6] |= 0x01
+    data[central + 8] |= 0x01
+    with zipfile.ZipFile(io.BytesIO(data)) as declared:
+        flags = {member.filename: member.flag_bits & 1 for member in declared.infolist()}
+    assert flags == {"doc.md": 0, "secret.md": 1}
+    with pytest.raises(IngestionError, match="cifrados"):
+        parse_upload("encrypted.zip", bytes(data), settings)
+
+
 @pytest.mark.parametrize(
     ("name", "data"),
     [

@@ -42,9 +42,10 @@ export function StatusSection() {
               capacidades del servidor antes de habilitarlas.
             </li>
             <li>
-              Fedora: instalación real pendiente de disponer del usuario y host SSH del portátil. La
-              carpeta prevista es <code>~/Documentos/repos/SoftopPrueba</code>; el helper y el
-              procedimiento están documentados.
+              Fedora: el portátil Fedora 44 ya contiene el checkout en{' '}
+              <code>~/Documentos/repos/SoftopPrueba</code> y pasó <code>make setup</code> y{' '}
+              <code>make check</code>; la clave, el administrador y <code>mcp-login</code> siguen
+              siendo pasos privados del operador.
             </li>
             <li>Qdrant remoto: opcional, fuera de la verificación registrada.</li>
             <li>PDF escaneado: no incluye OCR.</li>

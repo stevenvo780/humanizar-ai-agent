@@ -1,21 +1,50 @@
-# Adaptación a la prueba real
+# Feature Specification: Adaptación a la prueba real
 
-**Estado:** pendiente de recibir y leer el enunciado. Esta feature no representa
-una implementación terminada ni requisitos inventados del evaluador.
+**Feature Branch**: `002-exam-adaptation` (identificador de feature; la rama Git sigue siendo `dev`)
 
-## Entrada requerida
+**Created**: 2026-10-06
 
-ZIP/enunciado, rúbrica, ejemplos, restricciones de uso de herramientas/proveedores
-y formato de entrega. Importar sin ejecutar código y leer el material sanitizado.
+**Status**: Pendiente del brief — esqueleto, no es una especificación
 
-## Requisitos y aceptación
+**Input**: Material de Softop en `prueba-tecnica/` (ZIP o archivos sueltos), todavía no recibido
 
-Todavía no disponibles. Sustituir esta sección mediante `/speckit-specify` después
-de inspeccionar el brief. Asignar FR/SC verificables y mapearlos a tareas concretas.
-No convertir los criterios de la base `001` en criterios del examen por suposición.
+> `/speckit-specify` sustituye este esqueleto por la plantilla oficial rellenada con
+> el brief. Entrada esperada: enunciado, rúbrica, ejemplos, restricciones de
+> herramientas/proveedores y formato de entrega, importados sin ejecutar código.
+> No convertir los criterios de `001-company-agent` en criterios del examen.
+> Referencia de la base (no requisitos): [research.md](research.md),
+> [quickstart.md](quickstart.md), [checklists/requirements.md](checklists/requirements.md).
 
-## Referencia existente
+## User Scenarios & Testing *(mandatory)*
 
-`specs/001-company-agent` describe la base comprobada. Reutilizar sus componentes
-cuando cumplan los requisitos reales; preservar aislamiento, confirmación, fuentes
-y restricciones de ejecución salvo cambio explícito del enunciado.
+_Pendiente del brief._ Historias priorizadas (P1, P2…) derivadas sólo del enunciado,
+cada una con prueba independiente y escenarios Given/When/Then.
+
+### Edge Cases
+
+_Pendiente del brief._
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+_Pendiente del brief._ FR-### verificables, cada uno trazable a una frase del enunciado
+o de la rúbrica.
+
+### Key Entities *(include if feature involves data)*
+
+_Pendiente del brief._
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+_Pendiente del brief._ SC-### medibles; cada criterio del evaluador tiene un escenario
+en `quickstart.md` (Q7).
+
+## Assumptions
+
+_Pendiente del brief._ Registrar aquí las restricciones técnicas que imponga el
+enunciado y los valores por defecto elegidos. Mientras el brief no diga otra cosa se
+preservan aislamiento, confirmación de escrituras, fuentes visibles, autenticación y
+límites de ejecución de la base `specs/001-company-agent`.

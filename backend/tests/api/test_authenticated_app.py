@@ -3,6 +3,8 @@ import secrets
 import uuid
 from typing import Any
 
+import anthropic
+import httpx
 import pytest
 from anthropic.types import Message
 from fastapi.testclient import TestClient
@@ -173,3 +175,43 @@ def test_provider_config_is_backend_only_and_legacy_database_does_not_override(
             ).fetchone()[0]
             == legacy
         )
+
+
+@pytest.mark.parametrize("path", ["/api/chat", "/api/chat/stream"])
+def test_provider_failure_is_coded_unsaved_and_never_a_demo_answer(
+    settings: Settings, path: str
+) -> None:
+    class UnavailableProvider:
+        async def complete(self, *_args: Any, **_kwargs: Any) -> Message:
+            raise anthropic.APIConnectionError(
+                message="synthetic-outage-detail",
+                request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"),
+            )
+
+    config = settings.model_copy(
+        update={
+            "auth_enabled": True,
+            "llm_mode": "anthropic",
+            "anthropic_api_key": SecretStr("synthetic-environment-provider-value"),
+        }
+    )
+    application = create_app(config, UnavailableProvider())
+    with TestClient(application) as client:
+        account(client, "/api/auth/setup", "owner@example.invalid")
+        user = account(client, "/api/auth/register", "client@example.invalid")
+        body = {"message": "Hola", "session_id": str(uuid.uuid4())}
+        response = client.post(path, json=body, headers=user)
+        if path.endswith("stream"):
+            assert response.status_code == 200
+            assert "event: error" in response.text and "event: done" not in response.text
+            line = response.text.split("event: error\ndata: ", 1)[1].split("\n", 1)[0]
+            payload = json.loads(line)
+        else:
+            assert response.status_code == 503
+            payload = response.json()
+            assert set(payload) == {"detail", "code"}
+        assert payload["code"] == "provider_unavailable"
+        assert "synthetic-outage-detail" not in response.text
+        assert "Modo demostración" not in response.text and '"mode"' not in response.text
+        conversations = client.get("/api/conversations", headers=user).json()["conversations"]
+        assert all(conversation["messages"] == [] for conversation in conversations)

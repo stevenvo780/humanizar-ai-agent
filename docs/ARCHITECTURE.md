@@ -5,7 +5,7 @@ flowchart LR
   U[Usuario] --> UI[React y TypeScript]
   UI -->|REST y SSE| API[FastAPI]
   API --> AUTH[JWT y sesiones revocables]
-  AUTH --> DB[SQLite: usuarios, sesiones, conversaciones y solicitudes]
+  AUTH --> DB[SQLite o PostgreSQL: usuarios, sesiones, conversaciones y solicitudes]
   API --> ING[Parseo y fragmentación]
   ING --> V[Qdrant persistente]
   API --> AG[Ciclo de agente limitado]
@@ -83,7 +83,7 @@ evita almacenar respuestas privadas en caché y el backend mantiene el presupues
 de ejecución durante toda la respuesta SSE. Ver docs/DEPLOYMENT.md.
 
 Esta base incluye acceso multiusuario con roles administrador y cliente. Cuotas por
-tenant, despliegue público, OCR, navegador autónomo y ejecución arbitraria de código
+tenant, OCR, navegador autónomo y ejecución arbitraria de código
 requieren trabajo específico según el enunciado; no se presentan como capacidades
 ya implementadas.
 

@@ -204,8 +204,8 @@ El 7 de octubre de 2026 se publicó
 
 Capturas y resúmenes de ejecución quedan sólo en `artifacts/`, excluidos de Git y
 del paquete source. Las credenciales de operación se entregan en un archivo privado
-del VPS, separado del checkout. La instalación en Fedora no se acredita aquí:
-requiere identificar su usuario/host SSH y ejecutarla en el portátil.
+del VPS, separado del checkout. La instalación en Fedora se acredita
+aparte, en la sección Fedora de este documento.
 
 ## Revisión independiente
 
@@ -254,8 +254,9 @@ producción. La publicación real se registra por separado del inventario automa
   cuentas, sesiones, historial y solicitudes; Qdrant persiste en un volumen del VPS.
 - El hosting público utiliza Vercel para React y un VPS para FastAPI/sandbox.
   Procedimiento y variables documentados en [DEPLOYMENT.md](DEPLOYMENT.md).
-  Fedora dispone de un helper de preparación; ejecutar en el equipo real requiere
-  su acceso SSH y la autenticación interactiva local de Claude Code.
+  El portátil Fedora 44 ya pasó `make setup` y `make check`; la clave de Anthropic,
+  el administrador, `mcp-login` y la autenticación local de Claude Code siguen siendo
+  pasos privados del operador.
 - Las solicitudes se registran localmente; no hay envío externo ni reserva de agenda.
 
 ## Archivos y repetición

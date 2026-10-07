@@ -29,9 +29,14 @@ Write `specs/002-exam-adaptation/spec.md` (replace the placeholder content, keep
   brief states; mark real ambiguities and pick the conservative default instead of asking,
   unless a choice would break an explicit requirement.
 
-Then write `specs/002-exam-adaptation/tasks.md` as a checklist grouped by disjoint file ownership.
-Use the task list tool to track the acceptance criteria. Skip Spec Kit regeneration when the
-brief is clear; `/speckit-plan` only if architecture changes.
+Run the Spec Kit chain on feature 002 (all prerequisites were rehearsed; keep each step brief):
+`/speckit-specify` with `SPECIFY_FEATURE_DIRECTORY=specs/002-exam-adaptation` in the argument
+(never create 003, never touch 001) → `/speckit-clarify` only for blocking ambiguities →
+`/speckit-plan` (required: analyze/implement need plan.md; it copies the official template and
+reuses research.md, the baseline adaptation map) → `/speckit-tasks` grouped by disjoint file
+ownership → `/speckit-analyze` (read-only, fix CRITICAL/HIGH) → implement. Use
+`quickstart.md` Q0–Q10 as the verification script and track acceptance criteria with the task
+list tool.
 
 ## 3. Implement in parallel (≤9 min)
 
