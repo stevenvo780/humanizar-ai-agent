@@ -11,6 +11,9 @@
 4. A candidate opens Claude Code with Spec Kit and adapts the baseline to a real brief.
 5. Customers authenticate with individual accounts and recover only their own chats.
 6. Customers confirm demo/support requests; administrators review the stored inbox.
+7. An operator uses PostgreSQL for shared production persistence while SQLite remains
+   available for local setup under the same authentication and business contracts.
+8. Public visitors use the Vercel UI with the persistent Docker API and terminal sandbox.
 
 ## Acceptance criteria
 
@@ -24,6 +27,8 @@
 - JWT access with rotating refresh, Argon2, roles and persistent private histories.
 - Backend-only provider environment configuration, without browser key forms or HTTP key routes.
 - Public Humanizar corpus preloaded; grounded product recommendations and confirmed requests.
+- Optional PostgreSQL persistence with a dedicated schema, verified TLS and transactional session handling.
+- Vercel same-origin API proxy to the HTTPS Docker backend, with authenticated sessions and streamed tool activity.
 
 ## Scope limits
 
@@ -38,14 +43,16 @@ and arbitrary autonomous code execution are outside this implementation.
 | --- | --- | --- |
 | FR-001 | Answers expose retrieved evidence; absent facts produce uncertainty | Grounding/unknown-answer tests and source inspection |
 | FR-002 | Admin ingestion is bounded and documents/vectors persist | ZIP boundaries, ownership permissions and restart tests |
-| FR-003 | Anthropic tool use has bounded turns, tokens and errors | Mocked provider loop and budgets; live credential check remains environment-dependent |
+| FR-003 | Anthropic tool use has bounded turns, tokens and errors | Provider-loop and budget tests; deployed Haiku SSE response with retrieval and nonzero usage; each new installation requires its own backend key |
 | FR-004 | Demo mode is labelled and never claims a model call | Demo tests and visible mode |
-| FR-005 | Terminal uses fixed presets in the separate nonroot container | Injection/resource tests; actual Docker execution remains pending |
+| FR-005 | Terminal uses fixed presets in the separate nonroot container | Injection/resource tests; real Python preset in the deployed nonroot, read-only sandbox with internal networking and resource limits |
 | FR-006 | MCP reads through the API without another Qdrant writer | Handshake/company identity; protected search requires authentication |
 | FR-007 | Locked setup, source packaging and ten Spec Kit skills are portable | Setup/check commands, allowlist tests and scaffold hash/reference audit |
 | FR-008 | JWT/Argon2, roles, revocable sessions and histories isolate accounts | Auth, refresh, role and conversation ownership tests |
 | FR-009 | Provider credentials come only from the backend environment | Removed HTTP routes, ignored legacy DB configuration and public-response isolation tests; live calls require a user's key |
 | FR-010 | Public Humanizar evidence supports recommendations and confirmed local requests | Recommendation, idempotency, owner listing and admin inbox tests |
+| FR-011 | Optional PostgreSQL preserves auth and business contracts in a dedicated schema | Twelve isolated PostgreSQL tests, concurrent bootstrap, production TLS 1.3 and persistence after API restart |
+| FR-012 | Vercel proxies authenticated requests and SSE to the persistent Docker backend | Ready production deployment, secure session cookies, real tools, Swagger, protected origin and absence of backend keys from browser assets |
 
 Build, types, lint and responsive browser checks apply across these requirements.
 Detailed execution evidence and external-service limits are recorded in docs/VALIDATION.md.

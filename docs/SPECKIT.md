@@ -73,8 +73,9 @@ Mantén `001` como referencia y escribe los requisitos de la prueba en `002`.
 
 ## Auditoría de la base
 
-La revisión de coherencia encontró cobertura cualitativa de los diez requisitos
-de aceptación originales en sus diez tareas, sin conflictos críticos de constitución.
+La revisión de coherencia encontró cobertura cualitativa de los doce requisitos
+de aceptación en sus doce tareas, sin conflictos críticos de constitución. Los diez
+requisitos originales se complementan con PostgreSQL y el despliegue Vercel/Docker.
 Se corrigieron permisos de ingesta, descripción del embedding por defecto y las
 referencias a la persistencia del historial. La matriz FR/T de `001` hace explícita
 esa cobertura; la evidencia de ejecución vive en [VALIDATION.md](VALIDATION.md).
