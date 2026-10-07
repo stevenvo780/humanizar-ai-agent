@@ -6,7 +6,6 @@ export function ArchitectureSection({ assistant }: { assistant: string }) {
   return (
     <DocsSection
       id="arquitectura"
-      number="02"
       label="ARQUITECTURA"
       title="Piezas pequeñas. Responsabilidades claras."
     >

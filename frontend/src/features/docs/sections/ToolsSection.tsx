@@ -5,7 +5,6 @@ export function ToolsSection() {
   return (
     <DocsSection
       id="herramientas"
-      number="06"
       label="HERRAMIENTAS E INTEGRACIONES"
       title="Capacidades concretas, con límites concretos."
     >

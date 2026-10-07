@@ -3,7 +3,9 @@
 @import './styles/hero.css';
 @import './styles/sections.css';
 @import './styles/content-blocks.css';
+@import './styles/overview.css';
 @import './styles/quality-status.css';
 @import './styles/resources-footer.css';
+@import './styles/presentation.css';
 @import './styles/responsive.css';
 @import './styles/responsive-small.css';

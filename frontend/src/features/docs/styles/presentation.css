@@ -1,0 +1,158 @@
+/* Header shortcuts and the presentation mode controls. */
+.docs-header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 4px;
+  font-size: 14px;
+  color: #a8c3b5;
+  text-decoration: none;
+}
+.docs-header-link:hover {
+  color: #c7e8d3;
+}
+.docs-present-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #10261c;
+  background: #9fd8bd;
+  border: 1px solid #9fd8bd;
+  border-radius: 6px;
+}
+.docs-present-toggle:hover {
+  background: #b6e6cf;
+  border-color: #b6e6cf;
+}
+.docs-present-toggle[aria-pressed='true'] {
+  color: #c7e8d3;
+  background: #1c2d26;
+  border-color: #86b393;
+}
+.docs-return-short {
+  display: none;
+}
+.docs-page.is-presenting {
+  padding-bottom: 88px;
+}
+.docs-presentation-bar {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  background: #0e171ef5;
+  border: 1px solid #3b5548;
+  border-radius: 12px;
+  box-shadow: 0 14px 34px #00000080;
+  backdrop-filter: blur(10px);
+}
+.docs-presentation-bar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #c6e3cd;
+  background: #1c2d26;
+  border: 1px solid #3b5548;
+  border-radius: 8px;
+}
+.docs-presentation-bar button:hover {
+  background: #263e31;
+  border-color: #86b393;
+}
+.docs-presentation-bar button[aria-disabled='true'] {
+  cursor: not-allowed;
+  color: #8fa59a;
+  background: #172420;
+  border-color: #2c3f36;
+}
+.docs-presentation-count {
+  padding: 0 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  color: #a8c3b5;
+  white-space: nowrap;
+}
+.docs-presentation-count strong {
+  font-weight: 600;
+  color: #e1eae5;
+}
+.docs-presentation-label {
+  width: 200px;
+  overflow: hidden;
+  font-size: 14px;
+  color: #c4dfd2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.docs-presentation-hint {
+  font-size: 12px;
+  color: #a8bab3;
+  white-space: nowrap;
+}
+.docs-presentation-bar kbd {
+  padding: 1px 5px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: #c4dfd2;
+  background: #172420;
+  border: 1px solid #3b5548;
+  border-radius: 4px;
+}
+.docs-presentation-hint kbd {
+  font-family: inherit;
+  font-size: 13px;
+}
+@media (max-width: 800px) {
+  .docs-presentation-hint,
+  .docs-presentation-label {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .docs-header-link {
+    display: none;
+  }
+  .docs-presentation-bar {
+    bottom: 12px;
+  }
+}
+@media (max-width: 500px) {
+  .docs-header-actions {
+    gap: 8px;
+  }
+  .docs-present-toggle {
+    padding: 7px 9px;
+  }
+  .docs-present-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .docs-return-long {
+    display: none;
+  }
+  .docs-return-short {
+    display: inline;
+  }
+  .docs-presentation-bar kbd {
+    display: none;
+  }
+}

@@ -34,11 +34,16 @@ Run the Spec Kit chain on feature 002 (all prerequisites were rehearsed; keep ea
 (never create 003, never touch 001) → `/speckit-clarify` only for blocking ambiguities →
 `/speckit-plan` (required: analyze/implement need plan.md; it copies the official template and
 reuses research.md, the baseline adaptation map) → `/speckit-tasks` grouped by disjoint file
-ownership → `/speckit-analyze` (read-only, fix CRITICAL/HIGH) → implement. Use
+ownership → `/speckit-analyze` (read-only, fix CRITICAL/HIGH) → implement (optionally
+`/speckit-taskstoissues` after tasks for a public tracker; the owner approved public issues). Use
 `quickstart.md` Q0–Q10 as the verification script and track acceptance criteria with the task
 list tool.
 
 ## 3. Implement in parallel (≤9 min)
+
+If the brief asks for a small backend (endpoint → vector DB context → model), start from
+docs/EXAM_RECIPES.md: `POST /api/ask` already exists and is tested; R2 adds an external API.
+
 
 - Company identity and corpus: company facts → `backend/knowledge/<empresa>/*.md`; give the user
   the exact `.env` lines to paste (COMPANY_NAME, COMPANY_DESCRIPTION, ASSISTANT_NAME,

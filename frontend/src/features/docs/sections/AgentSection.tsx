@@ -5,7 +5,6 @@ export function AgentSection() {
   return (
     <DocsSection
       id="agente"
-      number="03"
       label="PROCESO DEL AGENTE"
       title="De una pregunta a una respuesta verificable."
     >

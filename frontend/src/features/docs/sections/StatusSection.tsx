@@ -1,29 +1,40 @@
 import { CheckCheck, CircleDot, ShieldCheck } from 'lucide-react';
 import { DocsSection } from '../DocsSection';
-import { REPOSITORY_URL } from '../docsContent';
+import { ExternalLink } from '../ExternalLink';
+import { repositoryFile } from '../docsLinks';
 
 export function StatusSection() {
   return (
     <DocsSection
       id="estado"
-      number="08"
       label="ESTADO Y LÍMITES"
       title="Lo comprobado y lo pendiente, a la vista."
     >
       <div className="docs-status-grid">
         <div className="docs-status-verified">
           <span>
-            <CheckCheck size={17} /> Comprobado en pruebas
+            <CheckCheck size={17} /> Comprobado
           </span>
           <ul>
             <li>Acceso por cuenta, roles y sesiones revocables.</li>
             <li>Persistencia PostgreSQL con TLS y recuperación semántica local.</li>
             <li>Chat con fuentes, solicitudes confirmadas e inbox admin.</li>
             <li>Identidad MCP y verificaciones de código.</li>
-            <li>Vercel y backend Docker desplegados; cookies HTTPS y sandbox comprobados.</li>
+            <li>
+              Producción desplegada: frontend en Vercel y API en Docker, con lectura de documentos y
+              gestión de clientes declaradas por HTTPS.
+            </li>
+            <li>
+              Backup coordinado antes de publicar y restauración ensayada en un entorno aislado.
+            </li>
             <li>
               Claude Haiku 4.5: llamada autenticada, ejecución real del agente con MCP y
               recuperación de documentación con fuentes verificadas desde la web pública.
+            </li>
+            <li>Spec Kit 001 completo, de specify a converge, con todas sus tareas cerradas.</li>
+            <li>
+              Equipo Fedora 44 de presentación con <code>make setup</code> y <code>make check</code>{' '}
+              aprobados.
             </li>
           </ul>
         </div>
@@ -36,16 +47,13 @@ export function StatusSection() {
               Cada instalación requiere su propia clave de Anthropic en el backend y verificar la
               conexión.
             </li>
+            <li>Spec Kit 002: preparada; se completa cuando llegue el enunciado real.</li>
             <li>
-              Backend auditado, lectura de documentos y gestión de clientes: publicación de la API
-              actualizada pendiente de recuperar el acceso SSH al VPS. La interfaz comprueba las
-              capacidades del servidor antes de habilitarlas.
+              Recorrido manual del lector y de Clientes con la sesión admin de producción; la API ya
+              declara ambas capacidades.
             </li>
             <li>
-              Fedora: el portátil Fedora 44 ya contiene el checkout en{' '}
-              <code>~/Documentos/repos/SoftopPrueba</code> y pasó <code>make setup</code> y{' '}
-              <code>make check</code>; la clave, el administrador y <code>mcp-login</code> siguen
-              siendo pasos privados del operador.
+              GitHub Actions está definido; la evidencia registrada procede de ejecuciones locales.
             </li>
             <li>Qdrant remoto: opcional, fuera de la verificación registrada.</li>
             <li>PDF escaneado: no incluye OCR.</li>
@@ -54,15 +62,11 @@ export function StatusSection() {
       </div>
       <p>
         El{' '}
-        <a
-          href={`${REPOSITORY_URL}/blob/dev/docs/OPERATIONS.md`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <ExternalLink href={repositoryFile('docs/OPERATIONS.md')}>
           runbook de operaciones
-        </a>{' '}
+        </ExternalLink>{' '}
         describe variables por entorno, publicación, verificaciones, copias de seguridad y
-        recuperación. La copia del portátil conserva el nombre de carpeta de este proyecto.
+        recuperación.
       </p>
       <div className="docs-limit-note">
         <ShieldCheck size={17} />

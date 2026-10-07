@@ -1,12 +1,12 @@
 import { Check } from 'lucide-react';
 import { DocsSection } from '../DocsSection';
-import { REPOSITORY_URL } from '../docsContent';
+import { ExternalLink } from '../ExternalLink';
+import { repositoryFile } from '../docsLinks';
 
 export function QualitySection() {
   return (
     <DocsSection
       id="calidad"
-      number="07"
       label="CALIDAD Y EVIDENCIA"
       title="El estándar se demuestra con comprobaciones."
     >
@@ -14,6 +14,8 @@ export function QualitySection() {
         La base cuenta con <strong>pruebas automatizadas en cada capa</strong>, incluidas pruebas
         reales de persistencia PostgreSQL, y comprobaciones de formato, tipos y build. La evidencia
         describe la base registrada; cada cambio posterior debe volver a pasar sus comprobaciones.
+        Los totales de cada ejecución están en{' '}
+        <ExternalLink href={repositoryFile('docs/VALIDATION.md')}>VALIDATION.md</ExternalLink>.
       </p>
       <div className="docs-quality-table-wrap">
         <table className="docs-quality-table">
@@ -68,13 +70,9 @@ export function QualitySection() {
       </p>
       <p>
         La{' '}
-        <a
-          href={`${REPOSITORY_URL}/blob/dev/docs/QUALITY.md`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <ExternalLink href={repositoryFile('docs/QUALITY.md')}>
           auditoría de calidad y adaptación
-        </a>{' '}
+        </ExternalLink>{' '}
         relaciona cada hallazgo con su corrección y sus regresiones. Incluye importación local
         segura, formularios derivados del esquema, sesiones ante fallos temporales, anuncio
         accesible y verificaciones de Spec Kit que conservan la selección activa.

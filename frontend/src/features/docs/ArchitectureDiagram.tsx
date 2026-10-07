@@ -15,14 +15,14 @@ export function ArchitectureDiagram({ assistant }: { assistant: string }) {
           role="img"
           aria-labelledby="architecture-title architecture-description"
         >
-          <title id="architecture-title">Arquitectura de {assistant}</title>
+          <title id="architecture-title">{`Arquitectura de ${assistant}`}</title>
           <desc id="architecture-description">
             React se sirve desde Vercel. Las llamadas REST y SSE del mismo origen pasan por un
             rewrite que añade una cabecera privada hacia FastAPI en Docker en el VPS. La API valida
             JWT, consulta PostgreSQL con TLS en el schema lumen, recupera evidencia de Qdrant local
             y coordina Claude Haiku y el sandbox aislado. SQLite es la alternativa local opcional.
-            MCP consulta la misma API por HTTP. Este diagrama describe la configuración preparada;
-            las comprobaciones del despliegue público se registran por separado.
+            MCP consulta la misma API por HTTP. Este diagrama describe la configuración desplegada;
+            la evidencia de cada comprobación se registra por separado.
           </desc>
           <defs>
             <marker

@@ -1,64 +1,100 @@
-.docs-resource-grid {
+.docs-link-groups {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin: 27px 0 19px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  margin: 26px 0 0;
 }
-.docs-resource-grid > a {
+.docs-link-group {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #334b3d;
+  border-radius: 9px;
+  background: #162520;
+}
+.docs-link-group.wide {
+  grid-column: 1 / -1;
+}
+.docs-link-group > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.docs-link-group-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  height: 38px;
+  color: #aad6b6;
+  background: #2c4a35;
+  border: 1px solid #486951;
+  border-radius: 8px;
+}
+.docs-link-group h3 {
+  font-size: 16px;
+  font-weight: 550;
+  color: #c2e1cb;
+  margin: 0 0 4px;
+}
+.docs-link-group header p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #a6bbad;
+  margin: 0;
+}
+.docs-link-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.docs-link-group.wide ul {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 215px), 1fr));
+}
+.docs-link-group li {
+  min-width: 0;
+}
+.docs-link-group li > a {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  border: 1px solid #3a5542;
-  border-radius: 8px;
+  gap: 10px;
+  min-height: 44px;
+  height: 100%;
+  padding: 9px 12px;
+  border: 1px solid #36513f;
+  border-radius: 7px;
   background: #1b3022;
   text-decoration: none;
   transition:
     background 0.2s,
     border-color 0.2s;
 }
-.docs-resource-grid > a:hover {
+.docs-link-group li > a:hover {
   border-color: #91bf99;
   background: #26432d;
 }
-.docs-resource-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #a7cdae;
-  background: #2e4c34;
-  border: 1px solid #4c6b4e;
-  height: 44px;
-  width: 44px;
-  flex: 0 0 44px;
-  border-radius: 8px;
+.docs-link-group li > a > span:first-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
-.docs-resource-icon.lavender {
-  color: #b6b2d5;
-  background: #393849;
-  border-color: #55536d;
-}
-.docs-resource-grid h3 {
-  font-size: 16px;
+.docs-link-group li strong {
+  font-size: 14px;
   font-weight: 500;
   color: #c6e3cd;
-  margin: 0 0 7px;
 }
-.docs-resource-grid p {
-  font-size: 14px;
+.docs-link-group li small {
+  font-size: 12px;
+  line-height: 1.5;
   color: #a3bca9;
-  margin: 0;
+  overflow-wrap: anywhere;
 }
-.docs-resource-grid > a > svg:last-child {
+.docs-link-group li > a > svg {
+  flex: 0 0 15px;
   margin-left: auto;
   color: #95c09e;
-}
-.docs-repository-state {
-  color: #a8baaf !important;
-  font-size: 12px !important;
-  line-height: 1.9;
-  margin-bottom: 25px !important;
-  overflow-wrap: anywhere;
 }
 .docs-start-code {
   border: 1px solid #334d3a;

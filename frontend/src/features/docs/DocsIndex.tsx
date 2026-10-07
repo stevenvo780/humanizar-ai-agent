@@ -1,5 +1,7 @@
 import { ArrowUpRight, Braces, ShieldCheck } from 'lucide-react';
+import { ExternalLink } from './ExternalLink';
 import { sections } from './docsContent';
+import { API_DOCS_PATH } from './docsLinks';
 
 export function DocsIndex({
   active,
@@ -37,10 +39,10 @@ export function DocsIndex({
           auditoría de producción.
         </p>
       </div>
-      <a className="docs-swagger-link" href="/api/docs" target="_blank" rel="noopener noreferrer">
+      <ExternalLink className="docs-swagger-link" href={API_DOCS_PATH}>
         <Braces size={15} /> Explorar API
         <ArrowUpRight size={12} />
-      </a>
+      </ExternalLink>
     </aside>
   );
 }

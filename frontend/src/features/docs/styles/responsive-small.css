@@ -145,24 +145,11 @@
     gap: 10px;
     flex-direction: column;
   }
-  .docs-resource-grid > a {
-    padding: 16px 14px;
-    gap: 10px;
+  .docs-link-groups {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .docs-resource-grid h3 {
-    font-size: 16px;
-  }
-  .docs-resource-grid p {
-    font-size: 14px;
-    line-height: 1.6;
-  }
-  .docs-resource-icon {
-    width: 36px;
-    height: 36px;
-    flex-basis: 36px;
-  }
-  .docs-resource-icon svg {
-    width: 19px;
+  .docs-link-group {
+    padding: 15px 14px;
   }
   .docs-start-code > div > span:last-child {
     display: none;
@@ -191,7 +178,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .docs-details summary > svg,
-  .docs-resource-grid > a {
+  .docs-link-group li > a,
+  .docs-hero-actions > a {
     transition: none;
   }
 }

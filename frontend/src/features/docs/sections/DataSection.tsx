@@ -5,7 +5,6 @@ export function DataSection() {
   return (
     <DocsSection
       id="datos"
-      number="04"
       label="CONOCIMIENTO Y PERSISTENCIA"
       title="El contexto se consulta. Las cuentas se respetan."
     >

@@ -64,6 +64,12 @@ interfaces y criterios de aceptación. Escribe una matriz breve:
 | Web y API Python | React + FastAPI | Adaptar campos o rutas | UI + Swagger |
 | Persistencia vectorial | Qdrant local/remoto | Elegir embedding/URL | Reinicio y búsqueda |
 
+## Recetas verificadas
+
+[EXAM_RECIPES.md](EXAM_RECIPES.md): endpoint RAG `POST /api/ask` ya implementado
+(pregunta → Qdrant → Claude con fuentes), herramienta de API externa, otro proveedor,
+otra base vectorial y entrega. Úsalo primero si el brief pide un backend pequeño.
+
 ## Claude Code + Codex (opcional)
 
 Claude Code coordina y Codex actúa como segundo trabajador en su propio worktree

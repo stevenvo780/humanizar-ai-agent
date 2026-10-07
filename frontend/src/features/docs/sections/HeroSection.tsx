@@ -1,4 +1,6 @@
 import {
+  ArrowDown,
+  ArrowUpRight,
   Braces,
   CheckCheck,
   Code2,
@@ -8,6 +10,9 @@ import {
   GitBranch,
   Sparkles,
 } from 'lucide-react';
+import { sectionNumber } from '../docsContent';
+import { API_DOCS_PATH, REPOSITORY_BRANCH, REPOSITORY_URL } from '../docsLinks';
+import { ExternalLink } from '../ExternalLink';
 
 export function HeroSection({
   company,
@@ -23,7 +28,9 @@ export function HeroSection({
       {/* prettier-ignore */}
       <div className="docs-eyebrow">
         <GitBranch size={13} /> DOCUMENTACIÓN TÉCNICA{' '}
-        <span>01 / {company.toUpperCase()}</span>
+        <span>
+          {sectionNumber('vision')} / {company.toUpperCase()}
+        </span>
       </div>
       <h1 id="docs-hero-title">
         La claridad también
@@ -41,6 +48,22 @@ export function HeroSection({
           : 'La empresa se configura en el backend;'}{' '}
         el perfil, los documentos y las herramientas se adaptan a los requisitos.
       </p>
+      <div className="docs-hero-actions">
+        <ExternalLink
+          className="docs-hero-primary"
+          href={`${REPOSITORY_URL}/tree/${REPOSITORY_BRANCH}`}
+        >
+          <GitBranch size={16} /> Código en GitHub
+          <ArrowUpRight size={14} />
+        </ExternalLink>
+        <ExternalLink href={API_DOCS_PATH}>
+          <Braces size={16} /> API · Swagger
+          <ArrowUpRight size={14} />
+        </ExternalLink>
+        <a href="#recursos">
+          <ArrowDown size={16} /> Todos los recursos
+        </a>
+      </div>
       <div className="docs-hero-tags">
         <span>
           <Code2 size={12} /> React + TypeScript
@@ -85,8 +108,9 @@ export function HeroSection({
         </div>
       </div>
       <p className="docs-snapshot-note">
-        El inventario y la evidencia están fechados; esta página no ejecuta comprobaciones en vivo.
-        La actualización del backend auditado está pendiente del acceso SSH al VPS.
+        Producción desplegada y verificada por HTTPS: frontend en Vercel y API en Docker, con backup
+        previo y restauración ensayada. La evidencia está fechada; esta página no ejecuta
+        comprobaciones en vivo.
       </p>
     </section>
   );

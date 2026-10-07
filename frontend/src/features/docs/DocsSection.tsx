@@ -1,14 +1,13 @@
 import type { ReactNode } from 'react';
+import { sectionNumber, type SectionId } from './docsContent';
 
 export function DocsSection({
   id,
-  number,
   label,
   title,
   children,
 }: {
-  id: string;
-  number: string;
+  id: SectionId;
   label: string;
   title: string;
   children: ReactNode;
@@ -16,7 +15,7 @@ export function DocsSection({
   return (
     <section className="docs-section" id={id} tabIndex={-1} aria-labelledby={`${id}-title`}>
       <div className="docs-section-kicker">
-        <span>{number}</span>
+        <span>{sectionNumber(id)}</span>
         {label}
       </div>
       <h2 id={`${id}-title`}>{title}</h2>

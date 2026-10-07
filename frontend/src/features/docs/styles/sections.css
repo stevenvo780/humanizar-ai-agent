@@ -42,8 +42,7 @@
 .docs-section > p:last-child {
   margin-bottom: 0;
 }
-.docs-section code,
-.docs-repository-state code {
+.docs-section code {
   color: #a8cbb4;
   background: #24382c;
   border-radius: 3px;

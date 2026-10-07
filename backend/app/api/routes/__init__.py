@@ -1,6 +1,7 @@
 """HTTP routers grouped by resource; app.main includes them in this order."""
 
 from app.api.routes import (
+    ask,
     chat,
     conversations,
     customers,
@@ -18,4 +19,5 @@ ROUTERS = (
     customers.router,
     conversations.router,
     chat.router,
+    ask.router,
 )

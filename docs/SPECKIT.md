@@ -15,7 +15,7 @@ La versión de la CLI de administración se fija con `make speckit`.
 | `/speckit-analyze` | Revisar coherencia sin modificar los artefactos |
 | `/speckit-implement` | Implementar y comprobar las tareas autorizadas |
 | `/speckit-converge` | Registrar diferencias que todavía faltan por implementar |
-| `/speckit-taskstoissues` | Crear issues solo cuando se solicite publicar en GitHub |
+| `/speckit-taskstoissues` | Publicar las tareas como issues de GitHub. Ejecutado para `001` el 2026-10-07: [30 issues](https://github.com/stevenvo780/humanizar-ai-agent/issues?q=label%3Aspec-kit-001) cerrados como completados. Para `002` se ejecuta después de `/speckit-tasks`, cuando exista `plan.md` |
 
 Los nombres utilizan guiones: `/speckit-specify`, no `/speckit.specify`.
 Los nombres con puntos en el workflow describen IDs internos de Spec Kit.

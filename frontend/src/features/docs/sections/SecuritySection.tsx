@@ -5,7 +5,6 @@ export function SecuritySection() {
   return (
     <DocsSection
       id="seguridad"
-      number="05"
       label="ACCESO Y SEGURIDAD"
       title="La sesión tiene dueño. La acción tiene permiso."
     >

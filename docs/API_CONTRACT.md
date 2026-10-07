@@ -85,6 +85,8 @@ Markdown formatting is not guaranteed. Reading does not query the vector service
 
 `DELETE /api/documents/{id}`: 204. Missing id: 404.
 
+`POST /api/ask`: JSON `{question: string (1–2000), top_k?: number (1–10, default 4)}` → `{answer: string, sources: Source[], model: string}`. Stateless retrieval → model → cited answer; honours `AUTH_ENABLED`; demo mode answers extractively; provider errors return 503 `{detail, code}`. Recipes: docs/EXAM_RECIPES.md.
+
 `POST /api/chat` or `POST /api/chat/stream`: JSON `{message: string, history?: {role: "user" | "assistant", content: string}[], session_id?: string}`.
 With authentication the server loads the user's database history and ignores the
 client-supplied history. Completed exchanges persist before the SSE `done` event.
