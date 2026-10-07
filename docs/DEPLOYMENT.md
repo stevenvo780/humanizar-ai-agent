@@ -5,11 +5,25 @@ Instancia publicada: [web](https://humanizar-ai-agent.vercel.app),
 [API](https://humanizar-ai-agent.vercel.app/api/docs). Los resultados observados
 de login, Haiku, TLS, sandbox y persistencia están en [VALIDATION.md](VALIDATION.md).
 
+**Estado al 2026-10-07:** el frontend de la revisión `f562cc9` está **READY** en
+Vercel. El despliegue de la nueva API con gestión de clientes y lectura de
+documentos sigue pendiente de recuperar la autenticación SSH del VPS. La
+instalación Fedora prevista en `~/Documentos/repos/SoftopPrueba` está pendiente
+de conocer usuario e IP; no se presenta como instalada.
+El operador preparó `.env.production` y `.env.vercel` privados, modo `0600` e
+ignorados por Git, preservando `.env` local. Su comprobación de sólo lectura
+confirmó PostgreSQL 18.6, TLS 1.3 y el schema dedicado; no actualizó la API ni
+modificó cuentas o contenido.
+El procedimiento de actualización, backup y recuperación está en
+[OPERATIONS.md](OPERATIONS.md); las tareas de la interfaz están en
+[ADMIN.md](ADMIN.md).
+
 El proyecto Vercel está conectado al repositorio GitHub con rama de producción
 `dev`. Un push a esa rama actualiza el frontend; el backend se actualiza por
 separado en el VPS mediante pull y el helper de Compose, después del backup.
 El lector de documentos necesita la API actualizada: `/api/health` debe declarar
-`features.document_reading: true`. La migración añade `document_contents` a la
+`features.document_reading: true`; la sección **Clientes** requiere
+`features.customer_management: true`. La migración añade `document_contents` a la
 base de conocimiento SQLite, conservando la tabla histórica de documentos,
 los fragmentos y los vectores. No modifica el schema PostgreSQL. La UI mantiene
 la carga y el borrado disponibles mientras un servidor anterior todavía no declara
@@ -21,8 +35,8 @@ dependen de atribuir éxito a ese workflow.
 El frontend se publica en Vercel y conserva llamadas del navegador a `/api` en el
 mismo origen. La API FastAPI y el sandbox se ejecutan en un VPS mediante
 `compose.production.yaml`. PostgreSQL remoto almacena cuentas, sesiones y
-solicitudes; Qdrant en modo local, documentos y el secreto generado permanecen en
-el volumen `/data` del VPS. Se usa un único worker de API por la persistencia local
+solicitudes; Qdrant en modo local, documentos y los archivos privados existentes
+permanecen en el volumen `/data` del VPS. Se usa un único worker de API por la persistencia local
 de Qdrant. Este documento describe el procedimiento; la publicación y las
 comprobaciones reales de cada entorno requieren evidencia de ese despliegue.
 
@@ -56,9 +70,9 @@ usar la auditoría de rutas y el escaneo de secretos establecidos por el reposit
 
 | Variable | Destino | Uso |
 | --- | --- | --- |
-| `API_ORIGIN` | Vercel, configuración de despliegue | Origen público HTTPS de la API, sin ruta, usuario, query ni fragmento. |
+| `API_ORIGIN` | Vercel, configuración de despliegue | Origen público HTTPS de la API, sin ruta, usuario, query ni fragmento. Preparación local en `.env.vercel` privado. |
 | `ORIGIN_SECRET` | Vercel protegido y proxy privado del VPS | Autoriza el tráfico del rewrite; nunca tiene prefijo `VITE_`. |
-| `ANTHROPIC_API_KEY` | API, archivo privado | Clave del proveedor; vacía permite el modo demo. |
+| `ANTHROPIC_API_KEY` | API, archivo privado | Clave del proveedor; `auto` sin clave usa demo, `anthropic` exige una clave. |
 | `LLM_MODE` / `ANTHROPIC_MODEL` | API | `auto`, `demo` o `anthropic`; el modelo web es independiente de Claude Code. |
 | `DATABASE_URL` | API, archivo privado | PostgreSQL remoto con `sslmode=verify-full&sslrootcert=system`. |
 | `DATABASE_SCHEMA` | API | Schema exclusivo `lumen`, sin modificar tablas de otros proyectos. |
@@ -67,6 +81,16 @@ usar la auditoría de rutas y el escaneo de secretos establecidos por el reposit
 | `CORS_ORIGINS` | API | Array JSON de los orígenes HTTPS exactos del frontend. |
 | `LUMEN_PRODUCTION_ENV` | Helper/Compose | Ruta absoluta del archivo privado externo al checkout. |
 | `LUMEN_API_PORT` | Helper/Compose | Puerto loopback de la API, por defecto `8087`. |
+
+En el entorno de trabajo, `.env` conserva la instalación local SQLite. El operador
+puede preparar `.env.production` como copia privada ignorada por Git, modo `0600`,
+con las variables aprobadas de producción; no se carga automáticamente ni se usa
+como archivo de Compose dentro del checkout. El runtime del VPS consume el archivo
+externo `/opt/humanizar-ai-agent/production.env`. Vercel recibe solamente las
+variables de su proxy, preparadas en `.env.vercel` privado, no el archivo del backend.
+El helper Vercel recibe variables de proceso y no carga ese archivo automáticamente.
+No leer ni imprimir estos archivos durante una revisión de código, publicación o
+prueba automatizada.
 
 La plantilla pública está en
 [config/production.env.example](../config/production.env.example). El archivo real
@@ -102,14 +126,15 @@ Crear el archivo privado fuera del repositorio; completar valores en un editor
 local sin copiarlos al terminal, al chat o al historial:
 
 ```bash
-install -d -m 700 "$HOME/.config/humanizar"
-# Ejecutar sólo si no existe; no sobrescribir una configuración ya preparada.
-if [ ! -e "$HOME/.config/humanizar/production.env" ]; then
-  install -m 600 config/production.env.example "$HOME/.config/humanizar/production.env"
+cd /opt/humanizar-ai-agent/repo
+# Sólo para una instalación nueva; conservar el archivo privado existente.
+if [ ! -e /opt/humanizar-ai-agent/production.env ]; then
+  install -m 600 config/production.env.example /opt/humanizar-ai-agent/production.env
 fi
-python3 scripts/deploy-vps.py check --env-file "$HOME/.config/humanizar/production.env"
-python3 scripts/deploy-vps.py up --env-file "$HOME/.config/humanizar/production.env"
-python3 scripts/deploy-vps.py status --env-file "$HOME/.config/humanizar/production.env"
+# Completar la plantilla en un editor privado antes de validar o arrancar.
+python3 scripts/deploy-vps.py check --env-file /opt/humanizar-ai-agent/production.env
+python3 scripts/deploy-vps.py up --env-file /opt/humanizar-ai-agent/production.env
+python3 scripts/deploy-vps.py status --env-file /opt/humanizar-ai-agent/production.env
 ```
 
 El proyecto Compose `humanizar-ai-agent` da nombres propios a sus contenedores,
@@ -137,7 +162,7 @@ Antes de publicar o habilitar el frontend, crear el primer administrador desde
 el CLI privado del contenedor, sin contraseña en argumentos:
 
 ```bash
-export LUMEN_PRODUCTION_ENV="$HOME/.config/humanizar/production.env"
+export LUMEN_PRODUCTION_ENV=/opt/humanizar-ai-agent/production.env
 export COMPOSE_DISABLE_ENV_FILE=1
 docker compose -p humanizar-ai-agent -f compose.production.yaml exec api \
   uv run --no-sync python -m app.manage create-admin
@@ -229,57 +254,28 @@ una llamada real a Anthropic: registrar esa comprobación por separado si se rea
 
 ## Backup, restauración y rollback
 
-Hacer backups privados de **ambas** capas antes de actualizar: PostgreSQL del schema
-del proyecto y el volumen `/data` con documentos, Qdrant y material de autenticación.
-Un backup de documentos puede contener datos personales. Mantenerlo fuera del
-repositorio, con directorio `0700`, archivos `0600` y almacenamiento cifrado.
+Antes de actualizar, obtener una copia coordinada de PostgreSQL y `/data`, además
+de preservar la configuración privada estable. PostgreSQL contiene cuentas,
+sesiones, conversaciones y solicitudes; la base de conocimiento sigue en SQLite
+y Qdrant dentro del volumen. Copiar únicamente PostgreSQL no conserva los documentos.
 
-Para PostgreSQL usar un servicio de libpq configurado de forma privada
-(`PGSERVICEFILE` y `.pgpass` propios, modo `0600`) con TLS verificado. El nombre de
-servicio público no contiene credenciales:
+El [runbook de operaciones](OPERATIONS.md) contiene los comandos completos para:
 
-```bash
-umask 077
-BACKUP_DIR="$HOME/.local/share/humanizar-backups/$(date -u +%Y%m%dT%H%M%SZ)"
-mkdir -p "$HOME/.local/share/humanizar-backups"
-mkdir "$BACKUP_DIR"
-PGSERVICE=humanizar pg_dump --schema=lumen --format=custom --file="$BACKUP_DIR/postgres.dump"
-```
+1. Verificar revisión, árbol Git limpio y configuración privada.
+2. Detener la API, volcar el schema `lumen` y copiar `/data`, con reinicio incluso
+   si falla la copia. El sandbox puede permanecer activo.
+3. Avanzar mediante `git fetch` y `git merge --ff-only`, validar la revisión y
+   ejecutar `deploy-vps.py check/up/status`.
+4. Comprobar HTTPS, bootstrap cerrado y flags de clientes/lector, sin publicar
+   respuestas autenticadas ni hacer una llamada de pago como parte del health.
+5. Volver a una revisión compatible desde un worktree separado, conservando el
+   mismo proyecto Compose, el volumen, PostgreSQL y los secretos de autenticación.
+6. Ensayar restauración en una base y volumen nuevos antes de sustituir los activos.
 
-Para una copia coherente de Qdrant local, detener la API y copiar `/data` a un
-directorio **nuevo**; el sandbox puede seguir activo. No copiar un Qdrant abierto:
-
-```bash
-export LUMEN_PRODUCTION_ENV="$HOME/.config/humanizar/production.env"
-export COMPOSE_DISABLE_ENV_FILE=1
-docker compose -p humanizar-ai-agent -f compose.production.yaml stop api
-API_CONTAINER="$(docker compose -p humanizar-ai-agent -f compose.production.yaml ps -a -q api)"
-mkdir "$BACKUP_DIR/data"
-docker cp "$API_CONTAINER:/data/." "$BACKUP_DIR/data"
-docker compose -p humanizar-ai-agent -f compose.production.yaml start api
-```
-
-Completar copia de PostgreSQL mientras la API está detenida cuando se requiera una
-instantánea coordinada de las dos capas. Comprobar permisos y legibilidad del backup
-de forma privada. Si la copia falla, arrancar la API igualmente antes de terminar.
-
-Restaurar primero en una base de datos **nueva** con rol/schema dedicado y en un
-volumen **nuevo** de un proyecto Compose separado:
-
-```bash
-pg_restore --no-owner --no-acl --exit-on-error \
-  --dbname='service=humanizar_restore' "$BACKUP_DIR/postgres.dump"
-```
-
-El servicio privado `humanizar_restore` debe apuntar a esa base vacía;
-no usar `--clean` ni sobrescribir la base activa.
-Copiar `/data` al volumen vacío conservando ownership `10001:10001`, arrancar una API
-aislada con otro puerto loopback y comprobar login, fuentes y solicitudes antes de
-cambiar el upstream del proxy. No extraer backups no confiables ni mezclar un secreto
-master de otra instalación. Guardar la instalación anterior hasta validar la nueva.
-
-Para rollback de código, desplegar una revisión previamente validada en un checkout
-separado y cambiar el upstream sólo después de su smoke; no hacer reset del árbol
-de trabajo ni revertir datos. `python3 scripts/deploy-vps.py stop --env-file ...`
-detiene sólo este proyecto y conserva los volúmenes. No ejecutar `down -v`, borrar
-schemas o reemplazar backups existentes como parte de esta receta.
+Usar un servicio libpq privado con TLS verificado para `pg_dump`/`pg_restore`;
+no poner credenciales en argumentos. Guardar backups fuera del checkout, con
+permisos privados y cifrado. No copiar Qdrant mientras otro proceso lo tenga abierto.
+No arrancar dos APIs sobre el mismo volumen local ni usar `down -v`, borrar schemas
+o regenerar JWT para hacer rollback. Una migración futura requiere su propia
+revisión de compatibilidad; la tabla aditiva del lector conserva la estructura
+histórica de documentos.

@@ -770,14 +770,32 @@ export default function DocsPage() {
                     la conexión.
                   </li>
                   <li>
+                    Lectura de documentos y gestión de clientes: código y pruebas completos;
+                    publicación de la API actualizada pendiente de recuperar el acceso SSH al VPS.
+                    La interfaz comprueba las capacidades del servidor antes de habilitarlas.
+                  </li>
+                  <li>
                     Fedora: instalación real pendiente de disponer del usuario y host SSH del
-                    portátil. El helper y el procedimiento están documentados.
+                    portátil. La carpeta prevista es <code>~/Documentos/repos/SoftopPrueba</code>;
+                    el helper y el procedimiento están documentados.
                   </li>
                   <li>Qdrant remoto: opcional, fuera de la verificación registrada.</li>
                   <li>PDF escaneado: no incluye OCR.</li>
                 </ul>
               </div>
             </div>
+            <p>
+              El{' '}
+              <a
+                href="https://github.com/stevenvo780/humanizar-ai-agent/blob/dev/docs/OPERATIONS.md"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                runbook de operaciones
+              </a>{' '}
+              describe variables por entorno, publicación, verificaciones, copias de seguridad y
+              recuperación. La copia del portátil conserva el nombre de carpeta de este proyecto.
+            </p>
             <div className="docs-limit-note">
               <ShieldCheck size={17} />
               <p>

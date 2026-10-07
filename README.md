@@ -114,8 +114,17 @@ pertenecen al entorno privado del backend. Vercel utiliza `API_ORIGIN` y un secr
 del proxy; ninguna credencial utiliza el prefijo público `VITE_`.
 
 [DEPLOYMENT.md](docs/DEPLOYMENT.md) describe las variables, aprovisionamiento,
-comprobaciones, backups y repetición. [FEDORA.md](docs/FEDORA.md) prepara la copia
-en Documentos, Python, Node, Claude Code y Spec Kit para presentar desde el portátil.
+comprobaciones, backups y repetición. [OPERATIONS.md](docs/OPERATIONS.md) reúne el
+procedimiento de actualización y el estado de publicación por componente.
+[FEDORA.md](docs/FEDORA.md) prepara la copia en
+`~/Documentos/repos/SoftopPrueba`, Python, Node, Claude Code y Spec Kit para presentar
+desde el portátil.
+
+La configuración privada de este workspace se separa en `.env` para desarrollo,
+`.env.production` para preparar la API productiva y `.env.vercel` para el proxy.
+Los archivos tienen permisos `0600`, están ignorados y no se incluyen en Git ni
+en el ZIP. El VPS consume su archivo externo `/opt/humanizar-ai-agent/production.env`;
+no se sobrescriben sus secretos ni se regeneran claves de sesión durante una actualización.
 
 Para adaptar otra empresa, cambia la identidad en `.env`, vacía `KNOWLEDGE_DIR`
 y utiliza un `DATA_DIR` distinto, o apunta `KNOWLEDGE_DIR` a tus archivos Markdown/TXT.

@@ -17,6 +17,7 @@
 - [ ] T015 FR-013: publish the updated API to the VPS and verify customer management through the public Vercel UI; requires an authenticated SSH connection.
 - [x] T016 FR-002/FR-008/FR-014: persist complete document text, migrate legacy metadata, add authenticated content API and safe Markdown/text reader, and verify storage, roles and browser behavior.
 - [ ] T017 FR-014: publish the document reader API/UI and verify reading from Vercel; requires an authenticated SSH connection to update the VPS API.
+- [ ] T018 FR-007: clone/update the public repository on the Fedora laptop in ~/Documentos/repos/SoftopPrueba and verify its local environment; requires a reachable SSH host/user and local tool authentication.
 
 Production Docker sandbox execution, real Haiku responses and PostgreSQL persistence
 were verified and are recorded in docs/VALIDATION.md. Remote Qdrant remains untested;

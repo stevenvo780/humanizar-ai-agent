@@ -25,7 +25,7 @@ límites y no se presenta como un entorno completamente verificado.
 ## Clon limpio
 
 ```bash
-git clone https://github.com/stevenvo780/humanizar-ai-agent.git
+git clone --branch dev https://github.com/stevenvo780/humanizar-ai-agent.git
 cd humanizar-ai-agent
 make setup
 make dev
@@ -88,3 +88,43 @@ No existen credenciales predeterminadas ni formularios web para introducir clave
 Las pruebas automatizadas simulan el proveedor; no validan tu cuenta de Anthropic.
 `make check` ejecuta los controles del proyecto. [VALIDATION.md](VALIDATION.md)
 separa la evidencia registrada de Docker, Anthropic y otros pendientes.
+
+## Separar local y producción
+
+| Entorno | Configuración y persistencia |
+| --- | --- |
+| Laptop local | `.env` privado del backend; `DATABASE_URL` vacío usa SQLite. Los datos viven en el `DATA_DIR` local. |
+| Preparación de producción | `.env.production` privado, ignorado por Git y modo `0600`. No reemplaza `.env` ni se carga automáticamente. |
+| Preparación de Vercel | `.env.vercel` privado, ignorado por Git y modo `0600`; contiene únicamente la configuración del proxy y no se publica. |
+| Runtime VPS | Archivo externo `/opt/humanizar-ai-agent/production.env`; PostgreSQL remoto con schema dedicado `lumen` y TLS completo. Documentos y Qdrant continúan en `/data` persistente. |
+| Vercel | Sólo configuración del proxy: `API_ORIGIN` y `ORIGIN_SECRET` gestionados en servidor. Ninguna clave Anthropic, URL PostgreSQL o secreto JWT. |
+
+No copiar archivos privados completos, bases de datos, volúmenes, cookies,
+sesiones de agentes o credenciales de otra instalación al clonar. Cada entorno
+local puede tener su propio administrador y corpus. Pasar de SQLite a PostgreSQL
+selecciona otro almacén; no migra automáticamente cuentas o conversaciones.
+Preservar los secretos existentes en el VPS durante las actualizaciones y los
+backups. [DEPLOYMENT.md](DEPLOYMENT.md) describe el alta inicial y
+[OPERATIONS.md](OPERATIONS.md) describe actualización y recuperación.
+
+## Equipo Fedora previsto
+
+El destino solicitado es `~/Documentos/repos/SoftopPrueba`. Al 2026-10-07 faltan
+usuario e IP del equipo; la instalación remota no se ha ejecutado ni validado.
+Seguir [FEDORA.md](FEDORA.md) con el operador del equipo. Para un destino vacío:
+
+```bash
+mkdir -p "$HOME/Documentos/repos"
+git clone --branch dev https://github.com/stevenvo780/humanizar-ai-agent.git \
+  "$HOME/Documentos/repos/SoftopPrueba"
+cd "$HOME/Documentos/repos/SoftopPrueba"
+make setup
+make check
+make dev
+```
+
+Si el directorio ya contiene un checkout, conservar sus cambios y configuración;
+no borrar ni sobrescribirlo para repetir la instalación. Descargar el código
+público no copia el acceso de producción. Instalar y autenticar Claude Code en
+ese equipo mediante el canal privado del dueño; no trasladar historiales ni
+ajustes de sesión desde otro runtime.

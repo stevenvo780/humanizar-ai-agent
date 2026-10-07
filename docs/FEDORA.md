@@ -1,20 +1,23 @@
-# Fedora en Documentos
+# Fedora en Documentos/repos/SoftopPrueba
 
 La ubicación preparada para desarrollo es
-`${HOME}/Documentos/humanizar-ai-agent`. Cada equipo instala sus propias
+`${HOME}/Documentos/repos/SoftopPrueba`, con el mismo nombre de carpeta que este
+proyecto. Cada equipo instala sus propias
 dependencias y conserva su configuración privada; no copiar `.env`, sesiones de
 Claude ni entornos virtuales desde otra máquina. Los archivos públicos se obtienen
 del repositorio y la clave del proveedor se configura localmente sólo en el backend.
 
 ## Preparar herramientas
 
-Clonar primero en Documentos para ejecutar el script versionado y revisarlo:
+Clonar primero en `Documentos/repos/SoftopPrueba` para ejecutar el script versionado
+y revisarlo. Si el destino ya existe, usar el checkout conservado; no ejecutar
+otro clon encima ni borrar sus cambios:
 
 ```bash
-mkdir -p "$HOME/Documentos"
-git clone --branch dev https://github.com/stevenvo780/humanizar-ai-agent.git \
-  "$HOME/Documentos/humanizar-ai-agent"
-cd "$HOME/Documentos/humanizar-ai-agent"
+mkdir -p "$HOME/Documentos/repos"
+git clone --branch dev --single-branch https://github.com/stevenvo780/humanizar-ai-agent.git \
+  "$HOME/Documentos/repos/SoftopPrueba"
+cd "$HOME/Documentos/repos/SoftopPrueba"
 bash scripts/prepare-fedora.sh
 ```
 
@@ -44,6 +47,8 @@ El script descarga instaladores oficiales por HTTPS a archivos temporales, despu
 los ejecuta y elimina únicamente esos archivos. Specify CLI se instala como tool de
 uv con versión **1.0.7**. No ejecuta código de un ZIP del examen. Un checkout existente
 se preserva: no hay pull, cambio de rama, reset ni sobrescritura de archivos locales.
+El helper rechaza enlaces simbólicos en el destino, `Documentos` o `Documentos/repos`,
+archivos que ocupen esas rutas y carpetas que no sean la raíz de un checkout existente.
 
 Opciones disponibles:
 
@@ -73,7 +78,7 @@ pública y editar `.env` localmente. Para usar la clave de Anthropic, completar 
 archivo backend del proyecto; nunca introducirla en el navegador.
 
 ```bash
-cd "$HOME/Documentos/humanizar-ai-agent"
+cd "$HOME/Documentos/repos/SoftopPrueba"
 make setup
 make check
 make speckit-check
@@ -100,3 +105,13 @@ Claude Code lee `CLAUDE.md`, `AGENTS.md` y las skills públicas del checkout. Su
 es independiente de `ANTHROPIC_API_KEY` del backend. Spec Kit usa los artefactos
 versionados y el selector de feature local creado por setup; para el examen real,
 trabajar desde el brief recibido siguiendo [EXAM_20_MIN.md](EXAM_20_MIN.md).
+
+## Verificación pendiente en Fedora
+
+Estado de esta entrega (2026-10-07): la preparación completa en Fedora aún no se
+ha ejecutado ni verificado. El alias SSH `fedora` no resuelve en el entorno actual;
+falta una dirección o un alias SSH válido antes de gestionar esa instalación.
+La comprobación local de sintaxis y ayuda del helper no acredita que las herramientas,
+el setup, el login interactivo de Claude o la aplicación funcionen en aquel equipo.
+La autenticación se realiza allí con una cuenta autorizada, sin transferir contraseñas,
+sesiones ni configuración privada desde este workspace.

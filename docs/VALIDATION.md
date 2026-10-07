@@ -33,6 +33,35 @@ PostgreSQL 16 local efímero, cerrado y eliminado al terminar; la conexión prod
 previamente validada sigue siendo PostgreSQL 18.6. Existe una advertencia externa de deprecación
 de TestClient/httpx en cada suite Python; no impide los resultados.
 
+## Publicación y configuración de este workspace
+
+Comprobación del 2026-10-07, 04:51 UTC: web, documentación y Swagger productivos
+responden HTTP 200. La API activa sigue en modo Anthropic con Haiku 4.5; todavía
+no declara `document_reading` ni `customer_management`, y OpenAPI no ofrece GET de
+contenido. Publicar la API actualizada sigue pendiente de una sesión SSH autenticada:
+el VPS responde `Permission denied (publickey,password)` y el socket anterior expiró.
+
+Se prepararon `.env.production` y `.env.vercel` privados, usando exclusivamente
+las variables requeridas de la configuración de despliegue existente, sin imprimir
+valores ni modificar el `.env` de desarrollo. Permisos `0600` y exclusión por Git
+verificados. No se transfirieron credenciales a GitHub, Vercel cliente o Fedora.
+El backend del VPS conserva su archivo privado externo; las variables del proxy
+se configuran en el servidor de Vercel y el proxy HTTPS.
+Una conexión de sólo lectura usando el nuevo `.env.production` confirmó PostgreSQL
+18.6, TLS 1.3 con verificación completa y existencia del schema dedicado. No se
+crearon ni modificaron cuentas, tablas, sesiones o documentos en esa comprobación.
+La configuración privada también pasó `deploy-vercel.py check`; el origen HTTPS
+devolvió 403 sin su secreto de servidor y 200 con él. Una llamada mínima autorizada
+al proveedor autenticó la clave del backend y devolvió respuesta con
+`claude-haiku-4-5-20251001` (14 tokens de entrada y 5 de salida), sin enviar corpus
+ni imprimir secretos. Esta llamada no sustituye el smoke del chat tras actualizar
+el contenedor productivo.
+
+Fedora: la copia solicitada es `~/Documentos/repos/SoftopPrueba`. El alias `fedora`
+no resuelve en este entorno; falta un host/usuario SSH accesible. El helper y la
+guía usan esa ruta y conservan checkouts existentes. Sintaxis, ayuda y nueve casos
+sintéticos de destino pasaron; no equivalen a una instalación real en el portátil.
+
 ## Servicios reales locales
 
 - Lector de documentos: API protegida por rol admin, contenido completo persistente

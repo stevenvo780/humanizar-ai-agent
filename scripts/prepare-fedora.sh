@@ -11,7 +11,7 @@ for option in "$@"; do
     --skip-setup) SKIP_SETUP=true ;;
     --help|-h)
       echo 'Usage: bash scripts/prepare-fedora.sh [--check] [--skip-claude] [--skip-setup]'
-      echo 'On Fedora, prepares tools and clones dev into ${HOME}/Documentos/humanizar-ai-agent.'
+      echo 'On Fedora, prepares tools and clones dev into ${HOME}/Documentos/repos/SoftopPrueba.'
       echo 'Uses local sudo only for dnf. Never signs in to Claude or forwards passwords.'
       exit 0 ;;
     *) echo 'Unknown Fedora preparation option. Use --help.' >&2; exit 2 ;;
@@ -78,14 +78,21 @@ if [[ "$SKIP_CLAUDE" == false ]]; then
   claude --version
 fi
 uv tool install specify-cli==1.0.7
-PROJECT_DIR="${HOME}/Documentos/humanizar-ai-agent"
-if [[ -L "$PROJECT_DIR" ]]; then
-  echo 'Project destination is a symlink; choose a regular directory locally.' >&2; exit 1
-elif [[ -e "$PROJECT_DIR" ]]; then
-  git -C "$PROJECT_DIR" rev-parse --is-inside-work-tree >/dev/null
+PROJECT_DIR="${HOME}/Documentos/repos/SoftopPrueba"
+for destination in "${HOME}/Documentos" "${HOME}/Documentos/repos" "$PROJECT_DIR"; do
+  if [[ -L "$destination" ]]; then
+    echo 'Project destination or its parent is a symlink; use regular directories locally.' >&2; exit 1
+  elif [[ -e "$destination" && ! -d "$destination" ]]; then
+    echo 'Project destination or its parent is not a directory; existing files were preserved.' >&2; exit 1
+  fi
+done
+if [[ -e "$PROJECT_DIR" ]]; then
+  if ! PROJECT_PREFIX="$(git -C "$PROJECT_DIR" rev-parse --show-prefix 2>/dev/null)" || [[ -n "$PROJECT_PREFIX" ]]; then
+    echo 'Project destination is not the root of an existing checkout; it was preserved.' >&2; exit 1
+  fi
   echo 'Existing checkout preserved; no pull, branch switch or reset was performed.'
 else
-  mkdir -p -- "${HOME}/Documentos"
+  mkdir -p -- "${HOME}/Documentos/repos"
   git clone --branch dev --single-branch https://github.com/stevenvo780/humanizar-ai-agent.git "$PROJECT_DIR"
 fi
 if [[ "$SKIP_SETUP" == false ]]; then
@@ -93,5 +100,5 @@ if [[ "$SKIP_SETUP" == false ]]; then
   if [[ -f "$PROJECT_DIR/.env" && ! -L "$PROJECT_DIR/.env" ]]; then chmod 600 "$PROJECT_DIR/.env"; fi
 fi
 echo 'Fedora preparation complete. Add ~/.local/bin to PATH in your shell if necessary.'
-echo 'Open ${HOME}/Documentos/humanizar-ai-agent, then make dev or make claude.'
+echo 'Open ${HOME}/Documentos/repos/SoftopPrueba, then make dev or make claude.'
 echo 'Claude authentication is a separate interactive step on this computer.'
